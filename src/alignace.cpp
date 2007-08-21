@@ -31,7 +31,7 @@ void AlignACE::set_default_params(){
   ace_params.ap_minpass[0]=200;
   ace_params.ap_seed=-1;
   ace_params.ap_psfact=0.1;
-  ace_params.ap_weight=0.8;
+  ace_params.ap_weight=0.8; 
   ace_params.ap_npass=1000000;
   ace_params.ap_fragment=true;
   ace_params.ap_flanking=0;
@@ -52,10 +52,10 @@ void AlignACE::set_final_params(){
   ace_params.ap_minpass[1]=2*ace_params.ap_minpass[0];
   ace_params.ap_minpass[2]=5*ace_params.ap_minpass[0];
   ace_params.ap_sitecut[0]=ap*5.0;//10.0*ap;
-  ace_params.ap_sitecut[2]=0.2;
-  ace_params.ap_sitecut[1]=sqrt(ace_params.ap_sitecut[0]*ace_params.ap_sitecut[2]);
-  ace_params.ap_nruns=ace_sites.positions_available()/ace_params.ap_expect/ace_sites.ncols()/ace_params.ap_undersample*ace_params.ap_oversample;
-  ace_params.ap_select=5.0;
+	ace_params.ap_sitecut[2]=0.2;
+	ace_params.ap_sitecut[1]=sqrt(ace_params.ap_sitecut[0]*ace_params.ap_sitecut[2]);
+	ace_params.ap_nruns=ace_sites.positions_available()/ace_params.ap_expect/ace_sites.ncols()/ace_params.ap_undersample*ace_params.ap_oversample;
+	ace_params.ap_select=5.0;
 }
 
 void AlignACE::ace_initialize(){
@@ -74,6 +74,7 @@ void AlignACE::doit(){
   ace_initialize();
   Sites best_sites=ace_sites;
   for(j=1;j<=ace_params.ap_nruns;j++){
+		//cerr << "\t\tRun #" << j << "/" << ace_params.ap_nruns << endl;
     seed_random_sites(1);
     //seed_biased_site();
     ace_select_sites.clear_sites();
@@ -82,61 +83,61 @@ void AlignACE::doit(){
     int phase=0;
     for(i=1;i<=ace_params.ap_npass;i++){
       if(phase==3){
-	double sc1=map_score();
-	sc=0.0;
-	for(int z=0;sc<sc1&&z<5;z++){
-	  optimize_columns();
-	  optimize_sites();
-	  sc=map_score();
-	}
-	if(sc<sc1) {
-	  ace_sites=best_sites;
-	  sc=sc1;
-	}
-	ace_archive.consider_motif(ace_sites,sc);
-	if(ace_verbose) output(cerr);
-	if(ace_verbose) cerr<<"optimized to "<<sc<<"\n";
-	break;
+				double sc1=map_score();
+				sc=0.0;
+				for(int z=0;sc<sc1&&z<5;z++){
+					optimize_columns();
+					optimize_sites();
+					sc=map_score();
+				}
+				if(sc<sc1) {
+					ace_sites=best_sites;
+					sc=sc1;
+				}
+				ace_archive.consider_motif(ace_sites,sc);
+				if(ace_verbose) output(cerr);
+				if(ace_verbose) cerr<<"optimized to "<<sc<<"\n";
+				break;
       }
       if(i_worse==0) single_pass(ace_params.ap_sitecut[phase]);
       else single_pass_select(ace_params.ap_sitecut[phase]);
       if(ace_sites.number()==0) {
-	if(ace_verbose) cerr<<j<<"   "<<i<<"   no sites\n";
-	if(sc_best_i==ace_map_cutoff) break;
-	//if(best_sites.number()<4) break;
-	ace_sites=best_sites;
-	ace_select_sites=best_sites;
-	phase++;
-	i_worse=0;
-	continue;
+				if(ace_verbose) cerr<<j<<"   "<<i<<"   no sites\n";
+				if(sc_best_i==ace_map_cutoff) break;
+				//if(best_sites.number()<4) break;
+				ace_sites=best_sites;
+				ace_select_sites=best_sites;
+				phase++;
+				i_worse=0;
+				continue;
       }
       if(i<=3) continue;
       if(column_sample(0)){}
       if(column_sample(ace_sites.width()-1)){}
       for(m=0;m<3;m++){
-	if(!(column_sample())) break;
+				if(!(column_sample())) break;
       }
       sc=map_score();
       if(sc-sc_best_i>1e-3){
-	i_worse=0;
-	cmp=ace_archive.check_motif(ace_sites,sc);
-	if(cmp>ace_sim_cutoff) {
-	  if(ace_verbose) cerr<<j<<"   "<<i<<"   similarity\n";
-	  break;
-	}
-	sc_best_i=sc;
-	best_sites=ace_sites;
-	if(ace_verbose) cerr<<j<<"\t"<<i<<"\t"<<sc<<"\t"<<ace_sites.number()<<'\t'<<phase<<"\n";
-	//kill sampling based on similarity of current to archived motif
+				i_worse=0;
+				cmp=ace_archive.check_motif(ace_sites,sc);
+				if(cmp>ace_sim_cutoff) {
+					if(ace_verbose) cerr<<j<<"   "<<i<<"   similarity\n";
+					break;
+				}
+				sc_best_i=sc;
+				best_sites=ace_sites;
+				if(ace_verbose) cerr<<j<<"\t"<<i<<"\t"<<sc<<"\t"<<ace_sites.number()<<'\t'<<phase<<"\n";
+				//kill sampling based on similarity of current to archived motif
       }
       else i_worse++;
       if(i_worse>ace_params.ap_minpass[phase]){
-	if(sc_best_i==ace_map_cutoff) break;
-	if(best_sites.number()<2) break;
-	ace_sites=best_sites;
-	ace_select_sites=best_sites;
-	phase++;
-	i_worse=0;
+				if(sc_best_i==ace_map_cutoff) break;
+				if(best_sites.number()<2) break;
+				ace_sites=best_sites;
+				ace_select_sites=best_sites;
+				phase++;
+				i_worse=0;
       }
     }
     //    if(j%100==0) full_output("37.tmp");
@@ -150,7 +151,7 @@ void AlignACE::seed_random_sites(const int num){
   bool watson;
   int possible=ace_sites.positions_available();
   ace_ran_int.set_range(0,possible-1);
-
+	
   for(j=0;j<max_attempts;j++){
     chosen=ace_ran_int.rnum();//random (0,possible-1)
     for(i=0;i<ace_seqset.num_seqs();i++){
@@ -185,27 +186,27 @@ void AlignACE::seed_biased_site(){
     calc_matrix();
     for(i=0;i<ace_seqset.num_seqs();i++){
       for(j=0;j<ace_seqset.len_seq(i)-ace_sites.width()+1;j++){
-	Lw=1.0;matpos=0;col=0;
-	for(k=0;k<ace_sites.ncols();k++){
-	  int seq=ss_seq[i][j+col];
-	  Lw*=ace_score_matrix[matpos+seq];
-	  col=ace_sites.next_column(col);
-	  matpos+=ace_sites.depth();
-	}
-	Lc=1.0;matpos=ace_sites.depth()-1;col=0;
-	for(k=0;k<ace_sites.ncols();k++){
-	  int seq=ss_seq[i][j+ace_sites.width()-1-col];
-	  Lc*=ace_score_matrix[matpos-seq];
-	  col=ace_sites.next_column(col);
-	  matpos+=ace_sites.depth();
-	}
-	Pw=Lw*ap/(1.0-ap+Lw*ap);
-	Pc=Lc*ap/(1.0-ap+Lc*ap);
-	//if(Pw<0.8&&Pc<0.8) continue;
-	for(k=j;k<=(j+ace_sites.width()-ace_sites.ncols());k++){
-	  ace_site_bias[i][k]*=(1-Pw)*(1-Pc);
-	  //ace_site_bias[i][k]=0.0;
-	}
+				Lw=1.0;matpos=0;col=0;
+				for(k=0;k<ace_sites.ncols();k++){
+					int seq=ss_seq[i][j+col];
+					Lw*=ace_score_matrix[matpos+seq];
+					col=ace_sites.next_column(col);
+					matpos+=ace_sites.depth();
+				}
+				Lc=1.0;matpos=ace_sites.depth()-1;col=0;
+				for(k=0;k<ace_sites.ncols();k++){
+					int seq=ss_seq[i][j+ace_sites.width()-1-col];
+					Lc*=ace_score_matrix[matpos-seq];
+					col=ace_sites.next_column(col);
+					matpos+=ace_sites.depth();
+				}
+				Pw=Lw*ap/(1.0-ap+Lw*ap);
+				Pc=Lc*ap/(1.0-ap+Lc*ap);
+				//if(Pw<0.8&&Pc<0.8) continue;
+				for(k=j;k<=(j+ace_sites.width()-ace_sites.ncols());k++){
+					ace_site_bias[i][k]*=(1-Pw)*(1-Pc);
+					//ace_site_bias[i][k]=0.0;
+				}
       }
     }
   }
@@ -213,18 +214,18 @@ void AlignACE::seed_biased_site(){
     seed_random_sites(1);
     return;
   }
-
+	
   for(T=0.0,i=0;i<ace_seqset.num_seqs();i++){
     for(j=0;j<ace_seqset.len_seq(i)-ace_sites.ncols()+1;j++){
       T+=ace_site_bias[i][j];
       //      if(m>3) cerr<<ace_site_bias[i][j]<<'\t'<<T<<'\n';
     }
   }
-
+	
   cerr<<"seeding "<<T<<" biased\n";
-
+	
   ace_sites.clear_sites();
-
+	
   T*=ace_ran_dbl.rnum();
   for(i=0;i<ace_seqset.num_seqs();i++){
     for(j=0;j<ace_seqset.len_seq(i)-ace_sites.ncols()+1;j++){
@@ -233,11 +234,11 @@ void AlignACE::seed_biased_site(){
     }
     if(T<=0.0) break;
   }
-
+	
   double db=ace_ran_dbl.rnum();//random (0,1)
-  bool watson=true;
-  if(db>0.5) watson=false;
-  ace_sites.add_site(i,j,watson);
+		bool watson=true;
+		if(db>0.5) watson=false;
+		ace_sites.add_site(i,j,watson);
 }
 
 
@@ -261,7 +262,7 @@ void AlignACE::single_pass(const double minprob){
   ace_sites.remove_all_sites();
   ace_select_sites.remove_all_sites();
   //will only update once per pass
-
+	
   char **ss_seq;
   ss_seq=ace_seqset.seq_ptr();
   double Lw,Lc,Pw,Pc,F;
@@ -272,37 +273,37 @@ void AlignACE::single_pass(const double minprob){
     for(j=0;j<=ace_seqset.len_seq(i)-ace_sites.width();j++){
       Lw=1.0;matpos=0;col=0;
       for(k=0;k<ace_sites.ncols();k++){
-	int seq=ss_seq[i][j+col];
-	Lw*=ace_score_matrix[matpos+seq];
-	col=ace_sites.next_column(col);
-	matpos+=ace_sites.depth();
+				int seq=ss_seq[i][j+col];
+				Lw*=ace_score_matrix[matpos+seq];
+				col=ace_sites.next_column(col);
+				matpos+=ace_sites.depth();
       }
       Lc=1.0;matpos=ace_sites.depth()-1;col=0;
       for(k=0;k<ace_sites.ncols();k++){
-	int seq=ss_seq[i][j+ace_sites.width()-1-col];
-	Lc*=ace_score_matrix[matpos-seq];
-	col=ace_sites.next_column(col);
-	matpos+=ace_sites.depth();
+				int seq=ss_seq[i][j+ace_sites.width()-1-col];
+				Lc*=ace_score_matrix[matpos-seq];
+				col=ace_sites.next_column(col);
+				matpos+=ace_sites.depth();
       }
       Pw=Lw*ap/(1.0-ap+Lw*ap);
       Pc=Lc*ap/(1.0-ap+Lc*ap);
       F=(Pw+Pc-Pw*Pc);//probability of either
-      if(F>(minprob/ace_params.ap_select)) ace_select_sites.add_site(i,j,true);
-      //strand irrelevant for ace_select_sites
-      if(i==iadd&&j<jadd+ace_sites.width()) continue;
-      if(F<minprob) continue;
-      considered++;
-      Pw=F*Pw/(Pw+Pc);
-      Pc=F-Pw;
-      double r=ace_ran_dbl.rnum();
-      if (r>F) continue;
+				if(F>(minprob/ace_params.ap_select)) ace_select_sites.add_site(i,j,true);
+				//strand irrelevant for ace_select_sites
+				if(i==iadd&&j<jadd+ace_sites.width()) continue;
+				if(F<minprob) continue;
+				considered++;
+				Pw=F*Pw/(Pw+Pc);
+				Pc=F-Pw;
+				double r=ace_ran_dbl.rnum();
+				if (r>F) continue;
       else if (r<Pw) {
-	ace_sites.add_site(i,j,true);
-	iadd=i;jadd=j;
+				ace_sites.add_site(i,j,true);
+				iadd=i;jadd=j;
       }
       else {
-	ace_sites.add_site(i,j,false);
-	iadd=i;jadd=j;
+				ace_sites.add_site(i,j,false);
+				iadd=i;jadd=j;
       }
     }
   }
@@ -315,7 +316,7 @@ void AlignACE::single_pass_select(const double minprob){
   calc_matrix();
   ace_sites.remove_all_sites();
   //will only update once per pass
-
+	
   char **ss_seq;
   ss_seq=ace_seqset.seq_ptr();
   double Lw,Lc,Pw,Pc,F;
@@ -344,11 +345,11 @@ void AlignACE::single_pass_select(const double minprob){
     Pw=Lw*ap/(1.0-ap+Lw*ap);
     Pc=Lc*ap/(1.0-ap+Lc*ap);
     F=(Pw+Pc-Pw*Pc);//probability of either
-    if(F<minprob) continue;
-    Pw=F*Pw/(Pw+Pc);
-    Pc=F-Pw;
-    double r=ace_ran_dbl.rnum();
-    if (r>F) continue;
+			if(F<minprob) continue;
+			Pw=F*Pw/(Pw+Pc);
+			Pc=F-Pw;
+			double r=ace_ran_dbl.rnum();
+			if (r>F) continue;
     else if (r<Pw) {
       ace_sites.add_site(i,j,true);
       iadd=i;jadd=j;
@@ -368,28 +369,28 @@ bool AlignACE::column_sample(const int c, const bool sample){
   int col=0,col_worst,col_removed;
   int *freq=new int[ace_sites.depth()];
   double wt,wt_worst=DBL_MAX;
-
+	
   if(c!=37) col_worst=c;//user chosen, hopefully a real column
   else{
     for(i=0;i<ace_sites.ncols();i++){
       ace_sites.column_freq(col,ace_seqset,freq);
       wt=0.0;
       for(j=0;j<ace_sites.depth();j++){
-	wt+=gammaln(freq[j]+ace_params.ap_pseudo[j]);
-	wt-=(double)freq[j]*log(ace_params.ap_backfreq[j]);
+				wt+=gammaln(freq[j]+ace_params.ap_pseudo[j]);
+				wt-=(double)freq[j]*log(ace_params.ap_backfreq[j]);
       }
       if(wt<wt_worst) {
-	col_worst=col;
-	wt_worst=wt;
+				col_worst=col;
+				wt_worst=wt;
       }
       col=ace_sites.next_column(col);
     }
   }
-
+	
   col_removed=ace_sites.remove_col(col_worst);
   i=ace_select_sites.remove_col(col_worst);
   if(i!=col_removed) {cerr<<i<<"  "<<col_removed<<" wrong assumption\n";abort();}
-
+	
   int max_left,max_right;
   max_left=max_right=(ace_sites.max_width()-ace_sites.width())/2;
   ace_sites.columns_open(max_left,max_right);
@@ -408,70 +409,70 @@ bool AlignACE::column_sample(const int c, const bool sample){
     if(ace_sites.column_freq(i-x,ace_seqset,freq)){
       wt=0.0;
       for(j=0;j<ace_sites.depth();j++){
-	wt+=gammaln(freq[j]+ace_params.ap_pseudo[j]);
-	wt-=(double)freq[j]*log(ace_params.ap_backfreq[j]);
+				wt+=gammaln(freq[j]+ace_params.ap_pseudo[j]);
+				wt-=(double)freq[j]*log(ace_params.ap_backfreq[j]);
       }
       wtx[i]=wt;
       if(wt>best_wt) best_wt=wt;
     }
   }
-
+	
   double scale=0.0;
   if(best_wt>100.0) scale=best_wt-100.0;//keep exp from overflowing
-  double tot2=0.0;
-  for(i=0;i<cs_span;i++){
-    if(wtx[i]==0.0) continue;
-    wtx[i]-=scale;
-    wtx[i]=exp(wtx[i]);
-    int newwidth=ace_sites.width();
-    if(i<x) newwidth+=(x-i);
-    else if(i>(x+ace_sites.width()-1)) newwidth+=(i-x-ace_sites.width()+1);
-    wtx[i]/=bico(newwidth-2,ace_sites.ncols()-2);
-    tot2+=wtx[i];
-  }
-  
-  double pick;
-  int col_pick;
-  double cutoff=.01;
-  if(sample){
-    if(1-(wtx[x+col_removed]/tot2)<cutoff){
-      ace_sites.add_col(col_removed);
-      ace_select_sites.add_col(col_removed);
-      delete [] wtx;
-      delete [] freq;
-      return false;
-    } 
-    pick=ace_ran_dbl.rnum()*tot2;
-    col_pick=373;
-    for(i=0;i<cs_span;i++){
-      if(wtx[i]==0.0) continue;
-      pick-=wtx[i];
-      if(pick<=0.0) {
-	col_pick=i-x;
-	break;
-      }
-    }
-  }
-  else{//select best
-    pick=-DBL_MAX;
-    for(i=0;i<cs_span;i++){
-      if(wtx[i]>pick){
-	col_pick=i-x;
-	pick=wtx[i];
-      }
-    }    
-  }
-  if(col_pick==373){
-    cout<<tot2<<'\t'<<"373 reached.\n";
-    abort();
-  }
-  ace_sites.add_col(col_pick);
-  ace_select_sites.add_col(col_pick);
-
-  delete [] wtx;
-  delete [] freq;
-
-  if(col_removed==col_pick) return false;
+		double tot2=0.0;
+		for(i=0;i<cs_span;i++){
+			if(wtx[i]==0.0) continue;
+			wtx[i]-=scale;
+			wtx[i]=exp(wtx[i]);
+			int newwidth=ace_sites.width();
+			if(i<x) newwidth+=(x-i);
+			else if(i>(x+ace_sites.width()-1)) newwidth+=(i-x-ace_sites.width()+1);
+			wtx[i]/=bico(newwidth-2,ace_sites.ncols()-2);
+			tot2+=wtx[i];
+		}
+		
+		double pick;
+		int col_pick;
+		double cutoff=.01;
+		if(sample){
+			if(1-(wtx[x+col_removed]/tot2)<cutoff){
+				ace_sites.add_col(col_removed);
+				ace_select_sites.add_col(col_removed);
+				delete [] wtx;
+				delete [] freq;
+				return false;
+			} 
+			pick=ace_ran_dbl.rnum()*tot2;
+			col_pick=373;
+			for(i=0;i<cs_span;i++){
+				if(wtx[i]==0.0) continue;
+				pick-=wtx[i];
+				if(pick<=0.0) {
+					col_pick=i-x;
+					break;
+				}
+			}
+		}
+		else{//select best
+			pick=-DBL_MAX;
+			for(i=0;i<cs_span;i++){
+				if(wtx[i]>pick){
+					col_pick=i-x;
+					pick=wtx[i];
+				}
+			}    
+		}
+		if(col_pick==373){
+			cout<<tot2<<'\t'<<"373 reached.\n";
+			abort();
+		}
+		ace_sites.add_col(col_pick);
+		ace_select_sites.add_col(col_pick);
+		
+		delete [] wtx;
+		delete [] freq;
+		
+		if(col_removed==col_pick) return false;
   else return true;
 }
 
@@ -485,7 +486,7 @@ double AlignACE::map_score(){
   double map_success=(double)ace_sites.number();
   ms +=( gammaln(map_success+map_alpha)+gammaln(map_N-map_success+map_beta) );
   ms -=( gammaln(map_alpha)+gammaln(map_N + map_beta) );
-
+	
   ace_sites.calc_freq_matrix(ace_seqset,ace_freq_matrix);
   double sc[6]={0.0,0.0,0.0,0.0,0.0,0.0};
   int d=ace_sites.depth();
@@ -528,7 +529,7 @@ void AlignACE::optimize_sites(){
   bool *str=new bool[possible];
   Heap hp(possible,3);
   double ap=(ace_params.ap_weight*ace_params.ap_expect+(1-ace_params.ap_weight)*ace_sites.number())/(2.0*ace_sites.positions_available());
-
+	
   calc_matrix();
   char **ss_seq;
   ss_seq=ace_seqset.seq_ptr();
@@ -540,32 +541,32 @@ void AlignACE::optimize_sites(){
     for(j=0;j<ace_seqset.len_seq(i)-ace_sites.width()+1;j++){
       Lw=1.0;matpos=0;col=0;
       for(k=0;k<ace_sites.ncols();k++){
-	int seq=ss_seq[i][j+col];
-	Lw*=ace_score_matrix[matpos+seq];
-	col=ace_sites.next_column(col);
-	matpos+=ace_sites.depth();
+				int seq=ss_seq[i][j+col];
+				Lw*=ace_score_matrix[matpos+seq];
+				col=ace_sites.next_column(col);
+				matpos+=ace_sites.depth();
       }
       Lc=1.0;matpos=ace_sites.depth()-1;col=0;
       for(k=0;k<ace_sites.ncols();k++){
-	int seq=ss_seq[i][j+ace_sites.width()-1-col];
-	Lc*=ace_score_matrix[matpos-seq];
-	col=ace_sites.next_column(col);
-	matpos+=ace_sites.depth();
+				int seq=ss_seq[i][j+ace_sites.width()-1-col];
+				Lc*=ace_score_matrix[matpos-seq];
+				col=ace_sites.next_column(col);
+				matpos+=ace_sites.depth();
       }
       Pw=Lw*ap/(1.0-ap+Lw*ap);
       Pc=Lc*ap/(1.0-ap+Lc*ap);
       //F=(Pw+Pc-Pw*Pc);//probability of either
       if(Pw>cutoff||Pc>cutoff){
-	chr[h]=i;pos[h]=j;
-	if(Pw>=Pc){
-	  str[h]=true;
-	  hp.insert(h,-Pw);//lower is better
-	}
-	else{
-	  str[h]=false;
-	  hp.insert(h,-Pc);
-	}
-	h++;
+				chr[h]=i;pos[h]=j;
+				if(Pw>=Pc){
+					str[h]=true;
+					hp.insert(h,-Pw);//lower is better
+				}
+				else{
+					str[h]=false;
+					hp.insert(h,-Pc);
+				}
+				h++;
       }
     }
   }
@@ -582,8 +583,8 @@ void AlignACE::optimize_sites(){
       if(hp.value(h)<-0.7) continue;
       ms=map_score();
       if(ms>ms_best){
-	ms_best=ms;
-	best=ace_sites;
+				ms_best=ms;
+				best=ace_sites;
       }
     }
   }
@@ -600,7 +601,7 @@ void AlignACE::orient_motif(){
   double *freq=new double[6];
   for(i=0;i<6;i++) info[i]=0.0;
   int d=ace_sites.depth();
-
+	
   double tot=(double)ace_sites.number()+ace_params.ap_npseudo;
   ace_sites.calc_freq_matrix(ace_seqset,ace_freq_matrix);
   for(i=0;i<d*ace_sites.ncols();i+=d){
@@ -613,7 +614,7 @@ void AlignACE::orient_motif(){
     ii=2+ii;
     for(j=1;j<=4;j++) info[j]+=freq[j]*ii;
   }
-
+	
   double flip=1.5*info[3]+1.0*info[1]-1.0*info[4]-1.5*info[2];
   //for(i=1;i<5;i++) cerr<<info[i]<<'\t';
   //cerr<<flip<<'\n';
@@ -636,14 +637,14 @@ void AlignACE::output(ostream &fout){
     bool s=ace_sites.strand(i);
     for(j=-x;j<ace_sites.width()+x;j++){
       if(s) {
-	if(p+j>=0&&p+j<ace_seqset.len_seq(c))
-	  fout<<nt[ss_seq[c][p+j]];
-	else fout<<' ';
+				if(p+j>=0&&p+j<ace_seqset.len_seq(c))
+					fout<<nt[ss_seq[c][p+j]];
+				else fout<<' ';
       }
       else {
-	if(p+ace_sites.width()-1-j>=0&&p+ace_sites.width()-1-j<ace_seqset.len_seq(c))
-	  fout<<nt[ace_sites.depth()-1-ss_seq[c][p+ace_sites.width()-1-j]];
-	else fout<<' ';
+				if(p+ace_sites.width()-1-j>=0&&p+ace_sites.width()-1-j<ace_seqset.len_seq(c))
+					fout<<nt[ace_sites.depth()-1-ss_seq[c][p+ace_sites.width()-1-j]];
+				else fout<<' ';
       }
     }
     fout<<'\t'<<c<<'\t'<<p<<'\t'<<s<<'\n';
