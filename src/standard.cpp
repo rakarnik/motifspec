@@ -34,7 +34,7 @@ code.*/
 			}
 			test.get(c);//ignore '>'
 			int j;
-			for(j=0;c!='\n';test.get(c)){//read name
+			for(j=0;c!=' ' && c != '\n';test.get(c)){//read name
 				y[j]=c;
 				j++;
 				if(j==max_name) break;
@@ -77,6 +77,47 @@ void get_fasta_fast(const char* filename, vector<string>& seqset){
 	get_fasta_fast(filename, seqset, nameset);
 }
 
+float** get_expr(const char* filename, int* npoints, vector<string>& nameset){
+	ifstream exprfile(filename);
+	if(! exprfile){
+	  cerr<<"No such file "<< filename<<'\n';
+	  exit(0);
+	}
+	return get_expr(exprfile, npoints, nameset);
+}
+
+float** get_expr(istream& exprfile, int* npoints, vector<string>& nameset) {
+	float** expr;
+	string line;
+	int gene = 0;
+	
+	// First count the number of lines in the file and allocate some storage
+	while(getline(exprfile, line)) {
+		gene++;
+	}
+	expr = new float*[gene];
+	
+	// Go back to the beginning of the file
+	exprfile.clear();
+	exprfile.seekg(0);
+		
+	// Now read in the values
+	*npoints = 0;
+	gene = 0;
+	while(getline(exprfile, line)) {
+		vector<string> values = split(line, '\t');
+		nameset.push_back(values[0]);
+		expr[gene] = new float[values.size() - 1];
+		for (int i = 1; i < values.size(); i++) {
+			expr[gene][i - 1] = atof(values[i].c_str());
+		}
+		*npoints = values.size() - 1;
+		gene++;
+	}
+	
+	return expr;
+}
+
 
 //The following GetArg2 commands change the command line option parsing
 //to expect spaces, i.e., -n 2 instead of -n2.  This allows for more
@@ -93,7 +134,19 @@ bool GetArg2(int argc, char *argv[], char *c, int &cval){
       return true;
     }
   }
-  return true;
+  return false;
+}
+
+bool GetArg2(int argc, char *argv[], char *c, float &cval){
+  if(argc < 2) return false;
+  for (int arg=1;arg<argc;arg++) {
+    if (strcmp(argv[arg],c)==0) {
+      string s=argv[++arg];
+      cval=(float)str_to_dbl(s);
+      return true;
+    }
+  }
+  return false;
 }
 
 bool GetArg2(int argc, char *argv[], char *c, double &cval){
@@ -105,7 +158,7 @@ bool GetArg2(int argc, char *argv[], char *c, double &cval){
       return true;
     }
   }
-  return true;
+  return false;
 }
 
 bool GetArg2(int argc, char *argv[], char *c, string &cval){
@@ -116,7 +169,7 @@ bool GetArg2(int argc, char *argv[], char *c, string &cval){
       return true;
     }
   }
-  return true;
+  return false;
 }
 
 bool GetArg2(int argc, char *argv[], char *c){

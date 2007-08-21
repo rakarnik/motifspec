@@ -23,8 +23,10 @@ void get_fasta_fast(const char* filename, vector<string>& seqset,
 			   vector<string>& nameset);
 void get_fasta_fast(const char* filename, vector<string>& seqset); 
 void get_fasta_fast(istream &test,vector<string>& seqset, vector<string>& nameset);
+float** get_expr(const char* filename, int* npoints, vector<string>& nameset);
+float** get_expr(istream &is, int* npoints, vector<string>& nameset);
 bool GetArg2(int argc, char *argv[], char *c, int &cval);
-bool GetArg2(int argc, char *argv[], char *c, double &cval);
+bool GetArg2(int argc, char *argv[], char *c, float &cval);
 bool GetArg2(int argc, char *argv[], char *c, double &cval);
 bool GetArg2(int argc, char *argv[], char *c, string &cval);
 bool GetArg2(int argc, char *argv[], char *c);
