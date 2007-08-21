@@ -50,7 +50,7 @@ im : \
 		-o im
 
 clean : 
-		rm \
+		rm -f\
 		bin/alignace.o\
 		bin/archivesites.o\
 		bin/cluster.o\
