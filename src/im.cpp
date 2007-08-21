@@ -8,15 +8,12 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 	
-  GetArg2(argc, argv, "-s", seqfile);
-	GetArg2(argc, argv, "-e", exprfile);
-	if (seqfile == "" || exprfile == "") {
+	if ((! GetArg2(argc, argv, "-s", seqfile)) || (! GetArg2(argc, argv, "-e", exprfile))) {
 		print_usage(cout);
     exit(0);
 	}
 	
 	// Read parameters
-	int k;                                // number of clusters
 	if(! GetArg2(argc, argv, "-k", k)) k = 10;
 	int rounds;                           // number of rounds
 	if(! GetArg2(argc, argv, "-rounds", rounds)) rounds = 50;
@@ -27,121 +24,206 @@ int main(int argc, char *argv[]) {
 	float cthresh;                        // how far genes can be from the cluster mean
 	if(! GetArg2(argc, argv, "-cthresh", cthresh)) cthresh = 0.65;
 	int minsize;                          // minimum size for a cluster
-	GetArg2(argc, argv, "-minsize", minsize);
+	if(! GetArg2(argc, argv, "-minsize", minsize)) minsize = 10;
 	
 	string outfile = "";
 	GetArg2(argc, argv, "-o", outfile);
 	
-  vector<string> seqs, nameset1, nameset2;
+  vector<string> seqs, nameset1;
   cerr << "Reading sequence data from '" << seqfile << "'... ";
 	get_fasta_fast(seqfile.c_str(), seqs, nameset1);
 	cerr << "done.\n";
 	
-	vector<vector<float> > expr;          // the expression data
+	vector<string> nameset2;
 	cerr << "Reading expression data from '" << exprfile << "'... ";
-  get_expr(exprfile.c_str(), expr, nameset2);
+  expr = get_expr(exprfile.c_str(), &npoints, nameset2);
 	cerr << "done.\n";
 	
-	int ngenes = nameset2.size();                           // number of genes
-	/*
 	if(nameset1.size() == nameset2.size()) {
 		ngenes = nameset1.size();
 	} else {
 		cerr << "Inconsistent sizes for sequence and expression datasets\n";
 		exit(0);
 	}
-	*/
 	
-	cerr << "Setting up AlignACE and kmeans models... ";
-	vector<AlignACE> gibbs(k, AlignACE(seqs, nc));
-	for (int i = 0; i < k; i++) {
-		gibbs[i].modify_params (argc, argv);
+	bool match = true;
+	for (int i = 0; i < ngenes; i++) {
+		match = match && (nameset1[i] == nameset2[i]);
+		if (nameset1[i] != nameset2[i]) {
+			cerr << "Row " << i << ": Sequence: '" << nameset1[i] << "'  " << "Expression: '" << nameset2[i] << "'" << endl;
+		}
 	}
-	vector<Cluster> clusters(k, Cluster(expr, nameset2));
-	cerr << "done.\n";
+	if(! match) {
+		cerr << "Inconsistent gene names for sequence and expression datasets\n";
+		exit(0);
+	}
 	
-	vector<int> gene_cluster(ngenes, (int) -1);             // cluster assignments for genes
+	gene_cluster = new int[ngenes];
+	for (int g = 0; g < ngenes; g++) {
+		gene_cluster[g] = -1;                             // -1 means not assigned to a cluster
+	}
+	
+	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints" << endl;
+	
+	cerr << "Setting up kmeans clusters... ";
+	clusters = new Cluster[k];
+	for (int c = 0; c < k; c++) {
+		clusters[c].init(expr, npoints, nameset2);
+	}
+	cerr << "done.\n";
 	
 	cerr << "Assigning cluster centers to random genes... ";
-	srand(1);
-	for (int i = 0; i < k; i++) {
-		recenter_cluster_random(clusters, gene_cluster, i);
+	srand(100);
+	for (int c = 0; c < k; c++) {
+		recenter_cluster_random(c);
 	}
-	cerr << "done.\n";
+	cerr << "done" << endl;
 	
 	int nchanges = 1;
 	int toosmall;
+	int assigned;
 	for (int i = 0; i < rounds || nchanges > 0 || toosmall > 0; i++) {
 		cerr << "Running iteration " << i + 1 << endl;
-		nchanges = assign_genes_to_nearest_cluster(clusters, gene_cluster, expr, cthresh);
+		nchanges = assign_genes_to_nearest_cluster(cthresh);
 		cerr << "\t" << nchanges << " changes in this iteration" << endl;
+		
+		cerr << "\tSorting clusters by size... ";
+		sort_clusters();
+		cerr << "done." << endl;
+		
+		assigned = 0;
 		cerr << "\t";
-		for (int j = 0; j < clusters.size(); j++) {
+		for (int j = 0; j < k; j++) {
 			cerr << clusters[j].size() << " ";
+			assigned += clusters[j].size();
 		}
-		cerr << endl;
-		check_cluster_distances(clusters, gene_cluster, expr, mthresh);
+		cerr << "(" << ngenes - assigned << " unassigned)" << endl;
+		
+		
+		check_cluster_distances(mthresh);
 		
 		toosmall = 0;
-		if ((i+1) % 10 == 0 || i >= rounds) {
+		if ((i+1) % 5 == 0) {
 			cerr << "\tResetting small clusters... " << endl; 
-			toosmall = check_cluster_sizes(clusters, gene_cluster, expr, minsize);
-			cerr << "done!" << endl;
+			toosmall = check_cluster_sizes(minsize);
+			cerr << "\tdone!" << endl;
 			cerr << "\tThere were " << toosmall << " small clusters" << endl;
+			assigned = 0;
+			cerr << "\t";
+			for (int j = 0; j < k; j++) {
+				cerr << clusters[j].size() << " ";
+				assigned += clusters[j].size();
+			}
+			cerr << "(" << ngenes - assigned << " unassigned)" << endl;
 		}
 		
-		sort_clusters(clusters, gene_cluster);
-				
 		if(i >= rounds && toosmall > 0) {
-			cerr << "\tRemoving cluster " << clusters.size() << endl;
+			cerr << "\tRemoving cluster " << k << endl;
 			vector<int> genes;
-			clusters[clusters.size() - 1].genes(genes);
+			clusters[k - 1].genes(genes);
 			for(int g = 0; g < genes.size(); g++) {
 				gene_cluster[genes[g]] = -1;
 			}
-			clusters.erase(clusters.end());
+			k--;
 		}
 		
 		if (outfile != "") {
 			ofstream out(outfile.c_str());
-			print_clusters(out, clusters, nameset2);
+			print_clusters(out, nameset2);
 			out.close();
 		}
 	}
 	
-	if (outfile == "") {
-		print_clusters(cout, clusters, nameset2);
+	cerr << "Searching for overrepresented sequences within clusters... " << endl;
+	pthread_t threads[k];
+	int rc;
+	struct aa_init inits[k];
+	for (int c = 0; c < k; c++) {
+		vector<string> clus_seqs;
+		vector<int> genes;
+		clusters[c].genes(genes);
+		for (int g = 0; g < genes.size(); g++) {
+			clus_seqs.push_back(seqs[genes[g]]);
+		}
+		inits[c].c = c;
+		inits[c].seqset = clus_seqs;
+		inits[c].nc = nc;
+		inits[c].argc = argc;
+		inits[c].argv = argv;
+		rc = pthread_create(&threads[c], NULL, doit, &inits[c]); 
+		if(rc != 0) {
+			cerr << "Unable to create thread for cluster " << c + 1 << ", error code is " << rc << endl;
+			exit(-1);
+		}
 	}
+	
+	int status;
+	for (int c = 0; c < k; c++) {
+		rc = pthread_join(threads[c], (void **) &status);
+		if (rc != 0) {
+			cerr << "Error while joining thread, return code from pthread_join() is " << rc << endl;
+			exit(-1);
+		}
+		cerr << "Completed join with thread " << c << ", status is "<< status << endl;
+	}
+	
+	cerr << "done." << endl;
+	
+	if (outfile == "") {
+		print_clusters(cout, nameset2);
+	}
+	
+	delete [] clusters;
+	pthread_exit(NULL);
 }
 
-int assign_genes_to_nearest_cluster(vector<Cluster>& clusters, vector<int>& gene_cluster, const vector<vector<float> >& expr, float threshold) {
+void* doit (void* a) {
+	struct aa_init* init = (aa_init*) a;
+	cerr << "Starting search for cluster " << (init->c + 1) << endl;
+	AlignACE ace(init->seqset, init->nc);
+	ace.modify_params(init->argc, init->argv);
+	ace.doit();
+	string acefn;
+	stringstream acefnstr;
+	acefnstr << (init->c + 1);
+	acefnstr << ".motif";
+	acefnstr >> acefn;
+	ofstream motifout(acefn.c_str());
+	ace.full_output(motifout);
+	cerr << "Done with cluster " << (init->c + 1) << endl;
+	return a;
+}
+
+int assign_genes_to_nearest_cluster (float threshold) {
 	float corr, max_corr;
 	int max_clus, nchanges = 0;
-	for (int g = 0; g < gene_cluster.size(); g++) {
+	for (int g = 0; g < ngenes; g++) {
 		max_clus = -1;
 		max_corr = 0;
-		for(int i = 0; i < clusters.size(); i++) {
-			corr = clusters[i].corr(expr[g]);
+		for(int c = 0; c < k; c++) {
+			corr = clusters[c].corr(expr[g]);
+			// cerr << "\tCorrelation of gene " << (g + 1) << " with cluster " << (c + 1) << " is " << corr << endl;
 			if (corr > max_corr && corr > threshold) {
-				max_clus = i;
+				max_clus = c;
 				max_corr = corr;
 			}
 		}
 		if (max_clus != gene_cluster[g]) {
 			nchanges++;
-			reassign_gene(clusters, gene_cluster, g, max_clus);
+			reassign_gene(g, max_clus);
 		}
 	}
-	update_cluster_means(clusters);
+	update_cluster_means();
 	return nchanges;
 }
 
-int check_cluster_distances(vector<Cluster>& clusters, vector<int>& gene_cluster, const vector<vector<float> >& expr, float threshold) {
+int check_cluster_distances(float threshold) {
 	float c;
 	int big, small, count;
-	for (int i = 0; i < clusters.size(); i++) {
-		for (int j = i+1; j < clusters.size(); j++) {
+	for (int i = 0; i < k; i++) {
+		for (int j = i+1; j < k; j++) {
 			c = clusters[i].corr(clusters[j].get_mean());
+			//cerr << "Cluster " << (i + 1) << " and cluster " << (j + 1) << " have correlation " << c << endl;
 			if (c > threshold) {
 				if (clusters[i].size() > clusters[j].size()) {
 					big = i;
@@ -151,40 +233,39 @@ int check_cluster_distances(vector<Cluster>& clusters, vector<int>& gene_cluster
 					small = i;
 				}
 				cerr << "\tMerging cluster " << (small + 1) << " into cluster " << (big + 1) << "(correlation was " << c << ")" << endl;
-				merge_clusters(clusters, gene_cluster, big, small);
-				recenter_cluster(clusters, gene_cluster, small, find_outlier(clusters, gene_cluster, expr));
+				merge_clusters(big, small);
+				recenter_cluster(small, find_outlier());
 				count++;
 			}
 		}
 	}
-	update_cluster_means(clusters);
+	update_cluster_means();
 	return count;
 }
 
-int check_cluster_sizes(vector<Cluster>& clusters, vector<int>& gene_cluster, const vector<vector<float> >& expr, int minsize) {
+int check_cluster_sizes(int minsize) {
 	int delcount = 0;
-	for (int i = 0; i < clusters.size(); i++) {
+	for (int i = 0; i < k; i++) {
 		if (clusters[i].size() < minsize) {
-			cerr << "\tResetting cluster " << i + 1 << "(" << clusters[i].size() << ")" << endl;
-			recenter_cluster(clusters, gene_cluster, i, find_outlier(clusters, gene_cluster, expr));
+			cerr << "\tResetting cluster " << i + 1 << "(" << clusters[i].size() << " < " << minsize <<")" << endl;
+			recenter_cluster_random(i);
 			delcount++;
 		}
 	}
 	return delcount;
 }
 
-void sort_clusters(vector<Cluster>& clusters, vector<int>& gene_cluster) {
-	for (int i = 0; i < clusters.size(); i++) {
-		for (int j = i + 1; j < clusters.size(); j++) {
+void sort_clusters() {
+	for (int i = 0; i < k; i++) {
+		for (int j = i + 1; j < k; j++) {
 			if (clusters[i].size() < clusters[j].size()) {
-				swap(clusters, gene_cluster, i, j);
+				swap(i, j);
 			}
 		}
 	}
 }
 
-void swap(vector<Cluster>& clusters, vector<int>& gene_cluster, int c1, int c2) {
-	swap(clusters[c1], clusters[c2]);
+void swap(int c1, int c2) {
 	vector<int> genes1;
 	clusters[c1].genes(genes1);
 	for (int i = 0; i < genes1.size(); i++) {
@@ -195,56 +276,68 @@ void swap(vector<Cluster>& clusters, vector<int>& gene_cluster, int c1, int c2) 
 	for (int i = 0; i < genes2.size(); i++) {
 		gene_cluster[genes2[i]] = c1;
 	}
+	swap(clusters[c1], clusters[c2]);
 }
 
-void merge_clusters(vector<Cluster>& clusters, vector<int>& gene_cluster, int c1, int c2) {
+void merge_clusters(int c1, int c2) {
 	vector<int> genes2;
 	clusters[c2].genes(genes2);
 	for (int i = 0; i < genes2.size(); i++) {
-		reassign_gene(clusters, gene_cluster, genes2[i], c1);
+		reassign_gene(genes2[i], c1);
 	}
 	clusters[c1].calc_mean();
 	clusters[c2].calc_mean();
 }
 
-void reassign_gene (vector<Cluster>& clusters, vector<int>& gene_cluster, int g, int c) {
-		if (c != -1) {
-			clusters[c].add_gene(g);
-		}
-		if (gene_cluster[g] != -1) {
-			clusters[gene_cluster[g]].remove_gene(g);
-		}
-		gene_cluster[g] = c;
+void reassign_gene (int g, int c) {
+	/*
+	if(gene_cluster[g] == -1) {
+		cerr << "\tMoving unassigned gene " << (g + 1) << " to cluster " << (c + 1) << endl;
+	} else if(c == -1) {
+		cerr << "\tMoving gene " << (g + 1) << " from cluster " << (gene_cluster[g] + 1) << " to unassigned" << endl;
+	} else { 
+		cerr << "\tMoving gene " << (g + 1) << " from cluster " << (gene_cluster[g] + 1) << " to cluster " << (c + 1) << endl;
+	}
+	*/
+	if (c != -1) {
+		clusters[c].add_gene(g);
+	}
+	if (gene_cluster[g] != -1) {
+		clusters[gene_cluster[g]].remove_gene(g);
+	}
+	gene_cluster[g] = c;
 }
 
-void update_cluster_means(vector<Cluster>& clusters) {
-	for (int i = 0; i < clusters.size(); i++) {
+void update_cluster_means() {
+	for (int i = 0; i < k; i++) {
 		clusters[i].calc_mean();
 	}
 }
 
-void recenter_cluster(vector<Cluster>& clusters, vector<int>& gene_cluster, int c, int g) {
+void recenter_cluster(int c, int g) {
 	vector<int> genes;
 	clusters[c].genes(genes);
-	for (int i = 0; i < genes.size(); i++) {
+	int numgenes = genes.size();
+	for (int i = 0; i < numgenes; i++) {
 		clusters[c].remove_gene(genes[i]);
 		gene_cluster[genes[i]] = -1;
 	}
-	reassign_gene(clusters, gene_cluster, g, c);
+	reassign_gene(g, c);
 	clusters[c].calc_mean();
+	assert(clusters[c].corr(expr[g]) > 0.95);
 }
 
-void recenter_cluster_random(vector<Cluster>& clusters, vector<int>& gene_cluster, int c) {
-	int new_center = (int) ((float) rand()/RAND_MAX * gene_cluster.size());
-	recenter_cluster(clusters, gene_cluster, c, new_center);
+void recenter_cluster_random(int c) {
+	int new_center = (int) ((float) rand()/RAND_MAX * ngenes);
+	recenter_cluster(c, new_center);
 }
 
-int find_outlier(const vector<Cluster>& clusters, const vector<int>& gene_cluster, const vector<vector<float> >& expr) {
+int find_outlier() {
 	float corr, min_corr = 1.0;
 	int outlier;
-	for (int g = 0; g < gene_cluster.size(); g++) {
-		for(int i = 0; i < clusters.size(); i++) {
-			corr = clusters[i].corr(expr[g]);
+	for (int g = 0; g < ngenes; g++) {
+		for(int c = 0; c < k; c++) {
+			corr = clusters[c].corr(expr[g]);
 			if (corr < min_corr) {
 				outlier = g;
 				min_corr = corr;
@@ -254,8 +347,8 @@ int find_outlier(const vector<Cluster>& clusters, const vector<int>& gene_cluste
 	return outlier;
 }
 
-void print_clusters(ostream& out, const vector<Cluster>& clusters, const vector<string>& nameset) {
-	for(int i = 0; i < clusters.size(); i++) {
+void print_clusters(ostream& out, const vector<string>& nameset) {
+	for(int i = 0; i < k; i++) {
 		vector<int> genes;
 		clusters[i].genes(genes);
 		out << "Cluster " << i + 1 << ", " << genes.size() << " orfs" << endl;
@@ -278,4 +371,19 @@ void print_usage(ostream& fout) {
   fout<<" -seed       \tset seed for random number generator (time)\n";
   fout<<" -undersample\tpossible sites / (expect * numcols * seedings) (1)\n"; 
   fout<<" -oversample\t1/undersample (1)\n";
+}
+
+void debug_check_membership() {
+	cerr << "\tChecking cluster membership arrays" << endl;
+	for(int c = 0; c < k; c++) {
+		cerr << "\t\tChecking cluster " << c + 1 << " ...";
+		for (int g = 0; g < ngenes; g++) {
+			if(gene_cluster[g] == c) {
+				assert(clusters[c].is_member(g));
+			} else {
+				assert(! clusters[c].is_member(g));
+			}
+		}
+		cerr << "done." << endl;
+	}
 }
