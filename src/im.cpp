@@ -186,7 +186,7 @@ void* doit (void* a) {
 	string acefn;
 	stringstream acefnstr;
 	acefnstr << (init->c + 1);
-	acefnstr << ".motif";
+	acefnstr << ".ace";
 	acefnstr >> acefn;
 	ofstream motifout(acefn.c_str());
 	ace.full_output(motifout);
