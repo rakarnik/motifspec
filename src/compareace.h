@@ -7,14 +7,15 @@
 #include "sites.h"
 
 class CompareACESites{
-  Sites comp_sites;
+ 	Sites comp_sites;
   bool comp_ready;
   double *comp_fm1;
   double *comp_fm2;
   int comp_fmsize;
   int comp_l1,comp_r1,comp_l2,comp_r2;
- public:
-  CompareACESites(){comp_ready=false;}
+
+public:
+	CompareACESites(){comp_ready=false;}
   ~CompareACESites();
   CompareACESites(const CompareACESites& s);
   CompareACESites& operator= (const CompareACESites& s);
