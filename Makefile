@@ -12,7 +12,7 @@
 
 CC = /usr/bin/g++
 CC_OPTIONS = 
-LNK_OPTIONS = -lpthread
+LNK_OPTIONS =
 
 
 #
