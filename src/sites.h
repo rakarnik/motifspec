@@ -8,7 +8,7 @@
 
 class Seqset;
 class Sites{
-
+ public:
   int sites_num;
   int sites_width;
   int sites_num_cols;
@@ -28,11 +28,11 @@ class Sites{
   //columns 0..wide-1;fwd(0)=2nd column
   bool sites_alloc;
 
- public:
   Sites(){sites_alloc=false;destroy();}
   void sites_init(const Sites& s);
   Sites(const vector<string>& v, int nc=10, int memx=1, int dp=6);
   Sites(const Sites& s);
+	void init(const vector<string>& v, int nc=10, int memx=1, int dp=6);
   Sites& operator= (const Sites& s);
   void allocate_mem();
   ~Sites();
@@ -56,6 +56,7 @@ class Sites{
   int remove_col(const int c);
   void add_col(const int c);
   int positions_available();
+	int positions_available_around_sites();
   void shift_sites(const int l, const int r);
   void flip_sites();
   void columns_open(int &l, int &r);

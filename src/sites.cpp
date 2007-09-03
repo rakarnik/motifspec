@@ -48,6 +48,24 @@ void Sites::sites_init(const Sites& s){
   *this=s;
 }
 
+void Sites::init(const vector<string>& v, int nc, int mx, int dp){
+  sites_num=0;
+  sites_width=nc;
+  sites_num_cols=nc;
+  sites_depth=dp;
+  sites_num_seqs=v.size();
+  sites_len_seq=new int[sites_num_seqs];
+  for(int i=0;i<v.size();i++){
+    sites_len_seq[i]=v[i].length();
+  }
+  sites_max_num_sites=0;
+  for(int i=0;i<sites_num_seqs;i++){
+    sites_max_num_sites+=sites_len_seq[i]/mx;
+  }
+  sites_max_width=3*sites_width;
+  allocate_mem();
+  clear_sites();
+}
 
 Sites& Sites::operator= (const Sites& s){
   if(this!=&s&&s.sites_alloc){
@@ -78,7 +96,7 @@ void Sites::allocate_mem(){
 }
 
 Sites::~Sites(){
-  if(sites_alloc){
+	if(sites_alloc){
     delete [] sites_len_seq;
     delete [] sites_chrom;
     delete [] sites_posit;
@@ -137,7 +155,6 @@ void Sites::remove_site(const int c, const int p){
   sites_strand[i]=sites_strand[sites_num];
   //if i==sites_num, this was irrelevant, but no need to check
 }
-
 
 void Sites::calc_freq_matrix(const Seqset& b, int *fm){
   //fm will have allocation for depth()*ncols()
@@ -242,7 +259,7 @@ int Sites::remove_col(const int c){
 }
 
 void Sites::add_col(const int c){
-  int col,nxt,i;
+	int col,nxt,i;
   if(c<0){
     for(i=sites_width-1;i>=0;i--){
       sites_active_fwd[i-c]=sites_active_fwd[i]-c;
@@ -255,15 +272,15 @@ void Sites::add_col(const int c){
     for(col=0;;){
       nxt=sites_active_fwd[col];
       if(nxt>c){
-	sites_active_fwd[col]=c;
-	sites_active_fwd[c]=nxt;
-	break;
+				sites_active_fwd[col]=c;
+				sites_active_fwd[c]=nxt;
+				break;
       }
       else col=nxt;
     }
   }
   else{
-    shift_sites(0,c-sites_width+1);
+		shift_sites(0,c-sites_width+1);
     sites_active_fwd[sites_width-1]=c;
     sites_active_fwd[c]=c;
     sites_width=c+1;
@@ -312,6 +329,14 @@ int Sites::positions_available(){
     ret+=sites_len_seq[i]-sites_width+1;
   }
   return ret;
+}
+
+int Sites::positions_available_around_sites(){
+	int ret = 0;
+	for(int i = 0; i < sites_num; i++) {
+		ret += sites_len_seq[sites_chrom[i]] - sites_width + 1;
+	}
+	return ret;
 }
 
 void Sites::columns_open(int &l, int &r){
