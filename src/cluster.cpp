@@ -124,3 +124,4 @@ void Cluster::genes(int* genes) const {
 	}
 	assert(count == nmembers);
 }
+
