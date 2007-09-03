@@ -75,14 +75,12 @@ int Cluster::size() const {
 void Cluster::calc_mean() {
 	if (dirty) {
 		int i, j;
-		if (npoints > 1) {
-			for (i = 0; i < npoints; i++) {
-				mean[i] = 0;
-				for (j = 0; j < nameset.size(); j++) {
-					mean[i] += membership[j] * expr[j][i];
-				}
-				mean[i] /= nmembers;
+		for (i = 0; i < npoints; i++) {
+			mean[i] = 0;
+			for (j = 0; j < nameset.size(); j++) {
+				mean[i] += membership[j] * expr[j][i];
 			}
+			mean[i] /= nmembers;
 		}
 		dirty = false;
 	}
@@ -116,10 +114,13 @@ float Cluster::corr (const float* pattern) const {
 	return c;
 }
 
-void Cluster::genes(vector<int>& genes) const {
-	for (int g = 0; g < nameset.size(); g++) {
+void Cluster::genes(int* genes) const {
+	int count = 0;
+	for (int g = 0; g < ngenes; g++) {
 		if (membership[g] == 1) {
-			genes.push_back(g);
+			genes[count] = g;
+			count++;
 		}
 	}
+	assert(count == nmembers);
 }

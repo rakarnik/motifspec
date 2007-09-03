@@ -31,7 +31,7 @@ public:
 	void calc_mean();                                       // Calculate the mean for this cluster
 	float* get_mean();                                      // Get the mean for this cluster
 	float corr (const float* pattern) const;                // Calculate the correlation between the cluster mean and 'pattern'
-	void genes(vector<int>& genes) const;                   // Return the genes that are assigned to this cluster
+	void genes(int* genes) const;                           // Return the genes that are assigned to this cluster
 };
 
 #endif
