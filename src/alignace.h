@@ -32,6 +32,7 @@ struct AlignACEParams{
 };
 
 class AlignACE{
+ public:
   AlignACEParams ace_params;
   int ace_max_motifs;
   double ace_map_cutoff;
@@ -50,9 +51,9 @@ class AlignACE{
   double *ace_score_matrix;
   double **ace_site_bias;
 
- public:
-  AlignACE(const vector<string>& v, const int nc=10, const int bf=100, const double map_cut=-20.0, const double sim_cut=0.8);
+	AlignACE();
   ~AlignACE();
+	void init(const vector<string>& v, const int nc=10, const int bf=100, const double map_cut=-20.0, const double sim_cut=0.8);
   void modify_params(int argc, char *argv[]);
   void doit();
   void output(ostream &fout);
@@ -62,21 +63,23 @@ class AlignACE{
   void full_output(ostream &fout);
   void full_output(char *name);
   void output_params(ostream &fout);
-
- private:
   void set_default_params();//modifiable
   void set_final_params();//derived from others
   void ace_initialize();
   void seed_random_sites(const int num);
+	void seed_random_sites(const int* genes, const int count, const int num);
   void seed_biased_site();
   void calc_matrix();
-  void single_pass(const double minprob=0.0);
-  void single_pass_select(const double minprob=0.0);
-  bool column_sample(const int c, const bool sample);
+	string consensus();
+	bool consider_site(int gene, float corr, const double minprob = 0.0);
+  void single_pass(const double minprob = 0.0);
+	void single_pass_select(const double minprob = 0.0);
+	bool column_sample(const int c, const bool sample);
   bool column_sample(const int c){return column_sample(c,true);}
   bool column_sample(const bool sample) {return column_sample(37,sample);}
   bool column_sample() {return column_sample(37,true);}
   double map_score();
+	double map_score_restricted();
   void optimize_columns();
   void optimize_sites();
   void orient_motif();

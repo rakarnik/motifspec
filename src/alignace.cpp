@@ -3,8 +3,23 @@
 
 #include "alignace.h"
 
-AlignACE::AlignACE(const vector<string>& v, const int nc, const int bf, const double map_cut, const double sim_cut):ace_seqset(v),ace_sites(v,nc,nc),ace_select_sites(v,nc),ace_archive(ace_sites,ace_seqset,bf,map_cut,sim_cut){
-  set_default_params();
+AlignACE::AlignACE() {
+}
+
+AlignACE::~AlignACE(){
+  delete [] ace_freq_matrix;
+  delete [] ace_score_matrix;
+  for(int i=0;i<ace_seqset.num_seqs();i++){
+    delete [] ace_site_bias[i];
+  }
+}
+
+void AlignACE::init(const vector<string>& v, const int nc, const int bf, const double map_cut, const double sim_cut) {
+  ace_seqset.init(v);
+	ace_sites.init(v, nc, nc);
+	ace_select_sites.init(v, nc);
+	ace_archive.init(ace_sites,ace_seqset,bf,map_cut,sim_cut);
+	set_default_params();
   ace_max_motifs=bf;
   ace_map_cutoff=map_cut;
   ace_sim_cutoff=sim_cut;
@@ -15,14 +30,6 @@ AlignACE::AlignACE(const vector<string>& v, const int nc, const int bf, const do
     ace_site_bias[i]=new double[ace_seqset.len_seq(i)];
   }
   ace_verbose=false;
-}
-
-AlignACE::~AlignACE(){
-  delete [] ace_freq_matrix;
-  delete [] ace_score_matrix;
-  for(int i=0;i<ace_seqset.num_seqs();i++){
-    delete [] ace_site_bias[i];
-  }
 }
 
 void AlignACE::set_default_params(){
@@ -74,7 +81,7 @@ void AlignACE::doit(){
   ace_initialize();
   Sites best_sites=ace_sites;
   for(j=1;j<=ace_params.ap_nruns;j++){
-		//cerr << "\t\tRun #" << j << "/" << ace_params.ap_nruns << endl;
+		if(j % 50 == 0) cerr << "\t\tRun #" << j << "/" << ace_params.ap_nruns << endl;
     seed_random_sites(1);
     //seed_biased_site();
     ace_select_sites.clear_sites();
@@ -132,16 +139,17 @@ void AlignACE::doit(){
       }
       else i_worse++;
       if(i_worse>ace_params.ap_minpass[phase]){
-				if(sc_best_i==ace_map_cutoff) break;
+				if(sc_best_i == ace_map_cutoff) break;
 				if(best_sites.number()<2) break;
-				ace_sites=best_sites;
-				ace_select_sites=best_sites;
+				ace_sites = best_sites;
+				ace_select_sites = best_sites;
 				phase++;
-				i_worse=0;
+				i_worse = 0;
       }
     }
     //    if(j%100==0) full_output("37.tmp");
   }
+	return;
 }
 
 void AlignACE::seed_random_sites(const int num){
@@ -167,6 +175,36 @@ void AlignACE::seed_random_sites(const int num){
     }
   }
 }
+
+
+void AlignACE::seed_random_sites(const int* options, const int count, const int num) {
+  int max_attempts=5*num;
+  ace_sites.clear_sites();
+  int i,j,chosen;
+  bool watson;
+  int possible=ace_sites.positions_available();
+  ace_ran_int.set_range(0,possible-1);
+	
+	chosen = -1;
+	
+  for(j=0;j<max_attempts;j++){
+		while(find(options, options + count, chosen) == options + count) {
+			chosen=ace_ran_int.rnum();//random (0,possible-1)
+    }
+		for(i=0;i<ace_seqset.num_seqs();i++){
+      if(chosen<ace_seqset.len_seq(i)-ace_sites.width()+1) break;
+      chosen-=(ace_seqset.len_seq(i)-ace_sites.width()+1);
+    }
+    if(ace_sites.is_open_site(i,chosen)){
+      double db=ace_ran_dbl.rnum();//random (0,1)
+      watson=true;
+      if(db>0.5) watson=false;
+      ace_sites.add_site(i,chosen,watson);
+      if(ace_sites.number()==num) break;
+    }
+  }
+}
+
 
 void AlignACE::seed_biased_site(){
   int i,j,k,m;
@@ -242,17 +280,69 @@ void AlignACE::seed_biased_site(){
 }
 
 
-void AlignACE::calc_matrix(){
-  int d=ace_sites.depth();
-  double tot=(double)ace_sites.number()+ace_params.ap_npseudo;
-  ace_sites.calc_freq_matrix(ace_seqset,ace_freq_matrix);
-  for(int i=0;i<d*ace_sites.ncols();i+=d){
-    ace_score_matrix[i]=ace_score_matrix[i+5]=1.0;
-    for(int j=1;j<=4;j++){
-      int x=ace_freq_matrix[i]+ace_freq_matrix[i+5];
-      ace_score_matrix[i+j]=(ace_freq_matrix[i+j]+x*ace_params.ap_backfreq[j]+ace_params.ap_pseudo[j])/(tot*ace_params.ap_backfreq[j]);
+void AlignACE::calc_matrix() {
+  int d = ace_sites.depth();
+  double tot = (double) ace_sites.number() + ace_params.ap_npseudo;
+  ace_sites.calc_freq_matrix(ace_seqset, ace_freq_matrix);
+  for(int i = 0; i < d * ace_sites.ncols();i += d){
+    ace_score_matrix[i] = ace_score_matrix[i + 5] = 1.0;
+    for(int j = 1;j <= 4; j++){
+      int x = ace_freq_matrix[i] + ace_freq_matrix[i + 5];
+      ace_score_matrix[i + j] = (ace_freq_matrix[i + j] + x * ace_params.ap_backfreq[j] 
+				+ ace_params.ap_pseudo[j])/(tot * ace_params.ap_backfreq[j]);
     }
   }
+}
+
+bool AlignACE::consider_site(int gene, float corr, const double minprob) {
+	int site_added = false;
+	double ap = (ace_params.ap_weight * ace_params.ap_expect 
+							+ (1 - ace_params.ap_weight) * ace_sites.number())
+							/(2.0 * ace_sites.positions_available());
+	char **ss_seq;
+	ss_seq = ace_seqset.seq_ptr();
+	double Lw, Lc, Pw, Pc, F;
+  int matpos, col;
+	for(int j = 0; j <= ace_seqset.len_seq(gene) - ace_sites.width(); j++){
+		Lw = 1.0;
+		matpos = 0;
+		col = 0;
+		for(int k = 0; k < ace_sites.ncols(); k++){
+			int seq = ss_seq[gene][j + col];
+			Lw *= ace_score_matrix[matpos + seq];
+			col = ace_sites.next_column(col);
+			matpos += ace_sites.depth();
+		}
+		Lc = 1.0;
+		matpos = ace_sites.depth()-1;
+		col = 0;
+		for(int k = 0; k < ace_sites.ncols(); k++){
+			int seq = ss_seq[gene][j + ace_sites.width() - 1 - col];
+			Lc *= ace_score_matrix[matpos - seq];
+			col = ace_sites.next_column(col);
+			matpos += ace_sites.depth();
+		}
+		Pw = Lw * ap/(1.0 - ap + Lw * ap);
+		Pc = Lc * ap/(1.0 - ap + Lc * ap);
+		F = (Pw+Pc-Pw*Pc); //probability of either
+		// cerr << "\t\tg="<< gene + 1 << "    corr=" << corr << "   j=" << j << "   F=" << F << "   minprob=" <<  minprob;
+		if(F < minprob) continue;
+				
+		Pw = F * Pw/(Pw + Pc);
+		Pc = F - Pw;
+		
+		/* This code uses F directly */
+		if(Pw > Pc) {
+			// cerr << "\t\tAdding site (" << gene + 1 << ", " << j << ", " << true << "), corr=" << corr << endl;
+			ace_sites.add_site(gene, j, true);
+			site_added = true;
+		} else {
+			// cerr << "\t\tAdding site (" << gene + 1 << ", " << j << ", " << false << "), corr=" << corr << endl;
+			ace_sites.add_site(gene, j, false);
+			site_added = true;
+		}
+	}
+	return site_added;
 }
 
 void AlignACE::single_pass(const double minprob){
@@ -288,23 +378,23 @@ void AlignACE::single_pass(const double minprob){
       Pw=Lw*ap/(1.0-ap+Lw*ap);
       Pc=Lc*ap/(1.0-ap+Lc*ap);
       F=(Pw+Pc-Pw*Pc);//probability of either
-				if(F>(minprob/ace_params.ap_select)) ace_select_sites.add_site(i,j,true);
-				//strand irrelevant for ace_select_sites
-				if(i==iadd&&j<jadd+ace_sites.width()) continue;
-				if(F<minprob) continue;
-				considered++;
-				Pw=F*Pw/(Pw+Pc);
-				Pc=F-Pw;
-				double r=ace_ran_dbl.rnum();
-				if (r>F) continue;
-      else if (r<Pw) {
+			if(F>(minprob/ace_params.ap_select)) ace_select_sites.add_site(i,j,true);
+			//strand irrelevant for ace_select_sites
+			if(i==iadd&&j<jadd+ace_sites.width()) continue;
+			if(F<minprob) continue;
+			considered++;
+			Pw=F*Pw/(Pw+Pc);
+			Pc=F-Pw;
+			double r=ace_ran_dbl.rnum();
+			if (r > F) 
+				continue;
+			else if (r < Pw) {
 				ace_sites.add_site(i,j,true);
 				iadd=i;jadd=j;
-      }
-      else {
+			} else {
 				ace_sites.add_site(i,j,false);
 				iadd=i;jadd=j;
-      }
+			}
     }
   }
   if(ace_verbose)cerr<<"sampling "<<considered<<"/"<<ace_select_sites.number()<<"\n";
@@ -345,22 +435,21 @@ void AlignACE::single_pass_select(const double minprob){
     Pw=Lw*ap/(1.0-ap+Lw*ap);
     Pc=Lc*ap/(1.0-ap+Lc*ap);
     F=(Pw+Pc-Pw*Pc);//probability of either
-			if(F<minprob) continue;
-			Pw=F*Pw/(Pw+Pc);
-			Pc=F-Pw;
-			double r=ace_ran_dbl.rnum();
-			if (r>F) continue;
+		if(F<minprob) continue;
+		Pw=F*Pw/(Pw+Pc);
+		Pc=F-Pw;
+		double r=ace_ran_dbl.rnum();
+		if (r>F)
+			continue;
     else if (r<Pw) {
       ace_sites.add_site(i,j,true);
       iadd=i;jadd=j;
-    }
-    else {
+    } else {
       ace_sites.add_site(i,j,false);
       iadd=i;jadd=j;
     }
   }
 }
-
 
 bool AlignACE::column_sample(const int c, const bool sample){
   //sample default to true, if false then replace with best column
@@ -419,64 +508,100 @@ bool AlignACE::column_sample(const int c, const bool sample){
 	
   double scale=0.0;
   if(best_wt>100.0) scale=best_wt-100.0;//keep exp from overflowing
-		double tot2=0.0;
+	double tot2=0.0;
+	for(i=0;i<cs_span;i++){
+		if(wtx[i]==0.0) continue;
+		wtx[i]-=scale;
+		wtx[i]=exp(wtx[i]);
+		int newwidth=ace_sites.width();
+		if(i<x) newwidth+=(x-i);
+		else if(i>(x+ace_sites.width()-1)) newwidth+=(i-x-ace_sites.width()+1);
+		wtx[i]/=bico(newwidth-2,ace_sites.ncols()-2);
+		tot2+=wtx[i];
+	}
+	
+	double pick;
+	int col_pick;
+	double cutoff=.01;
+	if(sample){
+		if(1-(wtx[x+col_removed]/tot2)<cutoff){
+			ace_sites.add_col(col_removed);
+			ace_select_sites.add_col(col_removed);
+			delete [] wtx;
+			delete [] freq;
+			return false;
+		} 
+		pick=ace_ran_dbl.rnum()*tot2;
+		col_pick=373;
 		for(i=0;i<cs_span;i++){
 			if(wtx[i]==0.0) continue;
-			wtx[i]-=scale;
-			wtx[i]=exp(wtx[i]);
-			int newwidth=ace_sites.width();
-			if(i<x) newwidth+=(x-i);
-			else if(i>(x+ace_sites.width()-1)) newwidth+=(i-x-ace_sites.width()+1);
-			wtx[i]/=bico(newwidth-2,ace_sites.ncols()-2);
-			tot2+=wtx[i];
-		}
-		
-		double pick;
-		int col_pick;
-		double cutoff=.01;
-		if(sample){
-			if(1-(wtx[x+col_removed]/tot2)<cutoff){
-				ace_sites.add_col(col_removed);
-				ace_select_sites.add_col(col_removed);
-				delete [] wtx;
-				delete [] freq;
-				return false;
-			} 
-			pick=ace_ran_dbl.rnum()*tot2;
-			col_pick=373;
-			for(i=0;i<cs_span;i++){
-				if(wtx[i]==0.0) continue;
-				pick-=wtx[i];
-				if(pick<=0.0) {
-					col_pick=i-x;
-					break;
-				}
+			pick-=wtx[i];
+			if(pick<=0.0) {
+				col_pick=i-x;
+				break;
 			}
 		}
-		else{//select best
-			pick=-DBL_MAX;
-			for(i=0;i<cs_span;i++){
-				if(wtx[i]>pick){
-					col_pick=i-x;
-					pick=wtx[i];
-				}
-			}    
+	}
+	else{//select best
+		pick=-DBL_MAX;
+		for(i=0;i<cs_span;i++){
+			if(wtx[i]>pick){
+				col_pick=i-x;
+				pick=wtx[i];
+			}
 		}
-		if(col_pick==373){
-			cout<<tot2<<'\t'<<"373 reached.\n";
-			abort();
-		}
-		ace_sites.add_col(col_pick);
-		ace_select_sites.add_col(col_pick);
-		
-		delete [] wtx;
-		delete [] freq;
-		
-		if(col_removed==col_pick) return false;
+	}
+	if(col_pick==373){
+		cout<<tot2<<'\t'<<"373 reached.\n";
+		abort();
+	}
+	ace_sites.add_col(col_pick);
+	ace_select_sites.add_col(col_pick);
+	
+	delete [] wtx;
+	delete [] freq;
+	
+	if(col_removed==col_pick) return false;
   else return true;
 }
 
 double AlignACE::map_score(){
+  int i,j,k;
+  double ms=0.0;
+  double map_N=ace_sites.positions_available();  
+  double w=ace_params.ap_weight/(1.0-ace_params.ap_weight);
+  double map_alpha=(double) ace_params.ap_expect*w;
+  double map_beta=map_N*w - map_alpha;
+  double map_success=(double)ace_sites.number();
+  ms +=( gammaln(map_success+map_alpha)+gammaln(map_N-map_success+map_beta) );
+  ms -=( gammaln(map_alpha)+gammaln(map_N + map_beta) );
+	
+  ace_sites.calc_freq_matrix(ace_seqset,ace_freq_matrix);
+  double sc[6]={0.0,0.0,0.0,0.0,0.0,0.0};
+  int d=ace_sites.depth();
+  for(k=0;k!=d*ace_sites.ncols();k+=d) {
+    int x=ace_freq_matrix[k]+ace_freq_matrix[k+5];
+    for(j=1;j<=4;j++){
+      ms += gammaln((double)ace_freq_matrix[k+j]+x*ace_params.ap_backfreq[j]+ace_params.ap_pseudo[j]);
+      sc[j]+=ace_freq_matrix[k+j]+x*ace_params.ap_backfreq[j];
+    }
+  }
+  ms-=ace_sites.ncols()*gammaln((double)ace_sites.number()+ace_params.ap_npseudo);
+  for (k=1;k<=4;k++) {
+    ms -= sc[k]*log(ace_params.ap_backfreq[k]);
+  }
+  /*This factor arises from a modification of the model of Liu, et al in which the background frequencies of DNA bases are taken to be constant for the organism under consideration*/
+  double  vg;
+  ms -= lnbico(ace_sites.width()-2, ace_sites.ncols()-2);
+  for(vg=0.0,k=1;k<=4;k++) {
+    vg += gammaln(ace_params.ap_pseudo[k]);
+  }
+  vg-=gammaln((double)(ace_params.ap_npseudo));
+  ms-=((double)ace_sites.ncols()*vg);
+  return ms;
+}
+
+double AlignACE::map_score_restricted(){
   int i,j,k;
   double ms=0.0;
   double map_N=ace_sites.positions_available();  
@@ -623,6 +748,56 @@ void AlignACE::orient_motif(){
   delete [] freq;
 }
 
+string AlignACE::consensus() {
+	map<char,char> nt;
+  nt[0]=nt[5]='N';
+  nt[1]='A';nt[2]='C';nt[3]='G';nt[4]='T';
+	char** ss_seq=ace_seqset.seq_ptr();
+	
+	vector<string> hits(ace_sites.number());
+	for(int i = 0; i < ace_sites.number(); i++){
+    int c = ace_sites.chrom(i);
+    int p = ace_sites.posit(i);
+    bool s = ace_sites.strand(i);
+    for(int j = 0; j < ace_sites.width(); j++){
+      if(s) {
+				if(p + j >= 0 && p+j < ace_seqset.len_seq(c))
+					 hits[i] += nt[ss_seq[c][p+j]];
+				else hits[i] += ' ';
+      } else {
+				if(p + ace_sites.width() - 1 - j >= 0 && p+ace_sites.width() - 1 - j < ace_seqset.len_seq(c))
+					hits[i] += nt[ace_sites.depth()-1-ss_seq[c][p+ace_sites.width()-1-j]];
+				else hits[i] += ' ';
+      }
+    }
+  }
+	
+	string cons;
+  int wide1 = hits[0].size();
+  int num1 = hits.size();
+  int num1a, num1c, num1g, num1t;
+  for(int i = 0; i < wide1; i++){
+    num1a = num1c = num1g = num1t = 0;
+    for(int j = 0; j < num1; j++){
+      if(hits[j][i] == 'a' || hits[j][i] == 'A') num1a += 1;
+      if(hits[j][i] == 'c' || hits[j][i] == 'C') num1c += 1;
+      if(hits[j][i] == 'g' || hits[j][i] == 'G') num1g += 1;
+      if(hits[j][i] == 't' || hits[j][i] == 'T') num1t += 1;
+    }
+    if(num1a > num1*0.7) cons += 'A';
+    else if(num1c > num1*0.7) cons += 'C';
+    else if(num1g > num1*0.7) cons += 'G';
+    else if(num1t > num1*0.7) cons += 'T';
+    else if((num1a + num1t) > num1 * 0.85) cons +='W';
+    else if((num1a + num1c) > num1 * 0.85) cons +='M';
+    else if((num1a + num1g) > num1 * 0.85) cons +='R';
+    else if((num1t + num1c) > num1 * 0.85) cons +='Y';
+    else if((num1t + num1g) > num1 * 0.85) cons +='K';
+    else if((num1c + num1g) > num1 * 0.85) cons +='S';
+    else cons += '-';
+  }
+  return cons;
+}
 
 void AlignACE::output(ostream &fout){
   map<char,char> nt;
@@ -732,7 +907,8 @@ void cAlignACE(int argc, char *argv[]){
   get_fasta_fast(i.c_str(), seqset,nameset);
   int nc=10;
   GetArg2(argc,argv,"-numcols",nc);
-  AlignACE a(seqset,nc);
+  AlignACE a;
+	a.init(seqset, nc);
   a.modify_params(argc, argv);
   a.doit();
   AlignACE::print_version(cout);
@@ -745,3 +921,4 @@ void cAlignACE(int argc, char *argv[]){
   cout<<'\n';
   a.full_output(cout);
 }
+
