@@ -3,15 +3,17 @@
 
 #include "seqset.h"
 
-Seqset::Seqset(const vector<string>& v){
-  int i,j;
+Seqset::Seqset() {
+}
+
+void Seqset::init(const vector<string>& v) {
+	int i,j;
   map<char,int> code;
   code['n']=code['N']=0;
   code['a']=code['A']=1;
   code['c']=code['C']=2;
   code['g']=code['G']=3;
-  code['t']=code['T']=4;
-  ss_num_seqs=v.size();
+  code['t']=code['T']=4;ss_num_seqs=v.size();
   ss_len_seq=new int[ss_num_seqs];
   ss_seq=new char*[ss_num_seqs];
   for(i=0;i<ss_num_seqs;i++){
@@ -24,7 +26,7 @@ Seqset::Seqset(const vector<string>& v){
 }
 
 Seqset::~Seqset(){
-  for(int i=0;i<ss_num_seqs;i++){
+	for(int i=0;i<ss_num_seqs;i++){
     delete [] ss_seq[i];
   }
   delete [] ss_seq;
