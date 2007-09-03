@@ -27,6 +27,8 @@ int main(int argc, char *argv[]) {
 	if(! GetArg2(argc, argv, "-cthresh", cthresh)) cthresh = 0.65;
 	int minsize;                          // minimum size for a cluster
 	if(! GetArg2(argc, argv, "-minsize", minsize)) minsize = 10;
+	string bootstrap;
+	if(! GetArg2(argc, argv, "-bootstrap", bootstrap)) bootstrap = "no";
 	
 	string outfile = "";
 	GetArg2(argc, argv, "-o", outfile);
@@ -159,11 +161,11 @@ int main(int argc, char *argv[]) {
 		}
 		bsaces[c].init(clus_seqs, nc);
 		bsaces[c].modify_params(argc, argv);
-		/*
-		bsaces[c].doit();
-		ofstream aceout(aceoutstr[c].c_str());
-		print_full_ace(aceout, bsaces[c], clus_names);
-		*/
+		if(bootstrap == "yes") {
+			bsaces[c].doit();
+			ofstream aceout(aceoutstr[c].c_str());
+			print_full_ace(aceout, bsaces[c], clus_names);
+		}
 		cerr << "\tdone." << endl;
 	}
 	cerr << "done." << endl;
