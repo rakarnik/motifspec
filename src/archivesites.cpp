@@ -3,8 +3,11 @@
 
 #include "archivesites.h"
 
-ArchiveSites::ArchiveSites(const Sites& s, const Seqset& seq, int max, double map_cut, double sim_cut):arch_seqset(seq){
-  arch_max_num=max;
+ArchiveSites::ArchiveSites() {
+}
+
+ArchiveSites::ArchiveSites(const Sites& s, Seqset& seq, int max, double map_cut, double sim_cut) : arch_seqset(&seq) {
+	arch_max_num=max;
   arch_num=0;
   arch_map_cutoff=0.0;
   arch_sim_cutoff=sim_cut;
@@ -21,16 +24,33 @@ ArchiveSites::ArchiveSites(const Sites& s, const Seqset& seq, int max, double ma
 }
 
 ArchiveSites::~ArchiveSites(){
-  delete [] arch_sites;
+	delete [] arch_sites;
   delete [] arch_score;
   delete [] arch_dejavu;
 }
 
+void ArchiveSites::init(const Sites& s, Seqset& seq, int max, double map_cut, double sim_cut) {
+	arch_seqset = &seq;
+	arch_max_num=max;
+  arch_num=0;
+  arch_map_cutoff=0.0;
+  arch_sim_cutoff=sim_cut;
+  arch_min_visits=3;
+  arch_sites=new CompareACESites[max];
+  arch_score=new double[max];
+  arch_dejavu=new int[max];
+  int i;
+  for(i=0;i<max;i++){
+    arch_sites[i].init(s,seq);
+    arch_score[i]=map_cut;
+    arch_dejavu[i]=0;
+  }
+}
 
 double ArchiveSites::check_motif(const Sites& s, double sc){
   int i;
   CompareACESites c;
-  c.init(s,arch_seqset);
+  c.init(s, *arch_seqset);
   double cmp, ret=-1.0;
   bool csd=true;
   for(i=0;i<arch_max_num;i++){
@@ -56,7 +76,7 @@ double ArchiveSites::consider_motif(const Sites& s, double sc, bool fnl){
   int i,j,k,m;
   if(sc<=arch_map_cutoff) return -1.0;
   CompareACESites c;
-  c.init(s,arch_seqset);
+  c.init(s, *arch_seqset);
   double cmp;
   for(i=0;i<arch_max_num;i++){
     if(sc<=arch_score[i]){
