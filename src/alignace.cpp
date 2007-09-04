@@ -601,10 +601,10 @@ double AlignACE::map_score(){
   return ms;
 }
 
-double AlignACE::map_score_restricted(){
+double AlignACE::map_score_restricted(int* possibles, int num_possibles){
   int i,j,k;
   double ms=0.0;
-  double map_N=ace_sites.positions_available_around_sites();  
+  double map_N=ace_sites.positions_available(possibles, num_possibles);  
   double w=ace_params.ap_weight/(1.0-ace_params.ap_weight);
   double map_alpha=(double) ace_params.ap_expect*w;
   double map_beta=map_N*w - map_alpha;

@@ -79,7 +79,7 @@ class AlignACE{
   bool column_sample(const bool sample) {return column_sample(37,sample);}
   bool column_sample() {return column_sample(37,true);}
   double map_score();
-	double map_score_restricted();
+	double map_score_restricted(int* possibles, int num_possibles);
   void optimize_columns();
   void optimize_sites();
   void orient_motif();
