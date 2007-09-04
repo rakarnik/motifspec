@@ -20,6 +20,7 @@ float** expr;              // the expression data
 int assign_genes_to_nearest_cluster(float threshold);
 int check_cluster_distances(float threshold);
 int check_cluster_sizes(int minsize);
+int reset_small_clusters(int minsize);
 void sort_clusters();
 void swap(int c1, int c2);
 void merge_clusters(int c1, int c2);
@@ -32,7 +33,7 @@ int find_outlier();
 void print_bsclusters(ostream& out, const vector<string>& nameset);
 void print_clusters(ostream& out, const vector<string>& nameset);
 void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset);
-void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset);
+void print_ace(ostream& out, AlignACE& a, const double score, const vector <string>& nameset);
 void print_motifs(ostream& out, const vector<string>& nameset);
 void print_usage(ostream& fout);
 void debug_check_membership();

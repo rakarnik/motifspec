@@ -107,11 +107,17 @@ int main(int argc, char *argv[]) {
 		check_cluster_distances(mthresh);
 		
 		toosmall = 0;
+		cerr << "\tChecking for small clusters... " << endl; 
+		toosmall = check_cluster_sizes(minsize);
+		cerr << "\tdone!" << endl;
+		cerr << "\tThere were " << toosmall << " small clusters" << endl;
+		
 		if ((i+1) % 5 == 0) {
-			cerr << "\tResetting small clusters... " << endl; 
-			toosmall = check_cluster_sizes(minsize);
+			int reset = 0;
+			cerr << "\tRecentering small clusters... " << endl;
+			reset = reset_small_clusters(minsize);
 			cerr << "\tdone!" << endl;
-			cerr << "\tThere were " << toosmall << " small clusters" << endl;
+			cerr << "\t" << reset << " small clusters were recentered." << endl;
 			assigned = 0;
 			cerr << "\t";
 			for (int j = 0; j < k; j++) {
@@ -257,18 +263,22 @@ int main(int argc, char *argv[]) {
 	nchanges = 1;
 	int additions[adjk];
 	int subtractions[adjk];
+	double score[adjk];
 	for (int r = 0; r < 50 && nchanges > 0; r++) {
 		cerr << "\tRound " << r + 1 << "/" << rounds << ":" << endl;
 		nchanges = 0;
 		for (int c = 0; c < adjk; c++) {
 			additions[c] = 0;
 			subtractions[c] = 0;
+			vector<int> possibles;
+			int num_poss = 0;
 			aces[c].calc_matrix();
 			aces[c].ace_sites.remove_all_sites();
 			// If gene is in or near this cluster, check if we have a high-scoring site
 			for(int g = 0; g < ngenes; g++) {
 				float corr = clusters[c].corr(expr[g]);
 				if(corr > 0.50) {
+					possibles.push_back(g);
 					if(aces[c].consider_site(g, corr, 0.2)) {
 						// cerr << "\t\t\tAdding gene " << g + 1 << " to cluster " << c + 1 << endl;
 						if(! clusters[c].is_member(g)) {
@@ -285,6 +295,7 @@ int main(int argc, char *argv[]) {
 						}
 					}
 				}
+				score[c] = aces[c].map_score_restricted(&possibles[0], possibles.size());
 			}
 		}
 		
@@ -294,7 +305,7 @@ int main(int argc, char *argv[]) {
 			cerr << setw(3) << right << c + 1 << " ";
 			cerr << setw(30) << left << aces[c].consensus();
 			cerr << setw(6) << right << clusters[c].size();
-			cerr << setw(12) <<  right << aces[c].map_score_restricted();
+			cerr << setw(12) <<  right << score[c];
 			cerr << setw(3) << right << "+";
 			cerr << setw(3) << left << additions[c];
 			cerr << setw(3) << right << "-";
@@ -330,7 +341,7 @@ int main(int argc, char *argv[]) {
 			string outstr;
 			outstream >> outstr;
 			ofstream out(outstr.c_str());
-			print_ace(out, aces[c * mots + d], nameset1);
+			print_ace(out, aces[c * mots + d], score[c * mots + d], nameset1);
 		}
 	}
 	
@@ -390,6 +401,16 @@ int check_cluster_distances(float threshold) {
 }
 
 int check_cluster_sizes(int minsize) {
+	int smallcount = 0;
+	for (int i = 0; i < k; i++) {
+		if (bsclusters[i].size() < minsize) {
+			smallcount++;
+		}
+	}
+	return smallcount;
+}
+
+int reset_small_clusters(int minsize) {
 	int delcount = 0;
 	for (int i = 0; i < k; i++) {
 		if (bsclusters[i].size() < minsize) {
@@ -540,7 +561,7 @@ void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
   a.full_output(out);
 }
 
-void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
+void print_ace(ostream& out, AlignACE& a, const double score, const vector <string>& nameset) {
 	out << "Parameter values:\n";
   a.output_params(out);
   out << "\nInput sequences:\n";
@@ -548,7 +569,7 @@ void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
   out << endl;
 	out << "Motif 1" << endl;
   a.output(out);
-	out << "MAP Score: " << a.map_score_restricted() << endl << endl;
+	out << "MAP Score: " << score << endl << endl;
 }
 
 void print_usage(ostream& fout) {
