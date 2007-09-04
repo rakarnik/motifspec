@@ -15,8 +15,6 @@ int main(int argc, char *argv[]) {
 	
 	// Read parameters
 	if(! GetArg2(argc, argv, "-k", k)) k = 10;
-	int mots = 10;
-	adjk = mots * k;
 	int rounds;                           // number of rounds
 	if(! GetArg2(argc, argv, "-rounds", rounds)) rounds = 50;
 	int nc;                               // number of columns in motif
@@ -29,6 +27,8 @@ int main(int argc, char *argv[]) {
 	if(! GetArg2(argc, argv, "-minsize", minsize)) minsize = 10;
 	string bootstrap;
 	if(! GetArg2(argc, argv, "-bootstrap", bootstrap)) bootstrap = "no";
+	int maxmots;
+	if(! GetArg2(argc, argv, "-maxmots", maxmots)) maxmots = 10;
 	
 	string outfile = "";
 	GetArg2(argc, argv, "-o", outfile);
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
 	vector<string> aceoutstr(k);
 	for (int c = 0; c < k; c++) {
 		stringstream aceoutstrm;
-		aceoutstrm << c+1;
+		aceoutstrm << c + 1;
 		aceoutstrm << ".ace";
 		aceoutstrm >> aceoutstr[c];
 		cerr << "\tRunning on cluster " << c + 1 << "... " << endl;
@@ -177,140 +177,151 @@ int main(int argc, char *argv[]) {
 	cerr << "done." << endl;
 	
 	// Set up adjustment AlignACE models, seeding with sites found above
-	cerr << "Setting up adjustment AlignACE models... ";
-	aces = new AlignACE[adjk];
+	cerr << "Setting up adjustment models... " << endl;
+	nmots = new int[k];
+	aces = new AlignACE*[k];
+	clusters = new Cluster*[k];
+	int** nsites;
+	int** additions;
+	int** subtractions;
+	double** score;
+	nsites = new int*[k];
+	additions = new int*[k];
+	subtractions = new int*[k];
+	score = new double*[k];
 	string line;
-	int nsites[adjk];
 	for (int c = 0; c < k; c++) {
 		int size = bsclusters[c].size();
 		int* genes = new int[size];
 		bsclusters[c].genes(genes);
-		/*
-		// Initialize with sites from bootstrap AlignACE
-		Sites bssites;
-		bsaces[c].ace_archive.return_best(bssites, 1);
-		cerr << "\tModel #" << c + 1 << endl;
-		cerr << "\t\tnumber of sites: " << bssites.sites_num; 
-		cerr << "\t\tname\tchrom\tadj_chrom\tposit\tstrand" << endl;
-		for(int s = 0; s < bssites.sites_num; s++) {
-			cerr << "\t\t" << nameset1[genes[bssites.sites_chrom[s]]];
-			cerr << "\t" << bssites.sites_chrom[s];
-			cerr << "\t" << genes[bssites.sites_chrom[s]];
-			cerr << "\t" << bssites.sites_posit[s];
-			cerr << "\t" << bssites.sites_strand[s];
-			cerr << endl;
-			aces[c].ace_sites.add_site(genes[bssites.sites_chrom[s]], bssites.sites_posit[s], bssites.sites_strand[s]);
+		
+		// First figure out the number of motifs in this cluster 
+		ifstream acein1(aceoutstr[c].c_str());
+		nmots[c] = 0;
+		while(! acein1.eof()) {
+			while((! acein1.eof()) && line.find("Motif") == line.npos) getline(acein1, line);
+			if(! acein1.eof()) (nmots[c])++;
+			line.clear();
 		}
-		*/
-		// Initialize with sites from a file
-		ifstream acein(aceoutstr[c].c_str());
-		for(int d = 0; d < mots; d++) { 
-			aces[c * mots + d].init(seqs, nc);
-			aces[c * mots + d].modify_params(argc, argv);
-			aces[c * mots + d].set_final_params();
-			aces[c * mots + d].ace_initialize();
-			nsites[c * mots + d] = 0; 
-			while((! acein.eof()) && line.find("Motif") == line.npos) getline(acein, line); // Discard everything before "Motif..."
-			while(! acein.eof()) {                                                          // Read everything until "*"
-				getline(acein, line);
+		cerr << "\t\t" << nmots[c] << " motifs read for cluster " << c + 1 << " from file " << aceoutstr[c] << endl;
+		if(nmots[c] > maxmots) nmots[c] = maxmots;
+		aces[c] = new AlignACE[nmots[c]];
+		clusters[c] = new Cluster[nmots[c]];
+		nsites[c] = new int[nmots[c]];
+		additions[c] = new int[nmots[c]];
+		subtractions[c] = new int[nmots[c]];
+		score[c] = new double[nmots[c]];
+		
+		ifstream acein2(aceoutstr[c].c_str());
+		for(int d = 0; d < nmots[c] && ! acein2.eof(); d++) {
+			// cerr << "\t\tSetting up AlignACE model for motif " << c + 1 << "." << d + 1 << endl;
+			aces[c][d].init(seqs, nc);
+			aces[c][d].modify_params(argc, argv);
+			aces[c][d].set_final_params();
+			aces[c][d].ace_initialize();
+			nsites[c][d] = 0; 
+			while((! acein2.eof()) && line.find("Motif") == line.npos) getline(acein2, line); // Discard everything before "Motif..."
+			
+			while(! acein2.eof()) {                                                          // Read everything until "*"
+				getline(acein2, line);
 				if(line.find("*") != line.npos) break;
 				vector<string> fields = split(line, '\t');
-				aces[c * mots + d].ace_sites.add_site(genes[str_to_int(fields[1])], str_to_int(fields[2]), str_to_int(fields[3]));
-				(nsites[c * mots + d])++;
+				aces[c][d].ace_sites.add_site(genes[str_to_int(fields[1])], str_to_int(fields[2]), str_to_int(fields[3]));
+				(nsites[c][d])++;
 			}
 			int width = line.length();
 			int prevpos = line.find("*");
 			int currpos = prevpos;
 			while(prevpos < width - 1) {
 				currpos = line.find("*", prevpos + 1);
-				aces[c * mots + d].ace_sites.sites_active_fwd[prevpos] = currpos;
+				aces[c][d].ace_sites.sites_active_fwd[prevpos] = currpos;
 				prevpos = currpos;
 			}
-			aces[c * mots + d].ace_sites.sites_active_fwd[width - 1] = width - 1;
-			aces[c * mots + d].ace_sites.sites_width = width;
-		}
-	}
-	cerr << "done.\n";
-	
-	cerr << "Setting up clusters to be adjusted... ";
-	clusters = new Cluster[adjk];
-	for(int c = 0; c < k; c++) {
-		int size = bsclusters[c].size();
-		int* genes = new int[size];
-		bsclusters[c].genes(genes);
-		for(int d = 0; d < mots; d++) {
-			clusters[c * mots + d].init(expr, npoints, nameset2);
+			aces[c][d].ace_sites.sites_active_fwd[width - 1] = width - 1;
+			aces[c][d].ace_sites.sites_width = width;
+			
+			// cerr << "\t\tSetting up adjustment cluster for motif " << c + 1 << "." << d + 1 << endl;
+			
+			clusters[c][d].init(expr, npoints, nameset2);
 			for(int g = 0; g < size; g++) {
-				clusters[c * mots + d].add_gene(genes[g]);
+				clusters[c][d].add_gene(genes[g]);
 			}
-			clusters[c * mots + d].calc_mean();
+			clusters[c][d].calc_mean();
+			
+			// cerr << "\t\tSet up adjustment model for motif " << c + 1 << "." << d + 1 << endl;
 		}
 	}
 	cerr << "done." << endl;
 	
 	cerr << "Initial state of clusters:" << endl;
-	for (int c = 0; c < adjk; c++) {
-		cerr << setw(3) << right << c + 1 << " ";
-		cerr << setw(30) << left << aces[c].consensus();
-		cerr << setw(6) << nsites[c];
-		cerr << setw(6) << clusters[c].size();
-		cerr << setw(12) << aces[c].map_score();
-		cerr << endl;
+	for (int c = 0; c < k; c++) {
+		for(int d = 0; d < nmots[c]; d++) {
+			cerr << setw(3) << right << c + 1;
+			cerr << ".";
+			cerr << setw(4) << left << d + 1;
+			cerr << setw(30) << left << aces[c][d].consensus();
+			cerr << setw(6) << nsites[c][d];
+			cerr << setw(6) << clusters[c][d].size();
+			cerr << setw(12) << aces[c][d].map_score();
+			cerr << endl;
+		}
 	}
 	cerr << endl;
 	
 	cerr << "Adjusting clusters using sequence information... " << endl;
 	nchanges = 1;
-	int additions[adjk];
-	int subtractions[adjk];
-	double score[adjk];
 	for (int r = 0; r < 50 && nchanges > 0; r++) {
 		cerr << "\tRound " << r + 1 << "/" << rounds << ":" << endl;
 		nchanges = 0;
-		for (int c = 0; c < adjk; c++) {
-			additions[c] = 0;
-			subtractions[c] = 0;
-			vector<int> possibles;
-			int num_poss = 0;
-			aces[c].calc_matrix();
-			aces[c].ace_sites.remove_all_sites();
-			// If gene is in or near this cluster, check if we have a high-scoring site
-			for(int g = 0; g < ngenes; g++) {
-				float corr = clusters[c].corr(expr[g]);
-				if(corr > 0.50) {
-					possibles.push_back(g);
-					if(aces[c].consider_site(g, corr, 0.2)) {
-						// cerr << "\t\t\tAdding gene " << g + 1 << " to cluster " << c + 1 << endl;
-						if(! clusters[c].is_member(g)) {
-							clusters[c].add_gene(g);
-							nchanges++;
-							additions[c]++;
-						}
-					} else {
-						// cerr << "\t\t\tRemoving gene " << g + 1 << " to cluster " << c + 1 << endl;
-						if(clusters[c].is_member(g)) {
-							clusters[c].remove_gene(g);
-							nchanges++;
-							subtractions[c]++;
+		for (int c = 0; c < k; c++) {
+			for(int d = 0; d < nmots[c]; d++) {
+				additions[c][d] = 0;
+				subtractions[c][d] = 0;
+				vector<int> possibles;
+				aces[c][d].calc_matrix();
+				aces[c][d].ace_sites.remove_all_sites();
+				// If gene is in or near this cluster, check if we have a high-scoring site
+				for(int g = 0; g < ngenes; g++) {
+					float corr = clusters[c][d].corr(expr[g]);
+					if(corr > 0.50) {
+						possibles.push_back(g);
+						if(aces[c][d].consider_site(g, corr, 0.2)) {
+							// cerr << "\t\t\tAdding gene " << g + 1 << " to cluster " << c + 1 << endl;
+							if(! clusters[c][d].is_member(g)) {
+								clusters[c][d].add_gene(g);
+								nchanges++;
+								additions[c][d]++;
+							}
+						} else {
+							// cerr << "\t\t\tRemoving gene " << g + 1 << " to cluster " << c + 1 << endl;
+							if(clusters[c][d].is_member(g)) {
+								clusters[c][d].remove_gene(g);
+								nchanges++;
+								subtractions[c][d]++;
+							}
 						}
 					}
+					score[c][d] = aces[c][d].map_score_restricted(&possibles[0], possibles.size());
 				}
-				score[c] = aces[c].map_score_restricted(&possibles[0], possibles.size());
 			}
 		}
 		
 		update_cluster_means();
 		
-		for (int c = 0; c < adjk; c++) {
-			cerr << setw(3) << right << c + 1 << " ";
-			cerr << setw(30) << left << aces[c].consensus();
-			cerr << setw(6) << right << clusters[c].size();
-			cerr << setw(12) <<  right << score[c];
-			cerr << setw(3) << right << "+";
-			cerr << setw(3) << left << additions[c];
-			cerr << setw(3) << right << "-";
-			cerr << setw(3) << left << subtractions[c];
-			cerr << endl;
+		for (int c = 0; c < k; c++) {
+			for(int d = 0; d < nmots[c]; d++) {
+				cerr << setw(3) << right << c + 1;
+				cerr << ".";
+				cerr << setw(4) << left << d + 1;
+				cerr << setw(30) << left << aces[c][d].consensus();
+				cerr << setw(6) << right << clusters[c][d].size();
+				cerr << setw(12) <<  right << score[c][d];
+				cerr << setw(3) << right << "+";
+				cerr << setw(3) << left << additions[c][d];
+				cerr << setw(3) << right << "-";
+				cerr << setw(3) << left << subtractions[c][d];
+				cerr << endl;
+			}
 		}
 		
 		cerr << "\t" << nchanges << " changes in total" << endl << endl;
@@ -335,13 +346,13 @@ int main(int argc, char *argv[]) {
 	}
 	
 	for(int c = 0; c < k; c++) {
-		for(int d = 0; d < mots; d++) {
+		for(int d = 0; d < nmots[c]; d++) {
 			stringstream outstream;
 			outstream << c + 1 << "." << d + 1 << ".ace";
 			string outstr;
 			outstream >> outstr;
 			ofstream out(outstr.c_str());
-			print_ace(out, aces[c * mots + d], score[c * mots + d], nameset1);
+			print_ace(out, aces[c][d], score[c][d], nameset1);
 		}
 	}
 	
@@ -349,6 +360,7 @@ int main(int argc, char *argv[]) {
 	delete [] clusters;
 	delete [] bsaces;
 	delete [] aces;
+	delete [] nsites;
 }
 
 int assign_genes_to_nearest_cluster (float threshold) {
@@ -488,8 +500,10 @@ void update_bscluster_means() {
 }
 
 void update_cluster_means() {
-	for (int i = 0; i < adjk; i++) {
-		clusters[i].calc_mean();
+	for (int c = 0; c < k; c++) {
+		for(int d = 0; d < nmots[c]; d++) {
+			clusters[c][d].calc_mean();
+		}
 	}
 }
 
@@ -540,15 +554,17 @@ void print_bsclusters(ostream& out, const vector<string>& nameset) {
 }
 
 void print_clusters(ostream& out, const vector<string>& nameset) {
-	for(int c = 0; c < adjk; c++) {
-		int size = clusters[c].size();
-		int* genes = new int[size];
-		clusters[c].genes(genes);
-		out << "Cluster " << c + 1 << ", " << size << " orfs" << endl;
-		for(int j = 0; j < size; j++) {
-			out << nameset[genes[j]] << endl;
+	for(int c = 0; c < k; c++) {
+		for(int d = 0; d < nmots[c]; d++) {
+			int size = clusters[c][d].size();
+			int* genes = new int[size];
+			clusters[c][d].genes(genes);
+			out << "Cluster " << c + 1 << "." << d + 1 << ", " << size << " orfs" << endl;
+			for(int j = 0; j < size; j++) {
+				out << nameset[genes[j]] << endl;
+			}
+			delete [] genes;
 		}
-		delete [] genes;
 	}
 }
 

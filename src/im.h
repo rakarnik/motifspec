@@ -7,13 +7,13 @@
 #include "standard.h"
 
 int k;                     // the number of clusters
-int adjk;                  // the number of adjustment clusters
 int ngenes;                // the number of genes
 int npoints;               // the number of data points
+int* nmots;								 // the number of motifs found in each cluster
 Cluster* bsclusters;       // the bootstrap k-means clusters
-Cluster* clusters;         // the k-means clusters
+Cluster** clusters;        // the adjustment k-means clusters
 AlignACE* bsaces;          // the bootstrap AlignACE models
-AlignACE* aces;            // the adjustment AlignACE models
+AlignACE** aces;           // the adjustment AlignACE models
 int* gene_cluster;         // mapping of genes to clusters
 float** expr;              // the expression data
 
