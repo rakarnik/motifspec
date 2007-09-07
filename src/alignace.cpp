@@ -331,7 +331,7 @@ bool AlignACE::consider_site(int gene, float corr, const double minprob) {
 		Pw = F * Pw/(Pw + Pc);
 		Pc = F - Pw;
 		
-		/* This code uses F directly */
+		/* This code adds sites if F > minprob */
 		if(Pw > Pc) {
 			// cerr << "\t\tAdding site (" << gene + 1 << ", " << j << ", " << true << "), corr=" << corr << endl;
 			ace_sites.add_site(gene, j, true);
@@ -341,6 +341,20 @@ bool AlignACE::consider_site(int gene, float corr, const double minprob) {
 			ace_sites.add_site(gene, j, false);
 			site_added = true;
 		}
+		
+		/* This code adds sites with probability */
+		/*
+		double r=ace_ran_dbl.rnum();
+		if (r > F) 
+			continue;
+		else if (r < Pw) {
+			ace_sites.add_site(gene, j, true);
+			site_added = true;
+		} else {
+			ace_sites.add_site(gene, j, false);
+			site_added = true;
+		}
+		*/
 	}
 	return site_added;
 }
