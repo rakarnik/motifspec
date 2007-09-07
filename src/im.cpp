@@ -268,6 +268,9 @@ int main(int argc, char *argv[]) {
 	}
 	cerr << endl;
 	
+	delete [] bsaces;
+	delete [] bsclusters;
+	
 	cerr << "Adjusting clusters using sequence information... " << endl;
 	nchanges = 1;
 	for (int r = 0; r < 50 && nchanges > 0; r++) {
@@ -301,8 +304,9 @@ int main(int argc, char *argv[]) {
 							}
 						}
 					}
-					score[c][d] = aces[c][d].map_score_restricted(&possibles[0], possibles.size());
 				}
+				
+				score[c][d] = aces[c][d].map_score_restricted(&possibles[0], possibles.size());
 			}
 		}
 		
@@ -327,16 +331,6 @@ int main(int argc, char *argv[]) {
 		cerr << "\t" << nchanges << " changes in total" << endl << endl;
 	}
 	
-	/*
-	cerr << "Doing final optimizations... " << endl;
-	for(int c = 0; c < adjk; c++) {
-		cerr << "\tOptimizing model " << c << endl;
-		aces[c].optimize_columns();
-		aces[c].optimize_sites();
-	}
-	cerr << "done." << endl;
-	*/
-	
 	if (outfile == "") {
 		print_clusters(cout, nameset2);
 	} else {
@@ -348,7 +342,7 @@ int main(int argc, char *argv[]) {
 	for(int c = 0; c < k; c++) {
 		for(int d = 0; d < nmots[c]; d++) {
 			stringstream outstream;
-			outstream << c + 1 << "." << d + 1 << ".ace";
+			outstream << c + 1 << "." << setfill('0') << setw(2) << d + 1 << ".ace";
 			string outstr;
 			outstream >> outstr;
 			ofstream out(outstr.c_str());
@@ -356,11 +350,20 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-	delete [] bsclusters;
+	for(int c = 0; c < k; c++) {
+		delete [] clusters[c];
+		delete [] aces[c];
+		delete [] nsites[c];
+		delete [] additions[c];
+		delete [] subtractions[c];
+		delete [] score[c];
+	}
+	delete [] nmots;
 	delete [] clusters;
-	delete [] bsaces;
 	delete [] aces;
 	delete [] nsites;
+	delete [] additions;
+	delete [] subtractions;
 }
 
 int assign_genes_to_nearest_cluster (float threshold) {
