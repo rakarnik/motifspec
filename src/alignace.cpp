@@ -30,6 +30,8 @@ void AlignACE::init(const vector<string>& v, const int nc, const int bf, const d
     ace_site_bias[i]=new double[ace_seqset.len_seq(i)];
   }
   ace_verbose=false;
+	poss_count = -1;
+	possibles = NULL;
 }
 
 void AlignACE::set_default_params(){
@@ -71,6 +73,17 @@ void AlignACE::ace_initialize(){
   ace_ran_int.set_range(0,RAND_MAX);
   ace_ran_dbl.set_seed(ace_ran_int.rnum());
   ace_ran_dbl.set_range(0.0,1.0);
+}
+
+void AlignACE::set_possible(int* poss, int poss_cnt) {
+	if(poss_count != -1) {
+		delete [] possibles;
+	}
+	poss_count = poss_cnt;
+	possibles = new int[poss_cnt];
+	for(int i = 0; i < poss_cnt; i++) {
+		possibles[i] = poss[i];
+	}
 }
 
 void AlignACE::doit(){
@@ -177,29 +190,25 @@ void AlignACE::seed_random_sites(const int num){
 }
 
 
-void AlignACE::seed_random_sites(const int* options, const int count, const int num) {
-  int max_attempts=5*num;
+void AlignACE::seed_random_sites_restricted(const int num) {
+	if(poss_count < 1) return;
+	
+	int max_attempts = 5 * num;
   ace_sites.clear_sites();
-  int i,j,chosen;
+  int chosen_seq, chosen_posit;
   bool watson;
-  int possible=ace_sites.positions_available();
-  ace_ran_int.set_range(0,possible-1);
 	
-	chosen = -1;
+	chosen_seq = chosen_posit = -1;
 	
-  for(j=0;j<max_attempts;j++){
-		while(find(options, options + count, chosen) == options + count) {
-			chosen=ace_ran_int.rnum();//random (0,possible-1)
-    }
-		for(i=0;i<ace_seqset.num_seqs();i++){
-      if(chosen<ace_seqset.len_seq(i)-ace_sites.width()+1) break;
-      chosen-=(ace_seqset.len_seq(i)-ace_sites.width()+1);
-    }
-    if(ace_sites.is_open_site(i,chosen)){
-      double db=ace_ran_dbl.rnum();//random (0,1)
-      watson=true;
-      if(db>0.5) watson=false;
-      ace_sites.add_site(i,chosen,watson);
+  for(int j = 0; j < max_attempts; j++) {
+		ace_ran_int.set_range(0, poss_count - 1);
+		chosen_seq = possibles[ace_ran_int.rnum()];
+		ace_ran_int.set_range(0, ace_seqset.len_seq(chosen_seq) - 1);
+		chosen_posit = ace_ran_int.rnum();
+		if(ace_sites.is_open_site(chosen_seq, chosen_posit)) {
+      double db = ace_ran_dbl.rnum();//random (0,1)
+      watson = (db > 0.5);
+      ace_sites.add_site(chosen_seq, chosen_posit, watson);
       if(ace_sites.number()==num) break;
     }
   }
@@ -298,7 +307,7 @@ bool AlignACE::consider_site(int gene, float corr, const double minprob) {
 	int site_added = false;
 	double ap = (ace_params.ap_weight * ace_params.ap_expect 
 							+ (1 - ace_params.ap_weight) * ace_sites.number())
-							/(2.0 * ace_sites.positions_available());
+							/(2.0 * ace_sites.positions_available(possibles, poss_count));
 	char **ss_seq;
 	ss_seq = ace_seqset.seq_ptr();
 	double Lw, Lc, Pw, Pc, F;
@@ -331,20 +340,9 @@ bool AlignACE::consider_site(int gene, float corr, const double minprob) {
 		Pw = F * Pw/(Pw + Pc);
 		Pc = F - Pw;
 		
-		/* This code adds sites if F > minprob */
-		if(Pw > Pc) {
-			// cerr << "\t\tAdding site (" << gene + 1 << ", " << j << ", " << true << "), corr=" << corr << endl;
-			ace_sites.add_site(gene, j, true);
-			site_added = true;
-		} else {
-			// cerr << "\t\tAdding site (" << gene + 1 << ", " << j << ", " << false << "), corr=" << corr << endl;
-			ace_sites.add_site(gene, j, false);
-			site_added = true;
-		}
-		
 		/* This code adds sites with probability */
-		/*
 		double r=ace_ran_dbl.rnum();
+		//cerr << "\t\t\tg="<< gene + 1 << " corr=" << corr << " j=" << j << " minprob=" <<  minprob << " F=" << F << " r=" << r << endl;
 		if (r > F) 
 			continue;
 		else if (r < Pw) {
@@ -354,7 +352,6 @@ bool AlignACE::consider_site(int gene, float corr, const double minprob) {
 			ace_sites.add_site(gene, j, false);
 			site_added = true;
 		}
-		*/
 	}
 	return site_added;
 }
@@ -414,7 +411,71 @@ void AlignACE::single_pass(const double minprob){
   if(ace_verbose)cerr<<"sampling "<<considered<<"/"<<ace_select_sites.number()<<"\n";
 }
 
+void AlignACE::single_pass_restricted(const double minprob) {
+	// cerr << "\t\t\tRunning single pass with " << poss_count << " possibilities" << endl;
+	double ap = (ace_params.ap_weight * ace_params.ap_expect
+							+ (1 - ace_params.ap_weight) * ace_sites.number())
+							/(2.0 * ace_sites.positions_available(possibles, poss_count));
+  calc_matrix();
+  ace_sites.remove_all_sites();
+  ace_select_sites.remove_all_sites();
+  //will only update once per pass
+	
+  char **ss_seq;
+  ss_seq=ace_seqset.seq_ptr();
+  double Lw,Lc,Pw,Pc,F;
+  int matpos,col;
+  int considered=0;
+  int gadd=-1,jadd=-1;
+  for(int g = 0; g < poss_count; g++){
+		for(int j = 0; j <= ace_seqset.len_seq(possibles[g]) - ace_sites.width(); j++){
+      Lw = 1.0;
+			matpos = 0;
+			col = 0;
+      for(int k = 0; k < ace_sites.ncols(); k++){
+				int seq = ss_seq[possibles[g]][j+col];
+				Lw *= ace_score_matrix[matpos+seq];
+				col = ace_sites.next_column(col);
+				matpos += ace_sites.depth();
+      }
+      Lc = 1.0;
+			matpos = ace_sites.depth() - 1;
+			col = 0;
+      for(int k = 0; k < ace_sites.ncols(); k++){
+				int seq = ss_seq[possibles[g]][j+ace_sites.width()-1-col];
+				Lc *= ace_score_matrix[matpos-seq];
+				col = ace_sites.next_column(col);
+				matpos += ace_sites.depth();
+      }
+      Pw = Lw * ap/(1.0 - ap + Lw * ap);
+      Pc = Lc * ap/(1.0 - ap + Lc * ap);
+      F = Pw + Pc - Pw * Pc;//probability of either
+			if(F > (minprob/ace_params.ap_select)) ace_select_sites.add_site(possibles[g], j, true);
+			//strand irrelevant for ace_select_sites
+			if(possibles[g] == gadd && j < jadd + ace_sites.width()) continue;
+			if(F<minprob) continue;
+			considered++;
+			Pw=F*Pw/(Pw+Pc);
+			Pc=F-Pw;
+			double r=ace_ran_dbl.rnum();
+			if (r > F) 
+				continue;
+			else if (r < Pw) {
+				ace_sites.add_site(possibles[g], j, true);
+				gadd = possibles[g];
+				jadd = j;
+			} else {
+				ace_sites.add_site(possibles[g], j, false);
+				gadd = possibles[g];
+				jadd = j;
+			}
+    }
+  }
+  if(ace_verbose)cerr<<"sampling "<<considered<<"/"<<ace_select_sites.number()<<"\n";
+}
+
 void AlignACE::single_pass_select(const double minprob){
+	//cerr << "\t\t\tRunning single pass select" << endl;
   int i,j,k,n;
   double ap=(ace_params.ap_weight*ace_params.ap_expect+(1-ace_params.ap_weight)*ace_sites.number())/(2.0*ace_sites.positions_available());
   calc_matrix();
@@ -615,10 +676,10 @@ double AlignACE::map_score(){
   return ms;
 }
 
-double AlignACE::map_score_restricted(int* possibles, int num_possibles){
+double AlignACE::map_score_restricted(){
   int i,j,k;
   double ms=0.0;
-  double map_N=ace_sites.positions_available(possibles, num_possibles);  
+  double map_N=ace_sites.positions_available(possibles, poss_count);  
   double w=ace_params.ap_weight/(1.0-ace_params.ap_weight);
   double map_alpha=(double) ace_params.ap_expect*w;
   double map_beta=map_N*w - map_alpha;
@@ -768,9 +829,13 @@ string AlignACE::consensus() {
   nt[1]='A';nt[2]='C';nt[3]='G';nt[4]='T';
 	char** ss_seq=ace_seqset.seq_ptr();
 	
-	vector<string> hits(ace_sites.number());
-	for(int i = 0; i < ace_sites.number(); i++){
-    int c = ace_sites.chrom(i);
+	int numsites = ace_sites.number();
+	if(numsites < 1) return "";
+	
+	// cerr << "Computing consensus with " << numsites << " sites" << endl;
+	vector<string> hits(numsites);
+	for(int i = 0; i < numsites; i++){
+		int c = ace_sites.chrom(i);
     int p = ace_sites.posit(i);
     bool s = ace_sites.strand(i);
     for(int j = 0; j < ace_sites.width(); j++){

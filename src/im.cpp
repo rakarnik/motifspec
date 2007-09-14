@@ -71,9 +71,9 @@ int main(int argc, char *argv[]) {
 	
 	
 	cerr << "Setting up kmeans clusters... ";
-	bsclusters = new Cluster[k];
+	clusters = new Cluster[k];
 	for (int c = 0; c < k; c++) {
-		bsclusters[c].init(expr, npoints, nameset2);
+		clusters[c].init(expr, npoints, nameset2);
 	}
 	cerr << "done.\n";
 	
@@ -83,7 +83,6 @@ int main(int argc, char *argv[]) {
 		recenter_cluster_random(c);
 	}
 	cerr << "done" << endl;
-	
 	
 	// First run a complete round of k-means clustering
 	int nchanges = 1;
@@ -99,8 +98,8 @@ int main(int argc, char *argv[]) {
 		assigned = 0;
 		cerr << "\t";
 		for (int j = 0; j < k; j++) {
-			cerr << bsclusters[j].size() << " ";
-			assigned += bsclusters[j].size();
+			cerr << clusters[j].size() << " ";
+			assigned += clusters[j].size();
 		}
 		cerr << "(" << ngenes - assigned << " unassigned)" << endl;
 		
@@ -121,17 +120,17 @@ int main(int argc, char *argv[]) {
 			assigned = 0;
 			cerr << "\t";
 			for (int j = 0; j < k; j++) {
-				cerr << bsclusters[j].size() << " ";
-				assigned += bsclusters[j].size();
+				cerr << clusters[j].size() << " ";
+				assigned += clusters[j].size();
 			}
 			cerr << "(" << ngenes - assigned << " unassigned)" << endl;
 		}
 		
 		if(i >= rounds && toosmall > 0) {
 			cerr << "\tRemoving cluster " << k << endl;
-			int size = bsclusters[k - 1].size();
+			int size = clusters[k - 1].size();
 			int* genes = new int[size];
-			bsclusters[k - 1].genes(genes);
+			clusters[k - 1].genes(genes);
 			for(int g = 0; g < size; g++) {
 				gene_cluster[genes[g]] = -1;
 			}
@@ -141,195 +140,29 @@ int main(int argc, char *argv[]) {
 		
 		if (outfile != "") {
 			ofstream out(outfile.c_str());
-			print_bsclusters(out, nameset2);
+			print_clusters(out, nameset2);
 			out.close();
 		}
 	}
 	
-	// Setting up and running bootstrap AlignACE models
-	cerr << "Running bootstrap AlignACE models... " << endl;
-	bsaces = new AlignACE[k];
-	vector<string> aceoutstr(k);
+	cerr << "Setting up adjustment models... " << endl;
+	aces = new AlignACE[k];
+	string line;
 	for (int c = 0; c < k; c++) {
-		stringstream aceoutstrm;
-		aceoutstrm << c + 1;
-		aceoutstrm << ".ace";
-		aceoutstrm >> aceoutstr[c];
-		cerr << "\tRunning on cluster " << c + 1 << "... " << endl;
-		int size = bsclusters[c].size();
-		int* genes = new int[size];
-		bsclusters[c].genes(genes);
-		vector<string> clus_names;
-		vector<string> clus_seqs;
-		for(int g = 0; g < size; g++) {
-			clus_names.push_back(nameset1[genes[g]]);
-			clus_seqs.push_back(seqs[genes[g]]);
-		}
-		bsaces[c].init(clus_seqs, nc);
-		bsaces[c].modify_params(argc, argv);
-		if(bootstrap == "yes") {
-			bsaces[c].doit();
-			ofstream aceout(aceoutstr[c].c_str());
-			print_full_ace(aceout, bsaces[c], clus_names);
-		}
+		aces[c].init(seqs, nc);
+		aces[c].modify_params(argc, argv);
+		aces[c].set_final_params();
+		aces[c].ace_initialize();
+	}
+	cerr << "done." << endl;
+
+	cerr << "Adjusting clusters using sequence information... " << endl;
+	for(int c = 0; c < 1; c++) {
+		cerr << "\tOptimizing cluster "<< c + 1 << "..." << endl;
+		doit(clusters[c], aces[c]);
 		cerr << "\tdone." << endl;
 	}
 	cerr << "done." << endl;
-	
-	// Set up adjustment AlignACE models, seeding with sites found above
-	cerr << "Setting up adjustment models... " << endl;
-	nmots = new int[k];
-	aces = new AlignACE*[k];
-	clusters = new Cluster*[k];
-	int** nsites;
-	int** additions;
-	int** subtractions;
-	double** score;
-	nsites = new int*[k];
-	additions = new int*[k];
-	subtractions = new int*[k];
-	score = new double*[k];
-	string line;
-	for (int c = 0; c < k; c++) {
-		int size = bsclusters[c].size();
-		int* genes = new int[size];
-		bsclusters[c].genes(genes);
-		
-		// First figure out the number of motifs in this cluster 
-		ifstream acein1(aceoutstr[c].c_str());
-		nmots[c] = 0;
-		while(! acein1.eof()) {
-			while((! acein1.eof()) && line.find("Motif") == line.npos) getline(acein1, line);
-			if(! acein1.eof()) (nmots[c])++;
-			line.clear();
-		}
-		cerr << "\t\t" << nmots[c] << " motifs read for cluster " << c + 1 << " from file " << aceoutstr[c] << endl;
-		if(nmots[c] > maxmots) nmots[c] = maxmots;
-		aces[c] = new AlignACE[nmots[c]];
-		clusters[c] = new Cluster[nmots[c]];
-		nsites[c] = new int[nmots[c]];
-		additions[c] = new int[nmots[c]];
-		subtractions[c] = new int[nmots[c]];
-		score[c] = new double[nmots[c]];
-		
-		ifstream acein2(aceoutstr[c].c_str());
-		for(int d = 0; d < nmots[c] && ! acein2.eof(); d++) {
-			// cerr << "\t\tSetting up AlignACE model for motif " << c + 1 << "." << d + 1 << endl;
-			aces[c][d].init(seqs, nc);
-			aces[c][d].modify_params(argc, argv);
-			aces[c][d].set_final_params();
-			aces[c][d].ace_initialize();
-			nsites[c][d] = 0; 
-			while((! acein2.eof()) && line.find("Motif") == line.npos) getline(acein2, line); // Discard everything before "Motif..."
-			
-			while(! acein2.eof()) {                                                          // Read everything until "*"
-				getline(acein2, line);
-				if(line.find("*") != line.npos) break;
-				vector<string> fields = split(line, '\t');
-				aces[c][d].ace_sites.add_site(genes[str_to_int(fields[1])], str_to_int(fields[2]), str_to_int(fields[3]));
-				(nsites[c][d])++;
-			}
-			int width = line.length();
-			int prevpos = line.find("*");
-			int currpos = prevpos;
-			while(prevpos < width - 1) {
-				currpos = line.find("*", prevpos + 1);
-				aces[c][d].ace_sites.sites_active_fwd[prevpos] = currpos;
-				prevpos = currpos;
-			}
-			aces[c][d].ace_sites.sites_active_fwd[width - 1] = width - 1;
-			aces[c][d].ace_sites.sites_width = width;
-			
-			// cerr << "\t\tSetting up adjustment cluster for motif " << c + 1 << "." << d + 1 << endl;
-			
-			clusters[c][d].init(expr, npoints, nameset2);
-			for(int g = 0; g < size; g++) {
-				clusters[c][d].add_gene(genes[g]);
-			}
-			clusters[c][d].calc_mean();
-			
-			// cerr << "\t\tSet up adjustment model for motif " << c + 1 << "." << d + 1 << endl;
-		}
-	}
-	cerr << "done." << endl;
-	
-	cerr << "Initial state of clusters:" << endl;
-	for (int c = 0; c < k; c++) {
-		for(int d = 0; d < nmots[c]; d++) {
-			cerr << setw(3) << right << c + 1;
-			cerr << ".";
-			cerr << setw(4) << left << d + 1;
-			cerr << setw(30) << left << aces[c][d].consensus();
-			cerr << setw(6) << nsites[c][d];
-			cerr << setw(6) << clusters[c][d].size();
-			cerr << setw(12) << aces[c][d].map_score();
-			cerr << endl;
-		}
-	}
-	cerr << endl;
-	
-	delete [] bsaces;
-	delete [] bsclusters;
-	
-	cerr << "Adjusting clusters using sequence information... " << endl;
-	nchanges = 1;
-	for (int r = 0; r < 50 && nchanges > 0; r++) {
-		cerr << "\tRound " << r + 1 << "/" << rounds << ":" << endl;
-		nchanges = 0;
-		for (int c = 0; c < k; c++) {
-			for(int d = 0; d < nmots[c]; d++) {
-				additions[c][d] = 0;
-				subtractions[c][d] = 0;
-				vector<int> possibles;
-				aces[c][d].calc_matrix();
-				aces[c][d].ace_sites.remove_all_sites();
-				// If gene is in or near this cluster, check if we have a high-scoring site
-				for(int g = 0; g < ngenes; g++) {
-					float corr = clusters[c][d].corr(expr[g]);
-					if(corr > 0.50) {
-						possibles.push_back(g);
-						if(aces[c][d].consider_site(g, corr, 0.2)) {
-							// cerr << "\t\t\tAdding gene " << g + 1 << " to cluster " << c + 1 << endl;
-							if(! clusters[c][d].is_member(g)) {
-								clusters[c][d].add_gene(g);
-								nchanges++;
-								additions[c][d]++;
-							}
-						} else {
-							// cerr << "\t\t\tRemoving gene " << g + 1 << " to cluster " << c + 1 << endl;
-							if(clusters[c][d].is_member(g)) {
-								clusters[c][d].remove_gene(g);
-								nchanges++;
-								subtractions[c][d]++;
-							}
-						}
-					}
-				}
-				
-				score[c][d] = aces[c][d].map_score_restricted(&possibles[0], possibles.size());
-			}
-		}
-		
-		update_cluster_means();
-		
-		for (int c = 0; c < k; c++) {
-			for(int d = 0; d < nmots[c]; d++) {
-				cerr << setw(3) << right << c + 1;
-				cerr << ".";
-				cerr << setw(4) << left << d + 1;
-				cerr << setw(30) << left << aces[c][d].consensus();
-				cerr << setw(6) << right << clusters[c][d].size();
-				cerr << setw(12) <<  right << score[c][d];
-				cerr << setw(3) << right << "+";
-				cerr << setw(3) << left << additions[c][d];
-				cerr << setw(3) << right << "-";
-				cerr << setw(3) << left << subtractions[c][d];
-				cerr << endl;
-			}
-		}
-		
-		cerr << "\t" << nchanges << " changes in total" << endl << endl;
-	}
 	
 	if (outfile == "") {
 		print_clusters(cout, nameset2);
@@ -339,31 +172,122 @@ int main(int argc, char *argv[]) {
 		print_clusters(outf, nameset2);
 	}
 	
-	for(int c = 0; c < k; c++) {
-		for(int d = 0; d < nmots[c]; d++) {
-			stringstream outstream;
-			outstream << c + 1 << "." << setfill('0') << setw(2) << d + 1 << ".ace";
-			string outstr;
-			outstream >> outstr;
-			ofstream out(outstr.c_str());
-			print_ace(out, aces[c][d], score[c][d], nameset1);
-		}
+	for(int c = 0; c < 1; c++) {
+		stringstream outstream;
+		outstream << c + 1 << ".adj.ace";
+		string outstr;
+		outstream >> outstr;
+		ofstream out(outstr.c_str());
+		print_ace(out, aces[c], nameset1);
 	}
 	
-	for(int c = 0; c < k; c++) {
-		delete [] clusters[c];
-		delete [] aces[c];
-		delete [] nsites[c];
-		delete [] additions[c];
-		delete [] subtractions[c];
-		delete [] score[c];
-	}
-	delete [] nmots;
 	delete [] clusters;
 	delete [] aces;
-	delete [] nsites;
-	delete [] additions;
-	delete [] subtractions;
+}
+
+void doit(Cluster& c, AlignACE& a) {
+	double corr_cutoff[3] = {0.65, 0.60, 0.50};
+  double sc, cmp, sc_best_i;
+  int i_worse;
+  Sites best_sites = a.ace_sites;
+	
+	for(int j = 1; j <= a.ace_params.ap_nruns; j++) {
+		cerr << "\t\tSearch restart #" << j << "/" << a.ace_params.ap_nruns << endl;
+		// Create a copy of the cluster which we can modify
+		Cluster c1 = c;
+		c1.calc_mean();
+		
+		sc_best_i = a.ace_map_cutoff;
+    i_worse = 0;
+    int phase = 0;
+    
+		sync_ace_members(c1, a);
+		a.seed_random_sites_restricted(1);
+    a.ace_select_sites.clear_sites();
+		
+		for(int i = 1; i <= a.ace_params.ap_npass; i++){
+			if(phase == 3) {
+				double sc1 = a.map_score();
+				sc = 0.0;
+				for(int z = 0; sc < sc1 && z < 5; z++){
+					a.optimize_columns();
+					a.optimize_sites();
+					sc = a.map_score();
+				}
+				if(sc < sc1) {
+					a.ace_sites = best_sites;
+					sc = sc1;
+				}
+				a.ace_archive.consider_motif(a.ace_sites, sc);
+				cerr << "\t\t\tReached phase 3! Restarting..." << endl;
+				break;
+      }
+      if(i_worse == 0)
+				a.single_pass_restricted(a.ace_params.ap_sitecut[phase]);
+      else 
+				a.single_pass_select(a.ace_params.ap_sitecut[phase]);
+      if(a.ace_sites.number() == 0) {
+				if(sc_best_i == a.ace_map_cutoff) {
+					cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
+					break;
+				}
+				//if(best_sites.number()<4) break;
+				a.ace_sites=best_sites;
+				a.ace_select_sites=best_sites;
+				phase++;
+				i_worse = 0;
+				continue;
+      }
+      if(i<=3) continue;
+      if(a.column_sample(0)) {}
+      if(a.column_sample(a.ace_sites.width()-1)) {}
+      for(int m = 0; m < 3; m++) {
+				if(!(a.column_sample())) break;
+      }
+      sc = a.map_score();
+      if(sc - sc_best_i > 1e-3){
+				i_worse=0;
+				cmp = a.ace_archive.check_motif(a.ace_sites, sc);
+				if(cmp > a.ace_sim_cutoff) {
+					cerr <<"\t\t\tToo similar! Restarting..." << endl;
+					break;
+				}
+				sc_best_i = sc;
+				best_sites = a.ace_sites;
+      }
+      else i_worse++;
+      if(i_worse > a.ace_params.ap_minpass[phase]){
+				if(sc_best_i == a.ace_map_cutoff) {
+					cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
+					break;
+				}
+				if(best_sites.number() < 2) {
+					cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
+					break;
+				}
+				a.ace_sites = best_sites;
+				a.ace_select_sites = best_sites;
+				phase++;
+				i_worse = 0;
+      }
+			
+			if((i == 1 || i % 50 == 0) && a.ace_sites.number() > 0) {
+				cerr << "\t\t\t" << setw(5) << i;
+				cerr << setw(3) << phase; 
+				cerr << setw(5) << a.ace_sites.number();
+				cerr << setw(5) << a.poss_count;
+				cerr << setw(40) << a.consensus();
+				cerr << setw(10) << sc;
+				cerr << endl;
+			}
+			/*
+			if(phase > 0 and i % 50 == 0) {
+				sync_cluster(c1, a);
+				sync_ace_neighborhood(c1, a, corr_cutoff[phase]);
+			}
+			*/
+		}
+	}
 }
 
 int assign_genes_to_nearest_cluster (float threshold) {
@@ -373,7 +297,7 @@ int assign_genes_to_nearest_cluster (float threshold) {
 		max_clus = -1;
 		max_corr = 0;
 		for(int c = 0; c < k; c++) {
-			corr = bsclusters[c].corr(expr[g]);
+			corr = clusters[c].corr(expr[g]);
 			// cerr << "\tCorrelation of gene " << (g + 1) << " with cluster " << (c + 1) << " is " << corr << endl;
 			if (corr > max_corr && corr > threshold) {
 				max_clus = c;
@@ -385,7 +309,7 @@ int assign_genes_to_nearest_cluster (float threshold) {
 			reassign_gene(g, max_clus);
 		}
 	}
-	update_bscluster_means();
+	update_cluster_means();
 	return nchanges;
 }
 
@@ -394,10 +318,10 @@ int check_cluster_distances(float threshold) {
 	int big, small, count;
 	for (int i = 0; i < k; i++) {
 		for (int j = i+1; j < k; j++) {
-			c = bsclusters[i].corr(bsclusters[j].get_mean());
+			c = clusters[i].corr(clusters[j].get_mean());
 			//cerr << "Cluster " << (i + 1) << " and cluster " << (j + 1) << " have correlation " << c << endl;
 			if (c > threshold) {
-				if (bsclusters[i].size() > bsclusters[j].size()) {
+				if (clusters[i].size() > clusters[j].size()) {
 					big = i;
 					small = j;
 				} else {
@@ -411,14 +335,14 @@ int check_cluster_distances(float threshold) {
 			}
 		}
 	}
-	update_bscluster_means();
+	update_cluster_means();
 	return count;
 }
 
 int check_cluster_sizes(int minsize) {
 	int smallcount = 0;
 	for (int i = 0; i < k; i++) {
-		if (bsclusters[i].size() < minsize) {
+		if (clusters[i].size() < minsize) {
 			smallcount++;
 		}
 	}
@@ -428,8 +352,8 @@ int check_cluster_sizes(int minsize) {
 int reset_small_clusters(int minsize) {
 	int delcount = 0;
 	for (int i = 0; i < k; i++) {
-		if (bsclusters[i].size() < minsize) {
-			cerr << "\tResetting cluster " << i + 1 << "(" << bsclusters[i].size() << " < " << minsize <<")" << endl;
+		if (clusters[i].size() < minsize) {
+			cerr << "\tResetting cluster " << i + 1 << "(" << clusters[i].size() << " < " << minsize <<")" << endl;
 			recenter_cluster_random(i);
 			delcount++;
 		}
@@ -440,7 +364,7 @@ int reset_small_clusters(int minsize) {
 void sort_clusters() {
 	for (int i = 0; i < k; i++) {
 		for (int j = i + 1; j < k; j++) {
-			if (bsclusters[i].size() < bsclusters[j].size()) {
+			if (clusters[i].size() < clusters[j].size()) {
 				swap(i, j);
 			}
 		}
@@ -448,32 +372,32 @@ void sort_clusters() {
 }
 
 void swap(int c1, int c2) {
-	int size1 = bsclusters[c1].size();
+	int size1 = clusters[c1].size();
 	int* genes1 = new int[size1];
-	bsclusters[c1].genes(genes1);
+	clusters[c1].genes(genes1);
 	for (int i = 0; i < size1; i++) {
 		gene_cluster[genes1[i]] = c2;
 	}
-	int size2 = bsclusters[c2].size();
+	int size2 = clusters[c2].size();
 	int* genes2 = new int[size2];
-	bsclusters[c2].genes(genes2);
+	clusters[c2].genes(genes2);
 	for (int i = 0; i < size2; i++) {
 		gene_cluster[genes2[i]] = c1;
 	}
 	delete [] genes1;
 	delete [] genes2;
-	swap(bsclusters[c1], bsclusters[c2]);
+	swap(clusters[c1], clusters[c2]);
 }
 
 void merge_clusters(int c1, int c2) {
-	int size2 = bsclusters[c2].size();
+	int size2 = clusters[c2].size();
 	int* genes2 = new int[size2];
-	bsclusters[c2].genes(genes2);
+	clusters[c2].genes(genes2);
 	for (int i = 0; i < size2; i++) {
 		reassign_gene(genes2[i], c1);
 	}
-	bsclusters[c1].calc_mean();
-	bsclusters[c2].calc_mean();
+	clusters[c1].calc_mean();
+	clusters[c2].calc_mean();
 }
 
 void reassign_gene (int g, int c) {
@@ -488,39 +412,30 @@ void reassign_gene (int g, int c) {
 	}
 	*/
 	if (c != -1) {
-		bsclusters[c].add_gene(g);
+		clusters[c].add_gene(g);
 	}
 	if (gene_cluster[g] != -1) {
-		bsclusters[gene_cluster[g]].remove_gene(g);
+		clusters[gene_cluster[g]].remove_gene(g);
 	}
 	gene_cluster[g] = c;
 }
 
-void update_bscluster_means() {
-	for (int i = 0; i < k; i++) {
-		bsclusters[i].calc_mean();
-	}
-}
-
 void update_cluster_means() {
-	for (int c = 0; c < k; c++) {
-		for(int d = 0; d < nmots[c]; d++) {
-			clusters[c][d].calc_mean();
-		}
-	}
+	for (int c = 0; c < k; c++)
+		clusters[c].calc_mean();
 }
 
 void recenter_cluster(int c, int g) {
-	int size = bsclusters[c].size();
+	int size = clusters[c].size();
 	int* genes = new int[size];
-	bsclusters[c].genes(genes);
+	clusters[c].genes(genes);
 	for (int i = 0; i < size; i++) {
-		bsclusters[c].remove_gene(genes[i]);
+		clusters[c].remove_gene(genes[i]);
 		gene_cluster[genes[i]] = -1;
 	}
 	reassign_gene(g, c);
-	bsclusters[c].calc_mean();
-	assert(bsclusters[c].corr(expr[g]) > 0.95);
+	clusters[c].calc_mean();
+	assert(clusters[c].corr(expr[g]) > 0.95);
 }
 
 void recenter_cluster_random(int c) {
@@ -533,7 +448,7 @@ int find_outlier() {
 	int outlier;
 	for (int g = 0; g < ngenes; g++) {
 		for(int c = 0; c < k; c++) {
-			corr = bsclusters[c].corr(expr[g]);
+			corr = clusters[c].corr(expr[g]);
 			if (corr < min_corr) {
 				outlier = g;
 				min_corr = corr;
@@ -543,31 +458,16 @@ int find_outlier() {
 	return outlier;
 }
 
-void print_bsclusters(ostream& out, const vector<string>& nameset) {
+void print_clusters(ostream& out, const vector<string>& nameset) {
 	for(int c = 0; c < k; c++) {
-		int size = bsclusters[c].size();
+		int size = clusters[c].size();
 		int* genes = new int[size];
-		bsclusters[c].genes(genes);
+		clusters[c].genes(genes);
 		out << "Cluster " << c + 1 << ", " << size << " orfs" << endl;
 		for(int j = 0; j < size; j++) {
 			out << nameset[genes[j]] << endl;
 		}
 		delete [] genes;
-	}
-}
-
-void print_clusters(ostream& out, const vector<string>& nameset) {
-	for(int c = 0; c < k; c++) {
-		for(int d = 0; d < nmots[c]; d++) {
-			int size = clusters[c][d].size();
-			int* genes = new int[size];
-			clusters[c][d].genes(genes);
-			out << "Cluster " << c + 1 << "." << d + 1 << ", " << size << " orfs" << endl;
-			for(int j = 0; j < size; j++) {
-				out << nameset[genes[j]] << endl;
-			}
-			delete [] genes;
-		}
 	}
 }
 
@@ -580,15 +480,13 @@ void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
   a.full_output(out);
 }
 
-void print_ace(ostream& out, AlignACE& a, const double score, const vector <string>& nameset) {
+void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
 	out << "Parameter values:\n";
   a.output_params(out);
   out << "\nInput sequences:\n";
   for(int x = 0; x < nameset.size(); x++) out << "#" << x << '\t' << nameset[x] << endl;
   out << endl;
-	out << "Motif 1" << endl;
-  a.output(out);
-	out << "MAP Score: " << score << endl << endl;
+	a.full_output(out);
 }
 
 void print_usage(ostream& fout) {
@@ -612,12 +510,37 @@ void debug_check_membership() {
 		cerr << "\t\tChecking cluster " << c + 1 << " ...";
 		for (int g = 0; g < ngenes; g++) {
 			if(gene_cluster[g] == c) {
-				assert(bsclusters[c].is_member(g));
+				assert(clusters[c].is_member(g));
 			} else {
-				assert(! bsclusters[c].is_member(g));
+				assert(! clusters[c].is_member(g));
 			}
 		}
 		cerr << "done." << endl;
 	}
 }
 
+void sync_ace_members(Cluster& c, AlignACE& a) {
+	int size = c.size();
+	int* genes = new int[size];
+	c.genes(genes);
+	a.set_possible(genes, size);
+}
+
+void sync_ace_neighborhood(Cluster& c, AlignACE& a, double mincorr) {
+	vector<int> possibles;
+	for(int g = 0; g < ngenes; g++) {
+		if(c.corr(expr[g]) > mincorr) {
+			possibles.push_back(g);
+		}
+	}
+	if(possibles.size() > 0)
+		a.set_possible(&possibles[0], possibles.size());
+}
+
+void sync_cluster(Cluster&c, AlignACE& a) {
+	c.remove_all_genes();
+	for(int s = 0; s < a.ace_sites.number(); s++) {
+		c.add_gene(a.ace_sites.sites_chrom[s]);
+	}
+	c.calc_mean();
+}
