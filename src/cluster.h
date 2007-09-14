@@ -26,6 +26,7 @@ public:
 	void init (float** exprtab, int numexpr, const vector<string>& names);
 	void add_gene (const int gene);                         // Add gene to this cluster
 	void remove_gene (const int gene);                      // Remove gene from this cluster
+	void remove_all_genes();                                // Remove all genes from this cluster
 	bool is_member(const int gene);                         // Return whether the gene is a member of this cluster
 	int size() const;                                       // Return size of this cluster
 	void calc_mean();                                       // Calculate the mean for this cluster

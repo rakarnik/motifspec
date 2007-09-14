@@ -59,6 +59,12 @@ void Cluster::remove_gene(const int gene) {
 	dirty = true;
 }
 
+void Cluster::remove_all_genes() {
+	for(int g = 0; g < ngenes; g++) {
+		remove_gene(g);
+	}
+}
+
 bool Cluster::is_member(const int gene) {
 	return (membership[gene] == 1);
 }
@@ -77,7 +83,7 @@ void Cluster::calc_mean() {
 		int i, j;
 		for (i = 0; i < npoints; i++) {
 			mean[i] = 0;
-			for (j = 0; j < nameset.size(); j++) {
+			for (j = 0; j < ngenes; j++) {
 				mean[i] += membership[j] * expr[j][i];
 			}
 			mean[i] /= nmembers;
