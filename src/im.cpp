@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
 	cerr << "done." << endl;
 
 	cerr << "Adjusting clusters using sequence information... " << endl;
-	for(int c = 0; c < 1; c++) {
+	for(int c = 0; c < k; c++) {
 		cerr << "\tOptimizing cluster "<< c + 1 << "..." << endl;
 		doit(clusters[c], aces[c]);
 		cerr << "\tdone." << endl;
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 		print_clusters(outf, nameset2);
 	}
 	
-	for(int c = 0; c < 1; c++) {
+	for(int c = 0; c < k; c++) {
 		stringstream outstream;
 		outstream << c + 1 << ".adj.ace";
 		string outstr;
