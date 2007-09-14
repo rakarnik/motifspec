@@ -331,7 +331,7 @@ int Sites::positions_available(){
   return ret;
 }
 
-int Sites::positions_available(int* possibles, int num_possibles){
+int Sites::positions_available(const int* possibles, const int num_possibles){
 	int ret = 0;
 	for(int i = 0; i < num_possibles; i++) {
 		ret += sites_len_seq[possibles[i]] - sites_width + 1;
