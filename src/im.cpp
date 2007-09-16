@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
 	cerr << "Setting up adjustment models... " << endl;
 	aces = new AlignACE[k];
 	string line;
-	for (int c = 0; c < 1; c++) {
+	for (int c = 0; c < k; c++) {
 		aces[c].init(seqs, nc);
 		aces[c].modify_params(argc, argv);
 		aces[c].set_final_params();
