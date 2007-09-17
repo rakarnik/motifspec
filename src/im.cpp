@@ -167,14 +167,16 @@ int main(int argc, char *argv[]) {
 		m[c] = c;
 		rc = pthread_create(&tids[c], NULL, doit, (void*)(&m[c]));
 		if(rc) {
-			cerr << endl << "Error occurred during pthread_create(). Return code was " << rc << endl;
+			cerr << endl << "Error occurred during pthread_create() for cluster " << c + 1 << ". Return code was " << rc << endl;
+			exit(1);
 		}
 	}
 	pthread_attr_destroy(&attr);
 	for(int c = 0; c < k; c++) {
 		rc = pthread_join(tids[c], (void **)&status);
 		if(rc) {
-			cerr << "Error occurred during pthread_join(). Return code was " << rc << endl;
+			cerr << "Error occurred during pthread_join() for cluster " << c + 1 << ". Return code was " << rc << endl;
+			exit(1);
 		}
 	}
 	cerr << "done." << endl;
