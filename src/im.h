@@ -2,6 +2,7 @@
  *  im.cpp
  */
 #include <iostream>
+#include <pthread.h>
 #include "alignace.h"
 #include "cluster.h"
 #include "standard.h"
@@ -14,7 +15,13 @@ AlignACE* aces;            // the adjustment AlignACE models
 int* gene_cluster;         // mapping of genes to clusters
 float** expr;              // the expression data
 
-void doit(Cluster& c, AlignACE& a);
+struct model {
+	int num;
+	Cluster& c;
+	AlignACE& a;
+};
+
+void* doit(void* m);
 int assign_genes_to_nearest_cluster(float threshold);
 int check_cluster_distances(float threshold);
 int check_cluster_sizes(int minsize);

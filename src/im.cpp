@@ -157,10 +157,25 @@ int main(int argc, char *argv[]) {
 	cerr << "done." << endl;
 
 	cerr << "Adjusting clusters using sequence information... " << endl;
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	pthread_t tids[k];
+	int m[k];
+	int rc, status;
 	for(int c = 0; c < k; c++) {
-		cerr << "\tOptimizing cluster "<< c + 1 << "..." << endl;
-		doit(clusters[c], aces[c]);
-		cerr << "\tdone." << endl;
+		m[c] = c;
+		rc = pthread_create(&tids[c], NULL, doit, (void*)(&m[c]));
+		if(rc) {
+			cerr << endl << "Error occurred during pthread_create(). Return code was " << rc << endl;
+		}
+	}
+	pthread_attr_destroy(&attr);
+	for(int c = 0; c < k; c++) {
+		rc = pthread_join(tids[c], (void **)&status);
+		if(rc) {
+			cerr << "Error occurred during pthread_join(). Return code was " << rc << endl;
+		}
 	}
 	cerr << "done." << endl;
 	
@@ -183,109 +198,118 @@ int main(int argc, char *argv[]) {
 	
 	delete [] clusters;
 	delete [] aces;
+
+	pthread_exit(NULL);
 }
 
-void doit(Cluster& c, AlignACE& a) {
-	double corr_cutoff[3] = {0.65, 0.60, 0.50};
+void* doit(void* m) {
+	int c = *((int*) m); 
+	cerr << "Optimizing cluster " << c + 1 << endl;
+	
+	double corr_cutoff[] = {0.65, 0.60, 0.50};
   double sc, cmp, sc_best_i;
   int i_worse;
-  Sites best_sites = a.ace_sites;
+  Sites best_sites = aces[c].ace_sites;
 	
-	for(int j = 1; j <= a.ace_params.ap_nruns; j++) {
-		cerr << "\t\tSearch restart #" << j << "/" << a.ace_params.ap_nruns << endl;
+	for(int j = 1; j <= aces[c].ace_params.ap_nruns; j++) {
+		// cerr << "\t\tSearch restart #" << j << "/" << a.ace_params.ap_nruns << endl;
 		// Create a copy of the cluster which we can modify
-		Cluster c1 = c;
+		Cluster c1 = clusters[c];
 		c1.calc_mean();
 		
-		sc_best_i = a.ace_map_cutoff;
+		sc_best_i = aces[c].ace_map_cutoff;
     i_worse = 0;
     int phase = 0;
     
-		sync_ace_members(c1, a);
-		a.seed_random_sites_restricted(1);
-    a.ace_select_sites.clear_sites();
+		sync_ace_members(c1, aces[c]);
+		aces[c].seed_random_sites_restricted(1);
+    aces[c].ace_select_sites.clear_sites();
 		
-		for(int i = 1; i <= a.ace_params.ap_npass; i++){
+		for(int i = 1; i <= aces[c].ace_params.ap_npass; i++){
 			if(phase == 3) {
-				double sc1 = a.map_score();
+				double sc1 = aces[c].map_score();
 				sc = 0.0;
 				for(int z = 0; sc < sc1 && z < 5; z++){
-					a.optimize_columns();
-					a.optimize_sites();
-					sc = a.map_score();
+					aces[c].optimize_columns();
+					aces[c].optimize_sites();
+					sc = aces[c].map_score();
 				}
 				if(sc < sc1) {
-					a.ace_sites = best_sites;
+					aces[c].ace_sites = best_sites;
 					sc = sc1;
 				}
-				a.ace_archive.consider_motif(a.ace_sites, sc);
-				cerr << "\t\t\tReached phase 3! Restarting..." << endl;
+				aces[c].ace_archive.consider_motif(aces[c].ace_sites, sc);
+				// cerr << "\t\t\tReached phase 3! Restarting..." << endl;
 				break;
       }
       if(i_worse == 0)
-				a.single_pass_restricted(a.ace_params.ap_sitecut[phase]);
+				aces[c].single_pass_restricted(aces[c].ace_params.ap_sitecut[phase]);
       else 
-				a.single_pass_select(a.ace_params.ap_sitecut[phase]);
-      if(a.ace_sites.number() == 0) {
-				if(sc_best_i == a.ace_map_cutoff) {
-					cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
+				aces[c].single_pass_select(aces[c].ace_params.ap_sitecut[phase]);
+      if(aces[c].ace_sites.number() == 0) {
+				if(sc_best_i == aces[c].ace_map_cutoff) {
+					// cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
 					break;
 				}
 				//if(best_sites.number()<4) break;
-				a.ace_sites=best_sites;
-				a.ace_select_sites=best_sites;
+				aces[c].ace_sites=best_sites;
+				aces[c].ace_select_sites=best_sites;
 				phase++;
 				i_worse = 0;
 				continue;
       }
       if(i<=3) continue;
-      if(a.column_sample(0)) {}
-      if(a.column_sample(a.ace_sites.width()-1)) {}
+      if(aces[c].column_sample(0)) {}
+      if(aces[c].column_sample(aces[c].ace_sites.width()-1)) {}
       for(int m = 0; m < 3; m++) {
-				if(!(a.column_sample())) break;
+				if(!(aces[c].column_sample())) break;
       }
-      sc = a.map_score();
+      sc = aces[c].map_score();
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;
-				cmp = a.ace_archive.check_motif(a.ace_sites, sc);
-				if(cmp > a.ace_sim_cutoff) {
-					cerr <<"\t\t\tToo similar! Restarting..." << endl;
+				cmp = aces[c].ace_archive.check_motif(aces[c].ace_sites, sc);
+				if(cmp > aces[c].ace_sim_cutoff) {
+					// cerr <<"\t\t\tToo similar! Restarting..." << endl;
 					break;
 				}
 				sc_best_i = sc;
-				best_sites = a.ace_sites;
+				best_sites = aces[c].ace_sites;
       }
       else i_worse++;
-      if(i_worse > a.ace_params.ap_minpass[phase]){
-				if(sc_best_i == a.ace_map_cutoff) {
-					cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
+      if(i_worse > aces[c].ace_params.ap_minpass[phase]){
+				if(sc_best_i == aces[c].ace_map_cutoff) {
+					// cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
 					break;
 				}
 				if(best_sites.number() < 2) {
-					cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
+					// cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
 					break;
 				}
-				a.ace_sites = best_sites;
-				a.ace_select_sites = best_sites;
+				aces[c].ace_sites = best_sites;
+				aces[c].ace_select_sites = best_sites;
 				phase++;
 				i_worse = 0;
       }
-			
-			if((i == 1 || i % 50 == 0) && a.ace_sites.number() > 0) {
+			/*
+			if((i == 1 || i % 50 == 0) && aces[c].ace_sites.number() > 0) {
 				cerr << "\t\t\t" << setw(5) << i;
 				cerr << setw(3) << phase; 
-				cerr << setw(5) << a.ace_sites.number();
-				cerr << setw(5) << a.poss_count;
-				cerr << setw(40) << a.consensus();
+				cerr << setw(5) << aces[c].ace_sites.number();
+				cerr << setw(5) << aces[c].poss_count;
+				cerr << setw(40) << aces[c].consensus();
 				cerr << setw(10) << sc;
 				cerr << endl;
 			}
+			*/
 			if(phase > 0 and i % 50 == 0) {
-				sync_cluster(c1, a);
-				sync_ace_neighborhood(c1, a, corr_cutoff[phase]);
+				sync_cluster(c1, aces[c]);
+				sync_ace_neighborhood(c1, aces[c], corr_cutoff[phase]);
 			}
 		}
 	}
+	cerr << "Done with cluster " << c + 1 << endl;
+	
+	return m;
 }
 
 int assign_genes_to_nearest_cluster (float threshold) {
