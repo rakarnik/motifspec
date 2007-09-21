@@ -118,6 +118,38 @@ float** get_expr(istream& exprfile, int* npoints, vector<string>& nameset) {
 	return expr;
 }
 
+void get_cluster(const char* filename, const int num, vector<string>& nameset) {
+	ifstream clusfile(filename);
+	if(! clusfile){
+	  cerr<<"No such file "<< filename<<'\n';
+	  exit(0);
+	}
+	return get_cluster(clusfile, num, nameset);
+}
+
+void get_cluster(istream &clusfile, const int num, vector<string>& nameset) {
+	bool in_cluster = false;;
+	string line;
+	string clus1name, clus2name;
+	stringstream clus1strm, clus2strm;
+	clus1strm << "Cluster " << num << ",";
+	getline(clus1strm, clus1name);
+	clus2strm << "Cluster " << (num + 1) << ",";
+	getline(clus2strm, clus2name);
+	while(getline(clusfile, line)) {
+		if(line.find(clus1name.c_str()) != line.npos) {
+			in_cluster = true;
+			continue;
+		} else if(line.find (clus2name.c_str()) != line.npos) {
+			in_cluster = false;
+			break;
+		}
+		if(in_cluster && line != "") {
+			nameset.push_back(line);
+		}
+	}
+}
+
 
 //The following GetArg2 commands change the command line option parsing
 //to expect spaces, i.e., -n 2 instead of -n2.  This allows for more
