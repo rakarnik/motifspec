@@ -51,6 +51,12 @@ void Cluster::add_gene(const int gene) {
 	dirty = true;
 }
 
+void Cluster::add_genes(const int* genes, const int count) {
+	for(int g = 0; g < count; g++) {
+		add_gene(genes[g]);
+	}
+}
+
 void Cluster::remove_gene(const int gene) {
 	if (membership[gene] == 1) {
 		membership[gene] = 0;
