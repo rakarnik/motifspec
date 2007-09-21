@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
 	cerr << "done." << endl;
 	if(notfound > 0) cerr << notfound << " genes were not found in the dataset" << endl;
 	
+	nclusgenes -= notfound;
 	int clusgenes[nclusgenes];
 	int index = 0;
 	for (int g = 0; g < ngenes; g++) {
