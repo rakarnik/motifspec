@@ -102,6 +102,13 @@ int main(int argc, char *argv[]) {
 	c.calc_mean();
 	cerr << "done." << endl;
 	
+	stringstream outstream, tmpstream;
+	outstream << k << ".adj.ace";
+	tmpstream << k << ".tmp.ace";
+	string outstr, tmpstr;
+	outstream >> outstr;
+	tmpstream >> tmpstr;
+	
 	cerr << "Setting up AlignACE... ";
 	AlignACE a;
 	a.init(seqs, nc);
@@ -111,18 +118,15 @@ int main(int argc, char *argv[]) {
 	cerr << "done." << endl;
 	
 	cerr << "Adjusting clusters using sequence information... " << endl;
-	doit(c, a);
+	doit(tmpstr.c_str(), c, a, nameset1);
 	cerr << "done." << endl;
 	
-	stringstream outstream;
-	outstream << k << ".adj.ace";
-	string outstr;
-	outstream >> outstr;
-	ofstream out(outstr.c_str());
+	ofstream out(outstr.c_str(), ios::trunc);
 	print_ace(out, a, nameset1);
+	out.close();
 }
 
-void doit(Cluster& c, AlignACE& a) {
+void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset) {
 	double corr_cutoff[] = {0.80, 0.75, 0.65};
   double sc, cmp, sc_best_i;
   int i_worse;
@@ -149,13 +153,14 @@ void doit(Cluster& c, AlignACE& a) {
 				for(int z = 0; sc < sc1 && z < 5; z++){
 					a.optimize_columns();
 					a.optimize_sites();
-					sc = a.map_score();
+					sc = a.map_score_restricted();
 				}
 				if(sc < sc1) {
 					a.ace_sites = best_sites;
 					sc = sc1;
 				}
 				a.ace_archive.consider_motif(a.ace_sites, sc);
+				print_ace_status(cerr, a, i, phase, sc);
 				cerr << "\t\t\tReached phase 3! Restarting..." << endl;
 				break;
       }
@@ -186,6 +191,7 @@ void doit(Cluster& c, AlignACE& a) {
 				i_worse=0;
 				cmp = a.ace_archive.check_motif(a.ace_sites, sc);
 				if(cmp > a.ace_sim_cutoff) {
+					print_ace_status(cerr, a, i, phase, sc);
 					cerr <<"\t\t\tToo similar! Restarting..." << endl;
 					break;
 				}
@@ -195,10 +201,12 @@ void doit(Cluster& c, AlignACE& a) {
       else i_worse++;
       if(i_worse > a.ace_params.ap_minpass[phase]){
 				if(sc_best_i == a.ace_map_cutoff) {
+					print_ace_status(cerr, a, i, phase, sc);
 					cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
 					break;
 				}
 				if(best_sites.number() < 2) {
+					print_ace_status(cerr, a, i, phase, sc);
 					cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
 					break;
 				}
@@ -208,17 +216,12 @@ void doit(Cluster& c, AlignACE& a) {
 				i_worse = 0;
       }
 			
-			if((i == 1 || i % 50 == 0) && a.ace_sites.number() > 0) {
-				cerr << "\t\t\t" << setw(5) << i;
-				cerr << setw(3) << phase; 
-				cerr << setw(5) << a.ace_sites.number();
-				cerr << setw(5) << a.poss_count;
-				cerr << setw(40) << a.consensus();
-				cerr << setw(10) << sc;
-				cerr << endl;
-			}
-			
+			if(i == 1 || i % 50 == 0) print_ace_status(cerr, a, i, phase, sc); 
+						
 			if(phase > 1 and i % 50 == 0) {
+				ofstream out(filename, ios::trunc);
+				print_ace(out, a, nameset);
+				out.close();
 				sync_cluster(c1, a);
 				sync_ace_neighborhood(c1, a, corr_cutoff[phase]);
 			}
@@ -242,6 +245,20 @@ void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
   for(int x = 0; x < nameset.size(); x++) out << "#" << x << '\t' << nameset[x] << endl;
   out << endl;
 	a.full_output(out);
+}
+
+void print_ace_status(ostream& out, AlignACE& a, const int i, const int phase, const double sc) {
+	if(a.ace_sites.number() > 0) {
+		out << "\t\t\t" << setw(5) << i;
+		out << setw(3) << phase; 
+		out << setw(5) << a.ace_sites.number();
+		out << setw(5) << a.poss_count;
+		out << setw(40) << a.consensus();
+		out << setw(10) << sc;
+		out << endl;
+	} else {
+		out << "\t\t\tNo sites!" << endl;
+	}
 }
 
 void print_usage(ostream& fout) {

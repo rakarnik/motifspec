@@ -17,10 +17,11 @@ struct model {
 	AlignACE& a;
 };
 
-void doit(Cluster& c, AlignACE& a);
+void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset);
 void print_clusters(ostream& out, const vector<string>& nameset);
 void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset);
 void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset);
+void print_ace_status(ostream& out, AlignACE& a, const int i, const int phase, const double sc);
 void print_motifs(ostream& out, const vector<string>& nameset);
 void print_usage(ostream& fout);
 void sync_ace_members(Cluster& c, AlignACE& a);
