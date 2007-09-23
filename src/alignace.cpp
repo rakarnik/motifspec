@@ -553,7 +553,7 @@ bool AlignACE::column_sample(const int c, const bool sample){
 	
   col_removed=ace_sites.remove_col(col_worst);
   i=ace_select_sites.remove_col(col_worst);
-  if(i!=col_removed) {cerr<<i<<"  "<<col_removed<<" wrong assumption\n";abort();}
+  if(i!=col_removed) {cerr<<i<<"  "<<col_removed<<" wrong assumption in column_sample\n";abort();}
 	
   int max_left,max_right;
   max_left=max_right=(ace_sites.max_width()-ace_sites.width())/2;

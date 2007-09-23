@@ -143,9 +143,10 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
     int phase = 0;
     
 		sync_ace_members(c1, a);
+		a.ace_sites.clear_sites();
+		a.ace_select_sites.clear_sites();
 		a.seed_random_sites_restricted(1);
-    a.ace_select_sites.clear_sites();
-		
+    
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(phase == 3) {
 				double sc1 = a.map_score();
