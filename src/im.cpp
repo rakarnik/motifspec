@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[] = {0.80, 0.75, 0.65};
+	double corr_cutoff[] = {0.65, 0.60, 0.50};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
@@ -149,7 +149,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
     
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(phase == 3) {
-				double sc1 = a.map_score();
+				double sc1 = a.map_score_restricted();
 				sc = 0.0;
 				for(int z = 0; sc < sc1 && z < 5; z++){
 					a.optimize_columns();
@@ -182,12 +182,14 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				continue;
       }
       if(i<=3) continue;
-      if(a.column_sample(0)) {}
+      /*
+			if(a.column_sample(0)) {}
       if(a.column_sample(a.ace_sites.width()-1)) {}
       for(int m = 0; m < 3; m++) {
 				if(!(a.column_sample())) break;
       }
-      sc = a.map_score();
+			*/
+      sc = a.map_score_restricted();
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;
 				cmp = a.ace_archive.check_motif(a.ace_sites, sc);
