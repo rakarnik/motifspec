@@ -489,7 +489,6 @@ void AlignACE::single_pass_select(const double minprob){
 }
 
 bool AlignACE::column_sample(const int c, const bool sample){
-	debug_check_columns();
 	//cerr << "\t\t\tRunning column sample with c = " << c << "... ";
 	//sample default to true, if false then replace with best column
   //just consider throwing out the worst column, sample for replacement, no need to sample both ways, unless column is specified
@@ -605,7 +604,6 @@ bool AlignACE::column_sample(const int c, const bool sample){
 	delete [] freq;
 	
 	// cerr << "done." <<  endl;
-	debug_check_columns();
 	
 	if(col_removed==col_pick) return false;
   else return true;

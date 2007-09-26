@@ -275,7 +275,6 @@ void print_usage(ostream& fout) {
 }
 
 void sync_ace_members(const Cluster& c, AlignACE& a) {
-	a.debug_check_columns();
 	// cerr << "\t\t\t\tSyncing AlignACE with cluster members... ";
 	int size = c.size();
 	int* genes = new int[size];
@@ -284,11 +283,9 @@ void sync_ace_members(const Cluster& c, AlignACE& a) {
 	for(int g = 0; g < size; g++)
 		a.add_possible(genes[g]);
 	// cerr << "done." << endl;
-	a.debug_check_columns();
 }
 
 void sync_ace_neighborhood(const Cluster& c, AlignACE& a, double mincorr) {
-	a.debug_check_columns();
 	// cerr << "\t\t\t\tSyncing AlignACE with cluster neighborhood... ";
 	a.clear_possible();
 	for(int g = 0; g < ngenes; g++) {
@@ -297,7 +294,6 @@ void sync_ace_neighborhood(const Cluster& c, AlignACE& a, double mincorr) {
 		}
 	}
 	// cerr << "done." << endl;
-	a.debug_check_columns();
 }
 
 void sync_cluster(Cluster&c, const AlignACE& a) {
