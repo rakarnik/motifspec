@@ -47,8 +47,8 @@ class AlignACE{
   Sites ace_select_sites;
   ArchiveSites ace_archive;
 	
-	int* possibles;
-	int poss_count;
+	int* ace_membership;
+	int ace_members;
 
   int *ace_freq_matrix;
   double *ace_score_matrix;
@@ -69,7 +69,9 @@ class AlignACE{
   void set_default_params();//modifiable
   void set_final_params();//derived from others
   void ace_initialize();
-	void set_possible(int* poss, int poss_cnt);
+	void add_possible(int poss);
+	void remove_possible(int poss);
+	void clear_possible();
   void seed_random_sites(const int num);
 	void seed_random_sites_restricted(const int num);
   void seed_biased_site();
@@ -81,13 +83,14 @@ class AlignACE{
 	void single_pass_select(const double minprob = 0.0);
 	bool column_sample(const int c, const bool sample);
   bool column_sample(const int c){return column_sample(c,true);}
-  bool column_sample(const bool sample) {return column_sample(37,sample);}
-  bool column_sample() {return column_sample(37,true);}
+  bool column_sample(const bool sample) {return column_sample(-1,sample);}
+  bool column_sample() {return column_sample(-1,true);}
   double map_score();
 	double map_score_restricted();
   void optimize_columns();
   void optimize_sites();
   void orient_motif();
+	void debug_check_columns();
 };
 
 void cAlignACE(int argc, char *argv[]);
