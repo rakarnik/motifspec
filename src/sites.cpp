@@ -136,7 +136,7 @@ bool Sites::is_open_site(const int c, const int p){
 }
 
 void Sites::add_site(const int c, const int p, const bool s){
-  sites_chrom[sites_num]=c;
+	sites_chrom[sites_num]=c;
   sites_posit[sites_num]=p;
   sites_strand[sites_num]=s;
   sites_num++;
@@ -216,51 +216,62 @@ bool Sites::column_freq(const int col, const Seqset& s, int *ret){
   return true;
 }
 
-int Sites::remove_col(const int c){
-  int col,nxt,ret,ns;//return number of removed column in new numbering
-  if(c==0){
-    ns=sites_active_fwd[0];
-    ret=-ns;
-    for(col=ns;col<sites_width-1;){
-      nxt=sites_active_fwd[col];
-      sites_active_fwd[col-ns]=nxt-ns;
-      col=nxt;
+int Sites::remove_col(const int c) {
+  int col = 0, nxt = 0, ret = 0, ns = 0;         //return number of removed column in new numbering
+	bool found = false;
+	if(c == 0) {                   // if the column to be removed is the first column
+    ns = sites_active_fwd[0];
+    ret = -ns;
+    for(col = ns; col < sites_width - 1;){
+      nxt = sites_active_fwd[col];
+      sites_active_fwd[col - ns] = nxt - ns;
+      col = nxt;
     }
-    shift_sites(ns,0);
-    sites_width-=ns;
-    sites_active_fwd[sites_width-1]=sites_width-1;
+    shift_sites(ns, 0);
+    sites_width -= ns;
+    sites_active_fwd[sites_width - 1] = sites_width - 1;
+		found = true;
   }
-  else if(c==(sites_width-1)){
-    ret=c;
-    for(col=0;;){
-      nxt=sites_active_fwd[col];
-      if(nxt==(sites_width-1)){
-	sites_width=col+1;
-	sites_active_fwd[col]=col;
-	shift_sites(0,col-nxt);
-	break;
+  else if(c == (sites_width - 1)) {   // if the column to be removed is that last column
+    ret = c;
+    for(col = 0;;) {
+      nxt = sites_active_fwd[col];
+			if(nxt == (sites_width - 1)) {
+				sites_width = col + 1;
+				sites_active_fwd[col] = col;
+				shift_sites(0, col - nxt);
+				found = true;
+				break;
+      } else {
+				col = nxt;
+			}
+		}
+  } else {                            // somewhere in the middle, so find right insertion point
+    ret = c;
+		col = 0;
+    for(col = 0;;) {
+      nxt = sites_active_fwd[col];
+			if(nxt == col) break;
+      if(nxt == c) {
+				sites_active_fwd[col] = sites_active_fwd[nxt];
+				found = true;
+				break;
       }
-      else col=nxt;
-    }
-  }
-  else{
-    ret=c;
-    for(col=0;;){
-      nxt=sites_active_fwd[col];
-      if(nxt==c){
-	sites_active_fwd[col]=sites_active_fwd[nxt];
-	break;
-      }
-      col=nxt;
+      col = nxt;
     }
   }
   sites_num_cols--;
+	if (! found) {
+		cerr << "remove_column called for column " << c << " but it was not found!" << endl; 
+		abort();
+	}
   return ret;
 }
 
 void Sites::add_col(const int c){
-	int col,nxt,i;
-  if(c<0){
+	int col, nxt, i;
+	col = nxt = i = 0;
+  if(c < 0){
     for(i=sites_width-1;i>=0;i--){
       sites_active_fwd[i-c]=sites_active_fwd[i]-c;
     }
@@ -331,10 +342,11 @@ int Sites::positions_available(){
   return ret;
 }
 
-int Sites::positions_available(const int* possibles, const int num_possibles){
+int Sites::positions_available(const int* membership){
 	int ret = 0;
-	for(int i = 0; i < num_possibles; i++) {
-		ret += sites_len_seq[possibles[i]] - sites_width + 1;
+	for(int i = 0; i < sites_num_seqs; i++) {
+		if(membership[i] == 1)
+			ret += sites_len_seq[i] - sites_width + 1;
 	}
 	return ret;
 }
