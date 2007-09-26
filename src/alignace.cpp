@@ -707,7 +707,8 @@ void AlignACE::optimize_sites(){
   int h=1;
   double cutoff=0.2;
   for(i=0;i<ace_seqset.num_seqs();i++){
-    for(j=0;j<ace_seqset.len_seq(i)-ace_sites.width()+1;j++){
+    if(ace_membership[i] == 0) continue;
+		for(j=0;j<ace_seqset.len_seq(i)-ace_sites.width()+1;j++){
       Lw=1.0;matpos=0;col=0;
       for(k=0;k<ace_sites.ncols();k++){
 				int seq=ss_seq[i][j+col];
