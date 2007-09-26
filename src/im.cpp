@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 	int nclusgenes = clusnames.size();
 	cerr << nclusgenes << " genes read for cluster " << k << endl;
 	
-	cerr << "Checking cluster genes... ";
+	cerr << "Checking cluster genes..." << endl;
 	vector<string>::iterator result;
 	int notfound = 0;
 	for (int g = 0; g < nclusgenes; g++) {
@@ -146,7 +146,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 		a.ace_sites.clear_sites();
 		a.ace_select_sites.clear_sites();
 		a.seed_random_sites_restricted(1);
-    
+		
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(phase == 3) {
 				double sc1 = a.map_score_restricted();
@@ -182,13 +182,11 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				continue;
       }
       if(i<=3) continue;
-      /*
 			if(a.column_sample(0)) {}
       if(a.column_sample(a.ace_sites.width()-1)) {}
       for(int m = 0; m < 3; m++) {
 				if(!(a.column_sample())) break;
       }
-			*/
       sc = a.map_score_restricted();
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;
@@ -205,12 +203,12 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
       if(i_worse > a.ace_params.ap_minpass[phase]){
 				if(sc_best_i == a.ace_map_cutoff) {
 					print_ace_status(cerr, a, i, phase, sc);
-					cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
+					cerr << "\t\t\ti_worse is greater than cutoff and best score at cutoff! Restarting..." << endl;
 					break;
 				}
 				if(best_sites.number() < 2) {
 					print_ace_status(cerr, a, i, phase, sc);
-					cerr << "\t\t\ti_worse is greater than cutoff and best score matched cutoff! Restarting..." << endl;
+					cerr << "\t\t\ti_worse is greater than cutoff and only 1 site! Restarting..." << endl;
 					break;
 				}
 				a.ace_sites = best_sites;
@@ -221,10 +219,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 			
 			if(i == 1 || i % 50 == 0) print_ace_status(cerr, a, i, phase, sc); 
 						
-			if(phase > 1 and i % 50 == 0) {
-				ofstream out(filename, ios::trunc);
-				print_ace(out, a, nameset);
-				out.close();
+			if(phase > 0 and i % 50 == 0) {
 				sync_cluster(c1, a);
 				sync_ace_neighborhood(c1, a, corr_cutoff[phase]);
 			}
@@ -255,7 +250,7 @@ void print_ace_status(ostream& out, AlignACE& a, const int i, const int phase, c
 		out << "\t\t\t" << setw(5) << i;
 		out << setw(3) << phase; 
 		out << setw(5) << a.ace_sites.number();
-		out << setw(5) << a.poss_count;
+		out << setw(5) << a.ace_members;
 		out << setw(40) << a.consensus();
 		out << setw(10) << sc;
 		out << endl;
@@ -279,25 +274,33 @@ void print_usage(ostream& fout) {
   fout<<" -oversample\t1/undersample (1)\n";
 }
 
-void sync_ace_members(Cluster& c, AlignACE& a) {
+void sync_ace_members(const Cluster& c, AlignACE& a) {
+	a.debug_check_columns();
+	// cerr << "\t\t\t\tSyncing AlignACE with cluster members... ";
 	int size = c.size();
 	int* genes = new int[size];
 	c.genes(genes);
-	a.set_possible(genes, size);
+	a.clear_possible();
+	for(int g = 0; g < size; g++)
+		a.add_possible(genes[g]);
+	// cerr << "done." << endl;
+	a.debug_check_columns();
 }
 
-void sync_ace_neighborhood(Cluster& c, AlignACE& a, double mincorr) {
-	vector<int> possibles;
+void sync_ace_neighborhood(const Cluster& c, AlignACE& a, double mincorr) {
+	a.debug_check_columns();
+	// cerr << "\t\t\t\tSyncing AlignACE with cluster neighborhood... ";
+	a.clear_possible();
 	for(int g = 0; g < ngenes; g++) {
 		if(c.corr(expr[g]) > mincorr) {
-			possibles.push_back(g);
+			a.add_possible(g);
 		}
 	}
-	if(possibles.size() > 0)
-		a.set_possible(&possibles[0], possibles.size());
+	// cerr << "done." << endl;
+	a.debug_check_columns();
 }
 
-void sync_cluster(Cluster&c, AlignACE& a) {
+void sync_cluster(Cluster&c, const AlignACE& a) {
 	c.remove_all_genes();
 	for(int s = 0; s < a.ace_sites.number(); s++) {
 		c.add_gene(a.ace_sites.sites_chrom[s]);
