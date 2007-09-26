@@ -140,7 +140,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 							* a.ace_params.ap_oversample;
 	
 	for(int j = 1; j <= nruns; j++) {
-		cerr << "\t\tSearch restart #" << j << "/" << a.ace_params.ap_nruns << endl;
+		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 		// Create a copy of the cluster which we can modify
 		Cluster c1 = c;
 		c1.calc_mean();
