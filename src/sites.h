@@ -56,7 +56,7 @@ class Sites{
   int remove_col(const int c);
   void add_col(const int c);
   int positions_available();
-	int positions_available(const int* possibles, const int num_possibles);
+	int positions_available(const int* membership);
   void shift_sites(const int l, const int r);
   void flip_sites();
   void columns_open(int &l, int &r);
