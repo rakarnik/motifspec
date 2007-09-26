@@ -58,7 +58,6 @@ class AlignACE{
   ~AlignACE();
 	void init(const vector<string>& v, const int nc=10, const int bf=100, const double map_cut=-20.0, const double sim_cut=0.8);
   void modify_params(int argc, char *argv[]);
-  void doit();
   void output(ostream &fout);
   static void print_usage(ostream &fout);
   static void print_version(ostream &fout);
@@ -73,28 +72,21 @@ class AlignACE{
 	void remove_possible(int poss);
 	void clear_possible();
   void seed_random_sites(const int num);
-	void seed_random_sites_restricted(const int num);
   void seed_biased_site();
   void calc_matrix();
 	string consensus();
-	bool consider_site(int gene, float corr, const double minprob = 0.0);
-  void single_pass(const double minprob = 0.0);
-	void single_pass_restricted(const double minprob = 0.0);
+	void single_pass(const double minprob = 0.0);
 	void single_pass_select(const double minprob = 0.0);
 	bool column_sample(const int c, const bool sample);
   bool column_sample(const int c){return column_sample(c,true);}
   bool column_sample(const bool sample) {return column_sample(-1,sample);}
   bool column_sample() {return column_sample(-1,true);}
   double map_score();
-	double map_score_restricted();
-  void optimize_columns();
+	void optimize_columns();
   void optimize_sites();
   void orient_motif();
 	void debug_check_columns();
 };
-
-void cAlignACE(int argc, char *argv[]);
-
 
 #endif
 

@@ -152,16 +152,16 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 		sync_ace_members(c1, a);
 		a.ace_sites.clear_sites();
 		a.ace_select_sites.clear_sites();
-		a.seed_random_sites_restricted(1);
+		a.seed_random_sites(1);
 		
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(phase == 3) {
-				double sc1 = a.map_score_restricted();
+				double sc1 = a.map_score();
 				sc = 0.0;
 				for(int z = 0; sc < sc1 && z < 5; z++){
 					a.optimize_columns();
 					a.optimize_sites();
-					sc = a.map_score_restricted();
+					sc = a.map_score();
 				}
 				if(sc < sc1) {
 					a.ace_sites = best_sites;
@@ -173,7 +173,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				break;
       }
       if(i_worse == 0)
-				a.single_pass_restricted(a.ace_params.ap_sitecut[phase]);
+				a.single_pass(a.ace_params.ap_sitecut[phase]);
       else 
 				a.single_pass_select(a.ace_params.ap_sitecut[phase]);
       if(a.ace_sites.number() == 0) {
@@ -194,7 +194,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
       for(int m = 0; m < 3; m++) {
 				if(!(a.column_sample())) break;
       }
-      sc = a.map_score_restricted();
+      sc = a.map_score();
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;
 				cmp = a.ace_archive.check_motif(a.ace_sites, sc);
