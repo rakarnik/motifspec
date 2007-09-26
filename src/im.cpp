@@ -132,7 +132,14 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
   int i_worse;
   Sites best_sites = a.ace_sites;
 	
-	for(int j = 1; j <= a.ace_params.ap_nruns; j++) {
+	sync_ace_members(c, a);
+	int nruns = a.ace_sites.positions_available(a.ace_membership)
+	            / a.ace_params.ap_expect
+							/ a.ace_sites.ncols()
+							/ a.ace_params.ap_undersample
+							* a.ace_params.ap_oversample;
+	
+	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << a.ace_params.ap_nruns << endl;
 		// Create a copy of the cluster which we can modify
 		Cluster c1 = c;
