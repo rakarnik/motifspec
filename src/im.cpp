@@ -224,9 +224,9 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				i_worse = 0;
       }
 			
-			if(i == 1 || i % 50 == 0) print_ace_status(cerr, a, i, phase, sc); 
-						
-			if(phase > 0 and i % 50 == 0) {
+			if(i == 1 || i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
+			
+			if(phase > 1 && i % 50 == 0) {
 				sync_cluster(c1, a);
 				sync_ace_neighborhood(c1, a, corr_cutoff[phase]);
 			}
@@ -296,9 +296,8 @@ void sync_ace_neighborhood(const Cluster& c, AlignACE& a, double mincorr) {
 	// cerr << "\t\t\t\tSyncing AlignACE with cluster neighborhood... ";
 	a.clear_possible();
 	for(int g = 0; g < ngenes; g++) {
-		if(c.corr(expr[g]) > mincorr) {
+		if(c.corr(expr[g]) > mincorr)
 			a.add_possible(g);
-		}
 	}
 	// cerr << "done." << endl;
 }
