@@ -133,7 +133,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
   Sites best_sites = a.ace_sites;
 	
 	sync_ace_members(c, a);
-	int nruns = a.ace_sites.positions_available(a.ace_membership)
+	int nruns = a.ace_sites.positions_available()
 	            / a.ace_params.ap_expect
 							/ a.ace_sites.ncols()
 							/ a.ace_params.ap_undersample
@@ -225,7 +225,6 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
       }
 			
 			if(i == 1 || i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
-			
 			if(phase > 1 && i % 50 == 0) {
 				sync_cluster(c1, a);
 				sync_ace_neighborhood(c1, a, corr_cutoff[phase]);
