@@ -132,14 +132,14 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 		// Create a copy of the cluster which we can modify
-		Cluster c1(c);
-		c1.calc_mean();
+		Cluster* c1 = new Cluster(c);
+		c1->calc_mean();
 		
 		sc_best_i = a.ace_map_cutoff;
     i_worse = 0;
     int phase = 0;
     
-		sync_ace_members(c1, a);
+		sync_ace_members(*c1, a);
 		a.ace_sites.clear_sites();
 		a.ace_select_sites.clear_sites();
 		a.seed_random_sites(1);
@@ -216,10 +216,12 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 			
 			if(i == 1 || i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
 			if(phase > 1 && i % 50 == 0) {
-				sync_cluster(c1, a);
-				sync_ace_neighborhood(c1, a, corr_cutoff[phase]);
+				sync_cluster(*c1, a);
+				sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
 			}
 		}
+		
+		delete c1;
 	}
 }
 
