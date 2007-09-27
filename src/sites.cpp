@@ -173,7 +173,7 @@ void Sites::calc_freq_matrix(const Seqset& b, int *fm){
       pos = 0;
 			for(int j = 0; j < sites_num_cols; j++){ //j = position number
 				pos = p + col;
-				assert(p >= 0 && p < b.len_seq(i));
+				assert(p >= 0 && p < b.len_seq(c));
 				int seq = ss_seq[c][pos];
 				fm[matpos + seq]++;
 				col = sites_active_fwd[col];
@@ -185,7 +185,7 @@ void Sites::calc_freq_matrix(const Seqset& b, int *fm){
       pos = 0;
 			for(int j = 0; j < sites_num_cols; j++){
 				pos = p + sites_width - 1 - col;
-				assert(p >= 0 && p < b.len_seq(i));
+				assert(p >= 0 && p < b.len_seq(c));
 				int seq = ss_seq[c][p + sites_width - 1 - col];
 				fm[matpos - seq]++;
 				col = sites_active_fwd[col];
