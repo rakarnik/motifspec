@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[] = {0.65, 0.60, 0.50};
+	double corr_cutoff[] = {0.65, 0.50, 0.50};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
