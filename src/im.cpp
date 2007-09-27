@@ -1,6 +1,8 @@
 #include "im.h"
 
 int main(int argc, char *argv[]) {
+	set_new_handler(out_of_memory);
+
 	string seqfile;                       // file with sequences
 	string exprfile;                      // file with expression data
 	string clusfile;
@@ -16,20 +18,8 @@ int main(int argc, char *argv[]) {
 	
 	// Read parameters
 	if(! GetArg2(argc, argv, "-k", k)) k = 1;
-	int rounds;                           // number of rounds
-	if(! GetArg2(argc, argv, "-rounds", rounds)) rounds = 50;
 	int nc;                               // number of columns in motif
 	if(! GetArg2(argc,argv,"-numcols", nc)) nc = 10;
-	float mthresh;                        // how close clusters are allowed to get
-	if(! GetArg2(argc, argv, "-mthresh", mthresh)) mthresh = 0.9999;
-	float cthresh;                        // how far genes can be from the cluster mean
-	if(! GetArg2(argc, argv, "-cthresh", cthresh)) cthresh = 0.65;
-	int minsize;                          // minimum size for a cluster
-	if(! GetArg2(argc, argv, "-minsize", minsize)) minsize = 10;
-	string bootstrap;
-	if(! GetArg2(argc, argv, "-bootstrap", bootstrap)) bootstrap = "no";
-	int maxmots;
-	if(! GetArg2(argc, argv, "-maxmots", maxmots)) maxmots = 10;
 	
 	string outfile = "";
 	GetArg2(argc, argv, "-o", outfile);
@@ -142,7 +132,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 		// Create a copy of the cluster which we can modify
-		Cluster c1 = c;
+		Cluster c1(c);
 		c1.calc_mean();
 		
 		sc_best_i = a.ace_map_cutoff;
