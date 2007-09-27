@@ -56,8 +56,8 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
   sites_num_seqs=v.size();
   sites_len_seq=new int[sites_num_seqs];
   for(int i=0;i<v.size();i++){
-    sites_len_seq[i]=v[i].length();
-  }
+		sites_len_seq[i]=v[i].length();
+	}
   sites_max_num_sites=0;
   for(int i=0;i<sites_num_seqs;i++){
     sites_max_num_sites+=sites_len_seq[i]/mx;
@@ -157,34 +157,39 @@ void Sites::remove_site(const int c, const int p){
 }
 
 void Sites::calc_freq_matrix(const Seqset& b, int *fm){
-  //fm will have allocation for depth()*ncols()
-  int i,j;
-  char** ss_seq=b.seq_ptr();
-  for(i=0;i<sites_depth*sites_num_cols;i++){
-      fm[i]=0;
+	//fm will have allocation for depth()*ncols()
+  char** ss_seq = b.seq_ptr();
+  for(int i = 0; i < sites_depth * sites_num_cols; i++){
+		fm[i] = 0;
   }
-  for(i=0;i<sites_num;i++){//i = site number
-    int c=sites_chrom[i];
-    int p=sites_posit[i];
-    bool s=sites_strand[i];
-    int col,matpos;
-    if(s){
-      matpos=0;col=0;
-      for(j=0;j<sites_num_cols;j++){//j = position number
-	int seq=ss_seq[c][p+col];
-	fm[matpos+seq]++;
-	col=sites_active_fwd[col];
-	matpos+=sites_depth;
+  for(int i = 0; i < sites_num; i++){ //i = site number
+    int c = sites_chrom[i];
+    int p = sites_posit[i];
+    bool s = sites_strand[i];
+    int col, pos, matpos;
+    if(s) {                              // forward strand
+      matpos = 0;
+			col = 0;
+      pos = 0;
+			for(int j = 0; j < sites_num_cols; j++){ //j = position number
+				pos = p + col;
+				assert(p >= 0 && p < b.len_seq(i));
+				int seq = ss_seq[c][pos];
+				fm[matpos + seq]++;
+				col = sites_active_fwd[col];
+				matpos += sites_depth;
       }
-    }
-    else{
-      matpos=sites_depth-1;
-      col=0;
-      for(j=0;j<sites_num_cols;j++){
-	int seq=ss_seq[c][p+sites_width-1-col];
-	fm[matpos-seq]++;
-	col=sites_active_fwd[col];
-	matpos+=sites_depth;
+    } else {                             // reverse strand
+      matpos = sites_depth - 1;
+      col = 0;
+      pos = 0;
+			for(int j = 0; j < sites_num_cols; j++){
+				pos = p + sites_width - 1 - col;
+				assert(p >= 0 && p < b.len_seq(i));
+				int seq = ss_seq[c][p + sites_width - 1 - col];
+				fm[matpos - seq]++;
+				col = sites_active_fwd[col];
+				matpos += sites_depth;
       }
     }      
   }
