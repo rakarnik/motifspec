@@ -53,6 +53,7 @@ bool is_number(string s);
 double prob_overlap(int x, int y, int i, int t);
 string ace_consensus(const char* file, int mot_num);
 double ace_mapscore(const char* file, int mot_num);
+void out_of_memory();
 #endif
 
 
