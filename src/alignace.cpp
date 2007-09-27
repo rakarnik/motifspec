@@ -110,7 +110,7 @@ void AlignACE::seed_random_sites(const int num) {
   for(int j = 0; j < max_attempts; j++) {
 		ace_ran_int.set_range(0, ace_seqset.num_seqs() - 1);
 		chosen_seq = ace_ran_int.rnum();
-		ace_ran_int.set_range(0, ace_seqset.len_seq(chosen_seq) - 1);
+		ace_ran_int.set_range(0, ace_seqset.len_seq(chosen_seq) - ace_sites.width() - 1);
 		chosen_posit = ace_ran_int.rnum();
 		if(ace_sites.is_open_site(chosen_seq, chosen_posit) && ace_membership[chosen_seq] == 1) {
       double db = ace_ran_dbl.rnum();//random (0,1)
@@ -233,8 +233,10 @@ void AlignACE::single_pass(const double minprob) {
 			matpos = 0;
 			col = 0;
       for(int k = 0; k < ace_sites.ncols(); k++){
-				int seq = ss_seq[g][j+col];
-				Lw *= ace_score_matrix[matpos+seq];
+				assert(j + col >= 0);
+				assert(j + col <= ace_seqset.len_seq(g));
+				int seq = ss_seq[g][j + col];
+				Lw *= ace_score_matrix[matpos + seq];
 				col = ace_sites.next_column(col);
 				matpos += ace_sites.depth();
       }
@@ -242,8 +244,10 @@ void AlignACE::single_pass(const double minprob) {
 			matpos = ace_sites.depth() - 1;
 			col = 0;
       for(int k = 0; k < ace_sites.ncols(); k++){
-				int seq = ss_seq[g][j+ace_sites.width()-1-col];
-				Lc *= ace_score_matrix[matpos-seq];
+				assert(j + ace_sites.width() - 1 - col >= 0);
+				assert(j + ace_sites.width() - 1 - col <= ace_seqset.len_seq(g));
+				int seq = ss_seq[g][j + ace_sites.width() - 1 - col];
+				Lc *= ace_score_matrix[matpos - seq];
 				col = ace_sites.next_column(col);
 				matpos += ace_sites.depth();
       }
@@ -263,10 +267,14 @@ void AlignACE::single_pass(const double minprob) {
 			if (r > F)
 				continue;
 			else if (r < Pw) {
+				assert(j >= 0);
+				assert(j <= ace_seqset.len_seq(g) - ace_sites.width());
 				ace_sites.add_site(g, j, true);
 				gadd = g;
 				jadd = j;
 			} else {
+				assert(j >= 0);
+				assert(j <= ace_seqset.len_seq(g) - ace_sites.width());
 				ace_sites.add_site(g, j, false);
 				gadd = g;
 				jadd = j;
