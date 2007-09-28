@@ -103,18 +103,29 @@ void AlignACE::seed_random_sites(const int num) {
 	int max_attempts = 5 * num;
   ace_sites.clear_sites();
   int chosen_seq, chosen_posit;
-  bool watson;
+  bool valid = false;
+	bool watson;
 	
 	chosen_seq = chosen_posit = -1;
 	
   for(int j = 0; j < max_attempts; j++) {
 		ace_ran_int.set_range(0, ace_seqset.num_seqs() - 1);
-		chosen_seq = ace_ran_int.rnum();
+		valid = false;
+		while(! valid) {
+			chosen_seq = ace_ran_int.rnum();
+			valid = ace_membership[chosen_seq] == 1
+					&& ace_seqset.len_seq(chosen_seq) > ace_sites.width();
+		}
 		ace_ran_int.set_range(0, ace_seqset.len_seq(chosen_seq) - ace_sites.width() - 1);
-		chosen_posit = ace_ran_int.rnum();
-		if(ace_sites.is_open_site(chosen_seq, chosen_posit) && ace_membership[chosen_seq] == 1) {
-      double db = ace_ran_dbl.rnum();//random (0,1)
-      watson = (db > 0.5);
+		double db = ace_ran_dbl.rnum();//random (0,1)
+		watson = (db > 0.5);
+		valid = false;
+		while(! valid) {
+			chosen_posit = ace_ran_int.rnum();
+			valid = ((chosen_posit > ace_sites.width() && ! watson)
+				|| ((chosen_posit < ace_seqset.len_seq(chosen_seq) - ace_sites.width() - 1) && watson));
+		}
+		if(ace_sites.is_open_site(chosen_seq, chosen_posit)) {
       ace_sites.add_site(chosen_seq, chosen_posit, watson);
       if(ace_sites.number()==num) break;
     }
