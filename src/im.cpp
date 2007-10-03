@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[] = {0.65, 0.50, 0.50};
+	double corr_cutoff[] = {0, 0.75, 0.60, 0.50, 0.50};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
@@ -138,14 +138,25 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 		sc_best_i = a.ace_map_cutoff;
     i_worse = 0;
     int phase = 0;
-    
+    int old_phase = 0;
+		
 		sync_ace_members(*c1, a);
 		a.ace_sites.clear_sites();
 		a.ace_select_sites.clear_sites();
 		a.seed_random_sites(1);
 		
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
-			if(phase == 3) {
+			if(old_phase < phase) {
+				if(a.ace_members > 5) {
+					sync_cluster(*c1, a);
+					sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
+				}
+				print_ace_status(cerr, a, i, phase, sc);
+				old_phase = phase;
+			}
+			if(phase == 4) {
+				sync_cluster(*c1, a);
+				sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
 				double sc1 = a.map_score();
 				sc = 0.0;
 				for(int z = 0; sc < sc1 && z < 5; z++){
@@ -159,7 +170,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				}
 				a.ace_archive.consider_motif(a.ace_sites, sc);
 				print_ace_status(cerr, a, i, phase, sc);
-				cerr << "\t\t\tReached phase 3! Restarting..." << endl;
+				cerr << "\t\t\tReached phase 4! Restarting..." << endl;
 				break;
       }
       if(i_worse == 0)
@@ -215,10 +226,6 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
       }
 			
 			if(i == 1 || i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
-			if(phase > 1 && i % 50 == 0) {
-				sync_cluster(*c1, a);
-				sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
-			}
 		}
 		
 		delete c1;
