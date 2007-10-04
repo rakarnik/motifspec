@@ -56,7 +56,7 @@ class AlignACE{
 
 	AlignACE();
   ~AlignACE();
-	void init(const vector<string>& v, const int nc=10, const int bf=100, const double map_cut=-20.0, const double sim_cut=0.8);
+	void init(const vector<string>& v, const int nc=10, const int bf=1000, const double map_cut=-20.0, const double sim_cut=0.8);
   void modify_params(int argc, char *argv[]);
   void output(ostream &fout);
   static void print_usage(ostream &fout);
