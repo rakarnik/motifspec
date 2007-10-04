@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 	}
 	
 	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints" << endl;
-	
+	/*
 	vector<string> clusnames;
 	cerr << "Reading cluster data from '" << clusfile << "'... ";
   get_cluster(clusfile.c_str(), k, clusnames);
@@ -84,13 +84,16 @@ int main(int argc, char *argv[]) {
 			index++;
 		}
 	}
+	*/
 	
 	cerr << "Setting up adjustment cluster... ";
 	Cluster c;
+	/*
 	c.init(expr, npoints, nameset2);
 	c.add_genes(clusgenes, nclusgenes); 
 	c.calc_mean();
 	cerr << "done." << endl;
+	*/
 	
 	stringstream outstream, tmpstream;
 	outstream << k << ".adj.ace";
@@ -117,53 +120,55 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[] = {0, 0.75, 0.60, 0.50, 0.50};
+	double corr_cutoff[] = {0.90, 0.80, 0.70, 0.50, 0.50};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
 	
 	// Use the final search neighborhood to decide the number of runs
-	sync_ace_neighborhood(c, a, corr_cutoff[3]);
-	int nruns = a.ace_sites.positions_available(a.ace_membership)
+	// sync_ace_neighborhood(c, a, corr_cutoff[3]);
+	int nruns = a.ace_sites.positions_available()
 	            / a.ace_params.ap_expect
 							/ a.ace_sites.ncols()
 							/ a.ace_params.ap_undersample
 							* a.ace_params.ap_oversample;
 	
 	// Reset the search area strictly to cluster members
-	sync_ace_members(c, a);
+	// sync_ace_members(c, a);
 	
 	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 		// Create a copy of the cluster which we can modify
-		Cluster* c1 = new Cluster(c);
-		c1->calc_mean();
+		//Cluster* c1 = new Cluster(c);
+		Cluster* c1 = new Cluster();
+		c1->init(expr, npoints, nameset);
 		
 		sc_best_i = a.ace_map_cutoff;
     i_worse = 0;
     int phase = 0;
     int old_phase = 0;
 		
-		sync_ace_members(*c1, a);
+		// sync_ace_members(*c1, a);
 		a.ace_sites.clear_sites();
 		a.ace_select_sites.clear_sites();
+		for(int g = 0; g < ngenes; g++)
+			a.add_possible(g);
 		a.seed_random_sites(1);
+		sync_cluster(*c1, a);
+		sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
 		
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(old_phase < phase) {
-				if(a.ace_members > 5) {
-					sync_cluster(*c1, a);
-					sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
-					print_ace_status(cerr, a, i, phase, sc);
-					old_phase = phase;
-				} else {
-					cerr << "\t\t\tLess than five sites at beginning of phase! Restarting..." << endl; 
-					break;
-				}
-			}
-			if(phase == 3) {
 				sync_cluster(*c1, a);
 				sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
+				print_ace_status(cerr, a, i, phase, sc);
+				old_phase = phase;
+			}
+			if(phase == 3) {
+				if (a.ace_sites.number() < 5) {
+					cerr << "\t\t\tReached phase 3 and not enough sites! Restarting..." << endl;
+					break;
+				}
 				double sc1 = a.map_score();
 				sc = 0.0;
 				for(int z = 0; sc < sc1 && z < 5; z++){
@@ -177,7 +182,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				}
 				a.ace_archive.consider_motif(a.ace_sites, sc);
 				print_ace_status(cerr, a, i, phase, sc);
-				cerr << "\t\t\tReached phase 3! Restarting..." << endl;
+				cerr << "\t\t\tCompleted phase 3! Restarting..." << endl;
 				break;
       }
       if(i_worse == 0)
