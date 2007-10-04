@@ -122,12 +122,16 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
   int i_worse;
   Sites best_sites = a.ace_sites;
 	
-	sync_ace_members(c, a);
-	int nruns = a.ace_sites.positions_available()
+	// Use the final search neighborhood to decide the number of runs
+	sync_ace_neighborhood(c, a, corr_cutoff[3]);
+	int nruns = a.ace_sites.positions_available(a.ace_membership)
 	            / a.ace_params.ap_expect
 							/ a.ace_sites.ncols()
 							/ a.ace_params.ap_undersample
 							* a.ace_params.ap_oversample;
+	
+	// Reset the search area strictly to cluster members
+	sync_ace_members(c, a);
 	
 	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
@@ -150,11 +154,14 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				if(a.ace_members > 5) {
 					sync_cluster(*c1, a);
 					sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
+					print_ace_status(cerr, a, i, phase, sc);
+					old_phase = phase;
+				} else {
+					cerr << "\t\t\tLess than five sites at beginning of phase! Restarting..." << endl; 
+					break;
 				}
-				print_ace_status(cerr, a, i, phase, sc);
-				old_phase = phase;
 			}
-			if(phase == 4) {
+			if(phase == 3) {
 				sync_cluster(*c1, a);
 				sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
 				double sc1 = a.map_score();
@@ -170,7 +177,7 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				}
 				a.ace_archive.consider_motif(a.ace_sites, sc);
 				print_ace_status(cerr, a, i, phase, sc);
-				cerr << "\t\t\tReached phase 4! Restarting..." << endl;
+				cerr << "\t\t\tReached phase 3! Restarting..." << endl;
 				break;
       }
       if(i_worse == 0)
