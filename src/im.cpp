@@ -134,7 +134,7 @@ void doit(const char* outfile, Cluster& c, AlignACE& a, vector<string>& nameset)
 	// Reset the search area strictly to cluster members
 	// sync_ace_members(c, a);
 	
-	for(int j = 1; j <= 100; j++) {
+	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 		// Create a copy of the cluster which we can modify
 		//Cluster* c1 = new Cluster(c);
@@ -212,7 +212,6 @@ void doit(const char* outfile, Cluster& c, AlignACE& a, vector<string>& nameset)
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;
 				cmp = a.ace_archive.check_motif(a.ace_sites, sc);
-				cerr << "\t\t\tcmp=" << cmp << endl;
 				if(cmp > a.ace_sim_cutoff) {
 					print_ace_status(cerr, a, i, phase, sc);
 					cerr <<"\t\t\tToo similar! Restarting..." << endl;
