@@ -95,13 +95,6 @@ int main(int argc, char *argv[]) {
 	cerr << "done." << endl;
 	*/
 	
-	stringstream outstream, tmpstream;
-	outstream << k << ".adj.ace";
-	tmpstream << k << ".tmp.ace";
-	string outstr, tmpstr;
-	outstream >> outstr;
-	tmpstream >> tmpstr;
-	
 	cerr << "Setting up AlignACE... ";
 	AlignACE a;
 	a.init(seqs, nc);
@@ -111,16 +104,22 @@ int main(int argc, char *argv[]) {
 	cerr << "done." << endl;
 	
 	cerr << "Adjusting clusters using sequence information... " << endl;
-	doit(tmpstr.c_str(), c, a, nameset1);
+	doit(c, a, nameset1);
 	cerr << "done." << endl;
 	
-	ofstream out(outstr.c_str(), ios::trunc);
-	print_ace(out, a, nameset1);
-	out.close();
+	string outstr(outfile);
+	if(outfile != "") {
+		outstr.append(".adj.ace");
+		ofstream out(outstr.c_str(), ios::trunc);
+		print_ace(out, a, nameset1);
+		out.close();
+	} else {
+		print_ace(cerr, a, nameset1);
+	}
 }
 
-void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[] = {0.90, 0.80, 0.70, 0.60};
+void doit(Cluster& c, AlignACE& a, vector<string>& nameset) {
+	double corr_cutoff[] = {0.65, 0.60, 0.50, 0.50};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
@@ -148,7 +147,6 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
     int phase = 0;
     int old_phase = 0;
 		
-		// sync_ace_members(*c1, a);
 		a.ace_sites.clear_sites();
 		a.ace_select_sites.clear_sites();
 		for(int g = 0; g < ngenes; g++)
@@ -306,11 +304,15 @@ void sync_ace_members(const Cluster& c, AlignACE& a) {
 
 void sync_ace_neighborhood(const Cluster& c, AlignACE& a, double mincorr) {
 	// cerr << "\t\t\t\tSyncing AlignACE with cluster neighborhood... ";
+	int count = 0;
 	a.clear_possible();
 	for(int g = 0; g < ngenes; g++) {
-		if(c.corr(expr[g]) > mincorr)
+		if(c.corr(expr[g]) > mincorr) {
 			a.add_possible(g);
+			count++;
+		}
 	}
+	// cerr << "\t\t\t\tSearch neighborhood with corr > " << mincorr << " contains " << count << " genes" << endl; 
 	// cerr << "done." << endl;
 }
 
