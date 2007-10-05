@@ -20,8 +20,8 @@ struct AlignACEParams{
   double ap_pseudo[6];
   int ap_maxlen;//maximum length of sites
   int ap_npass;
-  int ap_minpass[3];
-  double ap_sitecut[3];
+  int ap_minpass[5];
+  double ap_sitecut[5];
   int ap_nruns;
   bool ap_fragment;
   int ap_seed;

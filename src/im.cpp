@@ -88,8 +88,8 @@ int main(int argc, char *argv[]) {
 	
 	cerr << "Setting up adjustment cluster... ";
 	Cluster c;
-	/*
 	c.init(expr, npoints, nameset2);
+	/*
 	c.add_genes(clusgenes, nclusgenes); 
 	c.calc_mean();
 	cerr << "done." << endl;
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[] = {0.90, 0.80, 0.70, 0.50, 0.50};
+	double corr_cutoff[] = {0.90, 0.80, 0.70, 0.60};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
@@ -164,9 +164,9 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				print_ace_status(cerr, a, i, phase, sc);
 				old_phase = phase;
 			}
-			if(phase == 3) {
+			if(phase == 4) {
 				if (a.ace_sites.number() < 5) {
-					cerr << "\t\t\tReached phase 3 and not enough sites! Restarting..." << endl;
+					cerr << "\t\t\tReached phase 5 and not enough sites! Restarting..." << endl;
 					break;
 				}
 				double sc1 = a.map_score();
@@ -202,11 +202,13 @@ void doit(const char* filename, Cluster& c, AlignACE& a, vector<string>& nameset
 				continue;
       }
       if(i<=3) continue;
-			if(a.column_sample(0)) {}
-      if(a.column_sample(a.ace_sites.width()-1)) {}
-      for(int m = 0; m < 3; m++) {
-				if(!(a.column_sample())) break;
-      }
+			if(phase < 2) {
+				if(a.column_sample(0)) {}
+				if(a.column_sample(a.ace_sites.width()-1)) {}
+				for(int m = 0; m < 3; m++) {
+					if(!(a.column_sample())) break;
+				}
+			}
       sc = a.map_score();
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;

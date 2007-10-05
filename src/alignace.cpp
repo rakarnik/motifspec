@@ -60,9 +60,13 @@ void AlignACE::set_final_params(){
   ace_params.ap_maxlen=3*ace_sites.width();
   double ap=(double)ace_params.ap_expect/(2.0*ace_sites.positions_available());
   ace_params.ap_minpass[1]=2*ace_params.ap_minpass[0];
-  ace_params.ap_minpass[2]=5*ace_params.ap_minpass[0];
+  ace_params.ap_minpass[2]=3*ace_params.ap_minpass[0];
+	ace_params.ap_minpass[3]=4*ace_params.ap_minpass[0];
+	ace_params.ap_minpass[4]=5*ace_params.ap_minpass[0];
   ace_params.ap_sitecut[0]=ap*5.0;//10.0*ap;
-	ace_params.ap_sitecut[2]=0.2;
+	ace_params.ap_sitecut[4]=0.2;
+	ace_params.ap_sitecut[2]=sqrt(ace_params.ap_sitecut[0]*ace_params.ap_sitecut[4]);
+	ace_params.ap_sitecut[3]=sqrt(ace_params.ap_sitecut[2]*ace_params.ap_sitecut[4]);
 	ace_params.ap_sitecut[1]=sqrt(ace_params.ap_sitecut[0]*ace_params.ap_sitecut[2]);
 	ace_params.ap_nruns=ace_sites.positions_available()/ace_params.ap_expect/ace_sites.ncols()/ace_params.ap_undersample*ace_params.ap_oversample;
 	ace_params.ap_select=5.0;
