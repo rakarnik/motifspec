@@ -6,12 +6,16 @@ int main(int argc, char *argv[]) {
 	string seqfile;                       // file with sequences
 	string exprfile;                      // file with expression data
 	string clusfile;
+	string outfile;
 	if(argc < 6) {
     print_usage(cout);
     exit(0);
   }
 	
-	if ((! GetArg2(argc, argv, "-s", seqfile)) || (! GetArg2(argc, argv, "-e", exprfile)) || (! GetArg2(argc, argv, "-c", clusfile))) {
+	if ((! GetArg2(argc, argv, "-s", seqfile)) 
+				|| (! GetArg2(argc, argv, "-e", exprfile)) 
+				|| (! GetArg2(argc, argv, "-c", clusfile))
+				|| (! GetArg2(argc, argv, "-o", outfile))) {
 		print_usage(cout);
     exit(0);
 	}
@@ -20,9 +24,6 @@ int main(int argc, char *argv[]) {
 	if(! GetArg2(argc, argv, "-k", k)) k = 1;
 	int nc;                               // number of columns in motif
 	if(! GetArg2(argc,argv,"-numcols", nc)) nc = 10;
-	
-	string outfile = "";
-	GetArg2(argc, argv, "-o", outfile);
 	
   vector<string> seqs, nameset1;
   cerr << "Reading sequence data from '" << seqfile << "'... ";
@@ -104,21 +105,19 @@ int main(int argc, char *argv[]) {
 	cerr << "done." << endl;
 	
 	cerr << "Adjusting clusters using sequence information... " << endl;
-	doit(c, a, nameset1);
+	string tmpstr(outfile);
+	tmpstr.append(".tmp.ace");
+	doit(tmpstr.c_str(), c, a, nameset1);
 	cerr << "done." << endl;
 	
 	string outstr(outfile);
-	if(outfile != "") {
-		outstr.append(".adj.ace");
-		ofstream out(outstr.c_str(), ios::trunc);
-		print_ace(out, a, nameset1);
-		out.close();
-	} else {
-		print_ace(cerr, a, nameset1);
-	}
+	outstr.append(".adj.ace");
+	ofstream out(outstr.c_str(), ios::trunc);
+	print_ace(out, a, nameset1);
+	out.close();
 }
 
-void doit(Cluster& c, AlignACE& a, vector<string>& nameset) {
+void doit(const char* outfile, Cluster& c, AlignACE& a, vector<string>& nameset) {
 	double corr_cutoff[] = {0.65, 0.60, 0.50, 0.50};
   double sc, cmp, sc_best_i;
   int i_worse;
@@ -135,7 +134,7 @@ void doit(Cluster& c, AlignACE& a, vector<string>& nameset) {
 	// Reset the search area strictly to cluster members
 	// sync_ace_members(c, a);
 	
-	for(int j = 1; j <= nruns; j++) {
+	for(int j = 1; j <= 100; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 		// Create a copy of the cluster which we can modify
 		//Cluster* c1 = new Cluster(c);
@@ -162,7 +161,7 @@ void doit(Cluster& c, AlignACE& a, vector<string>& nameset) {
 				print_ace_status(cerr, a, i, phase, sc);
 				old_phase = phase;
 			}
-			if(phase == 4) {
+			if(phase == 3) {
 				if (a.ace_sites.number() < 5) {
 					cerr << "\t\t\tReached phase 5 and not enough sites! Restarting..." << endl;
 					break;
@@ -173,14 +172,16 @@ void doit(Cluster& c, AlignACE& a, vector<string>& nameset) {
 					a.optimize_columns();
 					a.optimize_sites();
 					sc = a.map_score();
+					print_ace_status(cerr, a, i, phase, sc);
 				}
 				if(sc < sc1) {
 					a.ace_sites = best_sites;
 					sc = sc1;
 				}
-				a.ace_archive.consider_motif(a.ace_sites, sc);
+				sc = a.map_score();
 				print_ace_status(cerr, a, i, phase, sc);
-				cerr << "\t\t\tCompleted phase 3! Restarting..." << endl;
+				a.ace_archive.consider_motif(a.ace_sites, sc);
+				cerr << "\t\t\tCompleted phase 5! Restarting..." << endl;
 				break;
       }
       if(i_worse == 0)
@@ -211,6 +212,7 @@ void doit(Cluster& c, AlignACE& a, vector<string>& nameset) {
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;
 				cmp = a.ace_archive.check_motif(a.ace_sites, sc);
+				cerr << "\t\t\tcmp=" << cmp << endl;
 				if(cmp > a.ace_sim_cutoff) {
 					print_ace_status(cerr, a, i, phase, sc);
 					cerr <<"\t\t\tToo similar! Restarting..." << endl;
@@ -240,6 +242,10 @@ void doit(Cluster& c, AlignACE& a, vector<string>& nameset) {
 			if(i == 1 || i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
 		}
 		
+		if(j % 100 == 0) {
+			ofstream out(outfile, ios::trunc);
+			print_ace(out, a, nameset);
+		}
 		delete c1;
 	}
 }

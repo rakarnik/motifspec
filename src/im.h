@@ -17,7 +17,7 @@ struct model {
 	AlignACE& a;
 };
 
-void doit(Cluster& c, AlignACE& a, vector<string>& nameset);
+void doit(const char* outfile, Cluster& c, AlignACE& a, vector<string>& nameset);
 void print_clusters(ostream& out, const vector<string>& nameset);
 void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset);
 void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset);

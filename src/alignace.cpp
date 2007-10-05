@@ -19,6 +19,7 @@ void AlignACE::init(const vector<string>& v, const int nc, const int bf, const d
   ace_seqset.init(v);
 	ace_sites.init(v, nc, nc);
 	ace_select_sites.init(v, nc);
+	ace_print_sites.init(v, nc, nc);
 	ace_archive.init(ace_sites,ace_seqset,bf,map_cut,sim_cut);
 	set_default_params();
   ace_max_motifs=bf;
@@ -589,31 +590,56 @@ void AlignACE::optimize_sites(){
   delete [] str;
 }
 
-
 void AlignACE::orient_motif(){
-  int i,j;
-  double *info=new double[6];
-  double *freq=new double[6];
-  for(i=0;i<6;i++) info[i]=0.0;
-  int d=ace_sites.depth();
+  double *info = new double[6];
+  double *freq = new double[6];
+  for(int i = 0; i < 6; i++) info[i] = 0.0;
+  int d = ace_sites.depth();
 	
-  double tot=(double)ace_sites.number()+ace_params.ap_npseudo;
-  ace_sites.calc_freq_matrix(ace_seqset,ace_freq_matrix);
-  for(i=0;i<d*ace_sites.ncols();i+=d){
-    double ii=0.0;
-    for(j=1;j<=4;j++){
-      int x=ace_freq_matrix[i]+ace_freq_matrix[i+5];
-      freq[j]=(ace_freq_matrix[i+j]+x*ace_params.ap_backfreq[j]+ace_params.ap_pseudo[j])/tot;
-      ii+=freq[j]*log(freq[j]);
+  double tot = (double)ace_sites.number() + ace_params.ap_npseudo;
+  ace_sites.calc_freq_matrix(ace_seqset, ace_freq_matrix);
+  for(int i = 0; i < d * ace_sites.ncols(); i += d){
+    double ii = 0.0;
+    for(int j = 1; j <= 4; j++) {
+      int x = ace_freq_matrix[i] + ace_freq_matrix[i+5];
+      freq[j] = (ace_freq_matrix[i + j] + x * ace_params.ap_backfreq[j] + ace_params.ap_pseudo[j]) / tot;
+      ii += freq[j]*log(freq[j]);
     }
-    ii=2+ii;
-    for(j=1;j<=4;j++) info[j]+=freq[j]*ii;
+    ii = 2 + ii;
+    for(int j = 1; j <= 4; j++) info[j] += freq[j] * ii;
   }
 	
-  double flip=1.5*info[3]+1.0*info[1]-1.0*info[4]-1.5*info[2];
+  double flip = 1.5 * info[3] + 1.0 * info[1] - 1.0 * info[4] - 1.5 * info[2];
   //for(i=1;i<5;i++) cerr<<info[i]<<'\t';
   //cerr<<flip<<'\n';
-  if(flip<0.0) ace_sites.flip_sites();
+  if(flip < 0.0) ace_sites.flip_sites();
+  delete [] info;
+  delete [] freq;
+}
+
+void AlignACE::orient_print_motif(){
+  double *info = new double[6];
+  double *freq = new double[6];
+  for(int i = 0; i < 6; i++) info[i] = 0.0;
+  int d = ace_print_sites.depth();
+	
+  double tot = (double) ace_print_sites.number() + ace_params.ap_npseudo;
+  ace_print_sites.calc_freq_matrix(ace_seqset, ace_freq_matrix);
+  for(int i = 0; i < d * ace_print_sites.ncols(); i += d){
+    double ii = 0.0;
+    for(int j = 1; j <= 4; j++) {
+      int x = ace_freq_matrix[i] + ace_freq_matrix[i+5];
+      freq[j] = (ace_freq_matrix[i + j] + x * ace_params.ap_backfreq[j] + ace_params.ap_pseudo[j]) / tot;
+      ii += freq[j]*log(freq[j]);
+    }
+    ii = 2 + ii;
+    for(int j = 1; j <= 4; j++) info[j] += freq[j] * ii;
+  }
+	
+  double flip = 1.5 * info[3] + 1.0 * info[1] - 1.0 * info[4] - 1.5 * info[2];
+  //for(i=1;i<5;i++) cerr<<info[i]<<'\t';
+  //cerr<<flip<<'\n';
+  if(flip < 0.0) ace_print_sites.flip_sites();
   delete [] info;
   delete [] freq;
 }
@@ -675,48 +701,51 @@ string AlignACE::consensus() {
 
 void AlignACE::output(ostream &fout){
   map<char,char> nt;
-  nt[0]=nt[5]='N';
-  nt[1]='A';nt[2]='C';nt[3]='G';nt[4]='T';
-  int i,j,k;
-  char** ss_seq=ace_seqset.seq_ptr();
-  int x=ace_params.ap_flanking;
-  for(i=0;i<ace_sites.number();i++){
-    int c=ace_sites.chrom(i);
-    int p=ace_sites.posit(i);
-    bool s=ace_sites.strand(i);
-    for(j=-x;j<ace_sites.width()+x;j++){
+  nt[0] = nt[5] = 'N';
+  nt[1] = 'A';
+	nt[2] = 'C';
+	nt[3] = 'G';
+	nt[4] = 'T';
+  char** ss_seq = ace_seqset.seq_ptr();
+  int x = ace_params.ap_flanking;
+  for(int i = 0; i < ace_print_sites.number(); i++){
+    int c = ace_print_sites.chrom(i);
+    int p = ace_print_sites.posit(i);
+    bool s = ace_print_sites.strand(i);
+    for(int j = -x; j < ace_print_sites.width() + x; j++){
       if(s) {
-				if(p+j>=0&&p+j<ace_seqset.len_seq(c))
-					fout<<nt[ss_seq[c][p+j]];
-				else fout<<' ';
+				if(p + j >= 0 && p + j < ace_seqset.len_seq(c))
+					fout << nt[ss_seq[c][p + j]];
+				else fout << ' ';
       }
       else {
-				if(p+ace_sites.width()-1-j>=0&&p+ace_sites.width()-1-j<ace_seqset.len_seq(c))
-					fout<<nt[ace_sites.depth()-1-ss_seq[c][p+ace_sites.width()-1-j]];
-				else fout<<' ';
+				if(p + ace_print_sites.width() - 1 - j >= 0 && p + ace_print_sites.width()-1-j < ace_seqset.len_seq(c))
+					fout << nt[ace_print_sites.depth() - 1 - ss_seq[c][p + ace_print_sites.width() - 1 - j]];
+				else fout << ' ';
       }
     }
-    fout<<'\t'<<c<<'\t'<<p<<'\t'<<s<<'\n';
+    fout << '\t' << c << '\t' << p << '\t' << s << '\n';
   }
-  for(i=0;i<x;i++) fout<<' ';
-  for(i=0;;){
-    j=ace_sites.next_column(i);
-    fout<<'*';
-    if(i==ace_sites.width()-1) break;
-    for(k=0;k<(j-i-1);k++) fout<<' ';
-    i=j;
+  for(int i = 0; i < x; i++) fout << ' ';
+  int j = 0;
+	for(int i = 0;;){
+    j = ace_print_sites.next_column(i);
+    fout << '*';
+    if(i == ace_print_sites.width() - 1) break;
+    for(int k = 0; k < (j - i - 1); k++) fout << ' ';
+    i = j;
   }
-  fout<<"\n";
+  fout << "\n";
 }
 
 void AlignACE::full_output(ostream &fout){
-  for(int j=0;j<ace_max_motifs;j++){
-    double sc=get_best_motif(j);
-    orient_motif();
-    if(sc>0.0){
-      fout<<"Motif "<<j+1<<'\n';
+  for(int j = 0; j < ace_max_motifs; j++){
+    double sc = ace_archive.return_best(ace_print_sites, j);
+    orient_print_motif();
+    if(sc > 0.0){
+      fout << "Motif " << j + 1 << '\n';
       output(fout);
-      fout<<"MAP Score: "<<sc<<"\n\n";
+      fout << "MAP Score: " << sc << "\n\n";
     }
     else break;
   }

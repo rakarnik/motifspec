@@ -45,6 +45,7 @@ class AlignACE{
   Seqset ace_seqset;
   Sites ace_sites;
   Sites ace_select_sites;
+	Sites ace_print_sites;
   ArchiveSites ace_archive;
 	
 	int* ace_membership;
@@ -85,6 +86,7 @@ class AlignACE{
 	void optimize_columns();
   void optimize_sites();
   void orient_motif();
+	void orient_print_motif();
 	void debug_check_columns();
 };
 
