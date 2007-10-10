@@ -243,6 +243,47 @@ double  bico(long N,long k)
 double  lnbico(register long N, register long k)
 { return lnfact(N)-lnfact(k)-lnfact(N-k); }
 
+float corr(const float* expr1, const float* expr2, const int num, const int jindex) {
+	int i;
+	float u1, u2;
+	float s1, s2;
+	float c;
+	u1 = u2 = s1 = s2 = c = 0.0;
+	for (i = 0; i < num; i++) {
+		if(i != jindex) {
+			u1 += expr1[i];
+			u2 += expr2[i];
+			s1 += expr1[i] * expr1[i];
+			s2 += expr2[i] * expr2[i];
+		}
+	}
+	u1 /= num;
+	u2 /= num;
+	for (i = 0; i < num; i++) {
+		if(i != jindex)
+			c += (expr1[i] - u1) * (expr2[i] - u2);
+	}
+	s1 = s1/num - u1 * u1;
+	s2 = s2/num - u2 * u2;
+	if (s1 > 0 && s2 > 0) {
+		c /= sqrt(s1 * s2);
+		c /= num;
+	} else {
+		c = 0;
+	}
+	return c;
+}
+
+float jack_corr(const float* expr1, const float* expr2, const int num) {
+	float ret = 1;
+	float c = 0;
+	for(int i = 0; i < num; i++) {
+		c = corr(expr1, expr2, num, i);
+		if(c < ret) ret = c;
+	}
+	return ret;
+}
+
 double	lnfact(long n)
 /* static variables are guaranteed to be initialized to zero */
 {

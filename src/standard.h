@@ -46,6 +46,8 @@ double gammaln(double x);
 double  lnfact(long n);
 double  bico(long N,long k);
 double  lnbico(register long N, register long k);
+float corr(const float* expr1, const float* expr2, const int num, const int jindex = -1);
+float jack_corr(const float* expr1, const float* expr2, const int num);
 double find_cutoff(double sum, double sumsq, int num, int num_sdevs_below);
 int number_motifs(const char* file);
 int number_lines_beg(const char* file, string k);
