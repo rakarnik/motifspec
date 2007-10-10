@@ -48,7 +48,7 @@ class AlignACE{
 	Sites ace_print_sites;
   ArchiveSites ace_archive;
 	
-	int* ace_membership;
+	bool* ace_membership;
 	int ace_members;
 
   int *ace_freq_matrix;
@@ -72,7 +72,8 @@ class AlignACE{
 	void add_possible(int poss);
 	void remove_possible(int poss);
 	void clear_possible();
-  void seed_random_sites(const int num);
+	bool is_possible(int poss);
+  void seed_random_site();
   void seed_biased_site();
   void calc_matrix();
 	string consensus();
