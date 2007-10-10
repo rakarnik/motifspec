@@ -98,32 +98,8 @@ void Cluster::calc_mean() {
 	}
 }
 
-float Cluster::corr (const float* pattern) const {
-	int i;
-	float u1, u2;
-	float s1, s2;
-	float c;
-	u1 = u2 = s1 = s2 = c = 0.0;
-	for (i = 0; i < npoints; i++) {
-		u1 += mean[i];
-		u2 += pattern[i];
-		s1 += mean[i] * mean[i];
-		s2 += pattern[i] * pattern[i];
-	}
-	u1 /= npoints;
-	u2 /= npoints;
-	for (i = 0; i < npoints; i++) {
-		c += (mean[i] - u1) * (pattern[i] - u2);
-	}
-	s1 = s1/npoints - u1 * u1;
-	s2 = s2/npoints - u2 * u2;
-	if (s1 > 0 && s2 > 0) {
-		c /= sqrt(s1 * s2);
-		c /= npoints;
-	} else {
-		c = 0;
-	}
-	return c;
+float Cluster::corrmean(const float* pattern) const {
+	return corr(mean, pattern, npoints);
 }
 
 void Cluster::genes(int* genes) const {
