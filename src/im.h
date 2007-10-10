@@ -10,6 +10,7 @@ int k;                     // the number of clusters
 int ngenes;                // the number of genes
 int npoints;               // the number of data points
 float** expr;              // the expression data
+float** jcorr;             // the pairwise jackknife correlation value
 
 struct model {
 	int num;
@@ -17,14 +18,12 @@ struct model {
 	AlignACE& a;
 };
 
-void doit(const char* outfile, Cluster& c, AlignACE& a, vector<string>& nameset);
+void doit(const char* outfile, AlignACE& a, vector<string>& nameset);
 void print_clusters(ostream& out, const vector<string>& nameset);
 void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset);
 void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset);
 void print_ace_status(ostream& out, AlignACE& a, const int i, const int phase, const double sc);
 void print_motifs(ostream& out, const vector<string>& nameset);
 void print_usage(ostream& fout);
-void sync_ace_members(const Cluster& c, AlignACE& a);
-void sync_ace_neighborhood(const Cluster& c, AlignACE& a, double mincorr);
-void sync_cluster(Cluster& c, const AlignACE& a);
-void debug_check_columns(AlignACE& a);
+void expand_ace_search(AlignACE& a, double mincorr);
+float jcorr_lookup(const int g1, const int g2);

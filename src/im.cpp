@@ -55,46 +55,47 @@ int main(int argc, char *argv[]) {
 	}
 	
 	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints" << endl;
-	/*
-	vector<string> clusnames;
-	cerr << "Reading cluster data from '" << clusfile << "'... ";
-  get_cluster(clusfile.c_str(), k, clusnames);
-	cerr << "done.\n";
+
 	
-	int nclusgenes = clusnames.size();
-	cerr << nclusgenes << " genes read for cluster " << k << endl;
-	
-	cerr << "Checking cluster genes..." << endl;
-	vector<string>::iterator result;
-	int notfound = 0;
-	for (int g = 0; g < nclusgenes; g++) {
-		if(find(nameset1.begin(), nameset1.end(), clusnames[g]) == nameset1.end()) {
-			cerr << "\t\tGene '" << clusnames[g] << "' in cluster not found in dataset" << endl;
-			notfound++;
+	jcorr = new float*[ngenes];
+	for(int i = 0; i < ngenes; i++) {
+		jcorr[i] = new float[ngenes];
+		for(int j = 0; j < ngenes; j++) {
+			jcorr[i][j] = - 2;
 		}
 	}
-	cerr << "done." << endl;
-	if(notfound > 0) cerr << notfound << " genes were not found in the dataset" << endl;
 	
-	nclusgenes -= notfound;
-	int clusgenes[nclusgenes];
-	int index = 0;
-	for (int g = 0; g < ngenes; g++) {
-		if(find(clusnames.begin(), clusnames.end(), nameset1[g]) != clusnames.end()) {
-			clusgenes[index] = g;
-			index++;
+	float jc = 0;
+	jcorr = new float*[ngenes];
+	for(int i = 0; i < ngenes; i++) {
+		jcorr[i] = new float[ngenes];
+	}
+	/*
+	ofstream jcorrout("jcorr.out");
+	for(int i = 0; i < ngenes; i++) {
+		cerr << "Computing correlation for gene " << i << endl;
+		for(int j = i + 1; j < ngenes; j++) {
+			jc = jack_corr(expr[i], expr[j], npoints);
+			jcorr[i][j] = jcorr[j][i] = jc;
+			jcorrout << i << '\t' << j << '\t' << jcorr[i][j] << endl;
+			jcorrout << j << '\t' << i << '\t' << jcorr[i][j] << endl;
 		}
 	}
 	*/
 	
-	cerr << "Setting up adjustment cluster... ";
-	Cluster c;
-	c.init(expr, npoints, nameset2);
-	/*
-	c.add_genes(clusgenes, nclusgenes); 
-	c.calc_mean();
-	cerr << "done." << endl;
-	*/
+	ifstream corrin("jcorr.out");
+	int corrcount = 0;
+	string line;
+	vector<string> values;
+	while(getline(corrin, line)) {
+		values = split(line, '\t');
+		int i = atoi(values[0].c_str());
+		int j = atoi(values[1].c_str());
+		float jc = atof(values[2].c_str());
+		jcorr[i][j] = jcorr[j][i] = jc;
+		corrcount++;
+	}
+	cerr << "Read " << corrcount << " correlation values" << endl;
 	
 	cerr << "Setting up AlignACE... ";
 	AlignACE a;
@@ -104,11 +105,9 @@ int main(int argc, char *argv[]) {
 	a.ace_initialize();
 	cerr << "done." << endl;
 	
-	cerr << "Adjusting clusters using sequence information... " << endl;
 	string tmpstr(outfile);
 	tmpstr.append(".tmp.ace");
-	doit(tmpstr.c_str(), c, a, nameset1);
-	cerr << "done." << endl;
+	doit(tmpstr.c_str(), a, nameset1);
 	
 	string outstr(outfile);
 	outstr.append(".adj.ace");
@@ -117,29 +116,20 @@ int main(int argc, char *argv[]) {
 	out.close();
 }
 
-void doit(const char* outfile, Cluster& c, AlignACE& a, vector<string>& nameset) {
+void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 	double corr_cutoff[] = {0.65, 0.60, 0.50, 0.50};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
 	
-	// Use the final search neighborhood to decide the number of runs
-	// sync_ace_neighborhood(c, a, corr_cutoff[3]);
 	int nruns = a.ace_sites.positions_available()
 	            / a.ace_params.ap_expect
 							/ a.ace_sites.ncols()
 							/ a.ace_params.ap_undersample
 							* a.ace_params.ap_oversample;
 	
-	// Reset the search area strictly to cluster members
-	// sync_ace_members(c, a);
-	
 	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
-		// Create a copy of the cluster which we can modify
-		//Cluster* c1 = new Cluster(c);
-		Cluster* c1 = new Cluster();
-		c1->init(expr, npoints, nameset);
 		
 		sc_best_i = a.ace_map_cutoff;
     i_worse = 0;
@@ -150,20 +140,24 @@ void doit(const char* outfile, Cluster& c, AlignACE& a, vector<string>& nameset)
 		a.ace_select_sites.clear_sites();
 		for(int g = 0; g < ngenes; g++)
 			a.add_possible(g);
-		a.seed_random_sites(1);
-		sync_cluster(*c1, a);
-		sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
+		a.seed_random_site();
+		cerr << "Just seeded: ace_members is " << a.ace_members << endl;
+		expand_ace_search(a, corr_cutoff[phase]);
+		if(a.ace_members < 2) {
+			cerr << "\t\t\tSeed was too far from other genes!" << endl;
+			continue;
+		}
 		
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
+			sc = a.map_score();
+			print_ace_status(cerr, a, i, old_phase, sc);
 			if(old_phase < phase) {
-				sync_cluster(*c1, a);
-				sync_ace_neighborhood(*c1, a, corr_cutoff[phase]);
-				print_ace_status(cerr, a, i, phase, sc);
+				expand_ace_search(a, corr_cutoff[phase]);
 				old_phase = phase;
 			}
 			if(phase == 3) {
-				if (a.ace_sites.number() < 5) {
-					cerr << "\t\t\tReached phase 5 and not enough sites! Restarting..." << endl;
+				if(a.ace_sites.sites_num < 5) {
+					cerr << "\t\t\tReached phase 3 with less than 5 sites. Restarting..." << endl;
 					break;
 				}
 				double sc1 = a.map_score();
@@ -181,7 +175,7 @@ void doit(const char* outfile, Cluster& c, AlignACE& a, vector<string>& nameset)
 				sc = a.map_score();
 				print_ace_status(cerr, a, i, phase, sc);
 				a.ace_archive.consider_motif(a.ace_sites, sc);
-				cerr << "\t\t\tCompleted phase 5! Restarting..." << endl;
+				cerr << "\t\t\tCompleted phase 3! Restarting..." << endl;
 				break;
       }
       if(i_worse == 0)
@@ -238,14 +232,15 @@ void doit(const char* outfile, Cluster& c, AlignACE& a, vector<string>& nameset)
 				i_worse = 0;
       }
 			
-			if(i == 1 || i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
+		
+			print_ace_status(cerr, a, i, phase, sc);
+			expand_ace_search(a, corr_cutoff[phase]);
 		}
 		
 		if(j % 100 == 0) {
 			ofstream out(outfile, ios::trunc);
 			print_ace(out, a, nameset);
 		}
-		delete c1;
 	}
 }
 
@@ -296,35 +291,46 @@ void print_usage(ostream& fout) {
   fout<<" -oversample\t1/undersample (1)\n";
 }
 
-void sync_ace_members(const Cluster& c, AlignACE& a) {
-	// cerr << "\t\t\t\tSyncing AlignACE with cluster members... ";
-	int size = c.size();
-	int* genes = new int[size];
-	c.genes(genes);
-	a.clear_possible();
-	for(int g = 0; g < size; g++)
-		a.add_possible(genes[g]);
-	// cerr << "done." << endl;
-}
-
-void sync_ace_neighborhood(const Cluster& c, AlignACE& a, double mincorr) {
-	// cerr << "\t\t\t\tSyncing AlignACE with cluster neighborhood... ";
-	int count = 0;
-	a.clear_possible();
-	for(int g = 0; g < ngenes; g++) {
-		if(c.corr(expr[g]) > mincorr) {
-			a.add_possible(g);
-			count++;
+void expand_ace_search(AlignACE& a, double mincorr) {
+	if(a.ace_members == 1) {
+		for(int g1 = 0; g1 < ngenes; g1++) {
+			if(! a.is_possible(g1)) continue;
+			cerr << "\t\t\tJust seeded(" << a.ace_members << "): adding all genes within 0.7 of gene " << g1 << endl;
+			for(int g2 = 0; g2 < ngenes; g2++)
+				if(jcorr_lookup(g1, g2) > 0.7)
+					a.add_possible(g2);
+			break;
+		}
+	} else {
+		cerr << "\t\t\tMore than one gene in search space: adding closest gene to those already in space..." << endl;
+		for(int g1 = 0; g1 < ngenes; g1++) {
+			if(! a.ace_sites.sites_has_sites[g1]) continue;
+			int closest = -1;
+			float maxjc = -1;
+			float jc;
+			cerr << "\t\t\t\tLooking for gene closest to gene " << g1 << endl;
+			for(int g2 = 0; g2 < ngenes; g2++) {
+				if(a.is_possible(g2)) continue;
+				jc = jcorr_lookup(g1, g2);
+				if(jc > maxjc) {
+					closest = g2;
+					maxjc = jc;
+				}
+			}
+			if(closest != -1 && maxjc > 0.7) {
+				cerr << "\t\t\t\tClosest was " << closest << endl;
+				assert(! a.is_possible(closest));
+				a.add_possible(closest);
+			}
 		}
 	}
-	// cerr << "\t\t\t\tSearch neighborhood with corr > " << mincorr << " contains " << count << " genes" << endl; 
-	// cerr << "done." << endl;
 }
 
-void sync_cluster(Cluster&c, const AlignACE& a) {
-	c.remove_all_genes();
-	for(int s = 0; s < a.ace_sites.number(); s++) {
-		c.add_gene(a.ace_sites.sites_chrom[s]);
+float jcorr_lookup(const int g1, const int g2) {
+	float jc;
+	if(jcorr[g1][g2] == -2) {
+		jc = jack_corr(expr[g1], expr[g2], npoints);
+		jcorr[g1][g2] = jcorr[g2][g1] = jc;
 	}
-	c.calc_mean();
+	return jcorr[g1][g2];
 }
