@@ -49,50 +49,56 @@ void Sites::sites_init(const Sites& s){
 }
 
 void Sites::init(const vector<string>& v, int nc, int mx, int dp){
-  sites_num=0;
-  sites_width=nc;
-  sites_num_cols=nc;
-  sites_depth=dp;
-  sites_num_seqs=v.size();
-  sites_len_seq=new int[sites_num_seqs];
-  for(int i=0;i<v.size();i++){
-		sites_len_seq[i]=v[i].length();
+  sites_num = 0;
+  sites_width = nc;
+  sites_num_cols = nc;
+  sites_depth = dp;
+  sites_num_seqs = v.size();
+  sites_len_seq = new int[sites_num_seqs];
+  for(int i = 0; i < v.size(); i++){
+		sites_len_seq[i] = v[i].length();
 	}
-  sites_max_num_sites=0;
-  for(int i=0;i<sites_num_seqs;i++){
-    sites_max_num_sites+=sites_len_seq[i]/mx;
+  sites_max_num_sites = 0;
+  for(int i = 0;i < sites_num_seqs; i++){
+    sites_max_num_sites += sites_len_seq[i]/mx;
   }
-  sites_max_width=3*sites_width;
+  sites_max_width = 3*sites_width;
   allocate_mem();
+	for(int i = 0; i < v.size(); i++){
+		sites_has_sites[i] = false;
+	}
   clear_sites();
 }
 
 Sites& Sites::operator= (const Sites& s){
-  if(this!=&s&&s.sites_alloc){
-    int i,j;
+  if(this != &s && s.sites_alloc){
     //assume that the same Seqset is referred to, so ignore some things
-    sites_num=s.sites_num;
-    sites_width=s.sites_width;
-    sites_num_cols=s.sites_num_cols;
-    sites_depth=s.sites_depth;
-    for(i=0;i<sites_num;i++){
-      sites_chrom[i]=s.sites_chrom[i];
-      sites_posit[i]=s.sites_posit[i];
-      sites_strand[i]=s.sites_strand[i];
+    sites_num = s.sites_num;
+    sites_width = s.sites_width;
+    sites_num_cols = s.sites_num_cols;
+    sites_depth = s.sites_depth;
+    for(int i = 0; i < sites_num; i++){
+      sites_chrom[i] = s.sites_chrom[i];
+      sites_posit[i] = s.sites_posit[i];
+      sites_strand[i] = s.sites_strand[i];
     }
-    for(i=0;i<sites_max_width;i++){
-      sites_active_fwd[i]=s.sites_active_fwd[i];
+		for(int i = 0; i < sites_num_seqs; i++) {
+			sites_has_sites[i] = s.sites_has_sites[i];
+		}
+    for(int i = 0; i < sites_max_width; i++){
+      sites_active_fwd[i] = s.sites_active_fwd[i];
     }
   }
   return *this;
 }
 
 void Sites::allocate_mem(){
-  sites_alloc=true;
-  sites_chrom=new int[sites_max_num_sites];
-  sites_posit=new int[sites_max_num_sites];
-  sites_strand=new bool[sites_max_num_sites];
-  sites_active_fwd=new int[sites_max_width];
+  sites_alloc = true;
+  sites_chrom = new int[sites_max_num_sites];
+  sites_posit = new int[sites_max_num_sites];
+  sites_strand = new bool[sites_max_num_sites];
+	sites_has_sites = new bool[sites_num_seqs];
+  sites_active_fwd = new int[sites_max_width];
 }
 
 Sites::~Sites(){
@@ -139,21 +145,28 @@ void Sites::add_site(const int c, const int p, const bool s){
 	sites_chrom[sites_num]=c;
   sites_posit[sites_num]=p;
   sites_strand[sites_num]=s;
+	sites_has_sites[c] = true;
   sites_num++;
 }
 
 void Sites::remove_site(const int c, const int p){
   int i;
-  for(i=0;i<sites_num;i++){
-    if(sites_chrom[i]!=c||sites_posit[i]!=p) continue;
+	for(i = 0; i < sites_num; i++){
+    if(sites_chrom[i] != c || sites_posit[i] != p) continue;
     break;
   }
-  //i now equal to index of site to be removed
+  // i now equal to index of site to be removed
   sites_num--;
-  sites_chrom[i]=sites_chrom[sites_num];
-  sites_posit[i]=sites_posit[sites_num];
-  sites_strand[i]=sites_strand[sites_num];
-  //if i==sites_num, this was irrelevant, but no need to check
+  sites_chrom[i] = sites_chrom[sites_num];
+  sites_posit[i] = sites_posit[sites_num];
+  sites_strand[i] = sites_strand[sites_num];
+  
+	if(i != sites_num) {               // site was found
+		for(i = 0; i < sites_num; i++) { // scan for c, if not found we know this sequence has no sites
+			if(sites_chrom[i] == c) break;
+		}
+		if(i == sites_num) sites_has_sites[c] = false;
+	}
 }
 
 void Sites::calc_freq_matrix(const Seqset& b, int *fm){
@@ -347,10 +360,10 @@ int Sites::positions_available(){
   return ret;
 }
 
-int Sites::positions_available(const int* membership){
+int Sites::positions_available(const bool* membership){
 	int ret = 0;
 	for(int i = 0; i < sites_num_seqs; i++) {
-		if(membership[i] == 1)
+		if(membership[i])
 			ret += sites_len_seq[i] - sites_width + 1;
 	}
 	return ret;

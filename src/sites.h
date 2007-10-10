@@ -24,6 +24,8 @@ class Sites{
   bool *sites_strand;
   //these three are an unsorted compact list, just need to sort for output
 
+	bool* sites_has_sites;
+
   int *sites_active_fwd;
   //columns 0..wide-1;fwd(0)=2nd column
   bool sites_alloc;
@@ -56,7 +58,7 @@ class Sites{
   int remove_col(const int c);
   void add_col(const int c);
   int positions_available();
-	int positions_available(const int* membership);
+	int positions_available(const bool* membership);
   void shift_sites(const int l, const int r);
   void flip_sites();
   void columns_open(int &l, int &r);
