@@ -65,26 +65,17 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-	float jc = 0;
 	jcorr = new float*[ngenes];
 	for(int i = 0; i < ngenes; i++) {
 		jcorr[i] = new float[ngenes];
-	}
-	/*
-	ofstream jcorrout("jcorr.out");
-	for(int i = 0; i < ngenes; i++) {
-		cerr << "Computing correlation for gene " << i << endl;
-		for(int j = i + 1; j < ngenes; j++) {
-			jc = jack_corr(expr[i], expr[j], npoints);
-			jcorr[i][j] = jcorr[j][i] = jc;
-			jcorrout << i << '\t' << j << '\t' << jcorr[i][j] << endl;
-			jcorrout << j << '\t' << i << '\t' << jcorr[i][j] << endl;
+		for(int j = 0; j < ngenes; j++) {
+			jcorr[i][j] = -2;
 		}
 	}
-	*/
 	
+	cerr << "Reading precomputed correlation values from jcorr.out..." << endl;
 	ifstream corrin("jcorr.out");
-	int corrcount = 0;
+	int corrcount = 1;
 	string line;
 	vector<string> values;
 	while(getline(corrin, line)) {
@@ -94,8 +85,9 @@ int main(int argc, char *argv[]) {
 		float jc = atof(values[2].c_str());
 		jcorr[i][j] = jcorr[j][i] = jc;
 		corrcount++;
+		if(corrcount % 1000000 == 0) cerr << "\tRead " << corrcount << " correlation values" << endl;
 	}
-	cerr << "Read " << corrcount << " correlation values" << endl;
+	cerr << "done." << endl;
 	
 	cerr << "Setting up AlignACE... ";
 	AlignACE a;
@@ -141,7 +133,6 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 		for(int g = 0; g < ngenes; g++)
 			a.add_possible(g);
 		a.seed_random_site();
-		cerr << "Just seeded: ace_members is " << a.ace_members << endl;
 		expand_ace_search(a, corr_cutoff[phase]);
 		if(a.ace_members < 2) {
 			cerr << "\t\t\tSeed was too far from other genes!" << endl;
@@ -149,8 +140,6 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 		}
 		
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
-			sc = a.map_score();
-			print_ace_status(cerr, a, i, old_phase, sc);
 			if(old_phase < phase) {
 				expand_ace_search(a, corr_cutoff[phase]);
 				old_phase = phase;
@@ -232,15 +221,12 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				i_worse = 0;
       }
 			
-		
-			print_ace_status(cerr, a, i, phase, sc);
+			if(i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
 			expand_ace_search(a, corr_cutoff[phase]);
 		}
 		
-		if(j % 100 == 0) {
-			ofstream out(outfile, ios::trunc);
-			print_ace(out, a, nameset);
-		}
+		ofstream out(outfile, ios::trunc);
+		print_full_ace(out, a, nameset);
 	}
 }
 
@@ -308,7 +294,6 @@ void expand_ace_search(AlignACE& a, double mincorr) {
 			int closest = -1;
 			float maxjc = -1;
 			float jc;
-			cerr << "\t\t\t\tLooking for gene closest to gene " << g1 << endl;
 			for(int g2 = 0; g2 < ngenes; g2++) {
 				if(a.is_possible(g2)) continue;
 				jc = jcorr_lookup(g1, g2);
@@ -319,7 +304,6 @@ void expand_ace_search(AlignACE& a, double mincorr) {
 			}
 			if(closest != -1 && maxjc > 0.7) {
 				cerr << "\t\t\t\tClosest was " << closest << endl;
-				assert(! a.is_possible(closest));
 				a.add_possible(closest);
 			}
 		}
