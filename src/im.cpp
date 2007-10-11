@@ -281,30 +281,25 @@ void expand_ace_search(AlignACE& a, double mincorr) {
 	if(a.ace_members == 1) {
 		for(int g1 = 0; g1 < ngenes; g1++) {
 			if(! a.is_possible(g1)) continue;
-			cerr << "\t\t\tJust seeded(" << a.ace_members << "): adding all genes within 0.7 of gene " << g1 << endl;
+			//cerr << "\t\t\tJust seeded(" << a.ace_members << "): adding all genes within 0.7 of gene " << g1 << endl;
 			for(int g2 = 0; g2 < ngenes; g2++)
 				if(jcorr_lookup(g1, g2) > 0.7)
 					a.add_possible(g2);
 			break;
 		}
 	} else {
-		cerr << "\t\t\tMore than one gene in search space: adding closest gene to those already in space..." << endl;
+		//cerr << "\t\t\tMore than one gene in search space: adding closest gene to those already in space..." << endl;
 		for(int g1 = 0; g1 < ngenes; g1++) {
 			if(! a.ace_sites.sites_has_sites[g1]) continue;
-			int closest = -1;
-			float maxjc = -1;
 			float jc;
+			//cerr << "\t\t\t\tLooking for gene close to gene " << g1 << endl;
 			for(int g2 = 0; g2 < ngenes; g2++) {
 				if(a.is_possible(g2)) continue;
 				jc = jcorr_lookup(g1, g2);
-				if(jc > maxjc) {
-					closest = g2;
-					maxjc = jc;
+				if(jc > 0.7) {
+					a.add_possible(g2);
+					break;
 				}
-			}
-			if(closest != -1 && maxjc > 0.7) {
-				cerr << "\t\t\t\tClosest was " << closest << endl;
-				a.add_possible(closest);
 			}
 		}
 	}
