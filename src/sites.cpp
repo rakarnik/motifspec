@@ -112,17 +112,22 @@ Sites::~Sites(){
 }
 
 void Sites::clear_sites(){
-  int i;
-  sites_num=0;
+  sites_num = 0;
   sites_width=sites_num_cols;
-  for(i=0;i<sites_num_cols-1;i++){
+  for(int i = 0; i < sites_num_cols - 1; i++){
     sites_active_fwd[i]=i+1;
   }
-  sites_active_fwd[sites_num_cols-1]=sites_num_cols-1;
+  sites_active_fwd[sites_num_cols-1] = sites_num_cols - 1;
+	for(int i = 0; i < sites_num_seqs; i++) {
+		sites_has_sites[i] = false;
+	}
 }
 
 void Sites::remove_all_sites(){
-  sites_num=0;
+  sites_num = 0;
+	for(int i = 0; i < sites_num_seqs; i++) {
+		sites_has_sites[i] = false;
+	}
 }
 
 void Sites::destroy(){
