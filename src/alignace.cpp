@@ -225,12 +225,11 @@ void AlignACE::calc_matrix() {
 }
 
 void AlignACE::single_pass(const double minprob) {
-	// cerr << "\t\t\tRunning single_pass_restricted" << endl;
 	double ap = (ace_params.ap_weight * ace_params.ap_expect
 							+ (1 - ace_params.ap_weight) * ace_sites.number())
 							/(2.0 * ace_sites.positions_available(ace_membership));
   calc_matrix();
-  ace_sites.remove_all_sites();
+	ace_sites.remove_all_sites();
   ace_select_sites.remove_all_sites();
   //will only update once per pass
 	
@@ -299,11 +298,10 @@ void AlignACE::single_pass(const double minprob) {
 }
 
 void AlignACE::single_pass_select(const double minprob){
-	// cerr << "\t\t\tRunning single_pass_select" << endl;
 	int i,j,k,n;
   double ap=(ace_params.ap_weight*ace_params.ap_expect+(1-ace_params.ap_weight)*ace_sites.number())/(2.0*ace_sites.positions_available());
   calc_matrix();
-  ace_sites.remove_all_sites();
+	ace_sites.remove_all_sites();
   //will only update once per pass
 	
   char **ss_seq;
