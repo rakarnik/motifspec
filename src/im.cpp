@@ -222,7 +222,6 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
       }
 			
 			if(i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
-			expand_ace_search(a, corr_cutoff[phase]);
 		}
 		
 		ofstream out(outfile, ios::trunc);
@@ -288,17 +287,14 @@ void expand_ace_search(AlignACE& a, double mincorr) {
 			break;
 		}
 	} else {
-		//cerr << "\t\t\tMore than one gene in search space: adding closest gene to those already in space..." << endl;
 		for(int g1 = 0; g1 < ngenes; g1++) {
 			if(! a.ace_sites.sites_has_sites[g1]) continue;
 			float jc;
-			//cerr << "\t\t\t\tLooking for gene close to gene " << g1 << endl;
 			for(int g2 = 0; g2 < ngenes; g2++) {
 				if(a.is_possible(g2)) continue;
 				jc = jcorr_lookup(g1, g2);
 				if(jc > 0.7) {
 					a.add_possible(g2);
-					break;
 				}
 			}
 		}
