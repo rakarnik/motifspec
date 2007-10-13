@@ -8,8 +8,7 @@
 
 class Seqset;
 class Sites{
- public:
-  int sites_num;
+	int sites_num;
   int sites_width;
   int sites_num_cols;
   int sites_depth;//ie 4 for acgt, 6 for nacgtn
@@ -24,12 +23,14 @@ class Sites{
   bool *sites_strand;
   //these three are an unsorted compact list, just need to sort for output
 
+	int sites_num_seqs_with_sites;
 	bool* sites_has_sites;
 
   int *sites_active_fwd;
   //columns 0..wide-1;fwd(0)=2nd column
   bool sites_alloc;
 
+public:
   Sites(){sites_alloc=false;destroy();}
   void sites_init(const Sites& s);
   Sites(const vector<string>& v, int nc=10, int memx=1, int dp=6);
@@ -47,6 +48,8 @@ class Sites{
   bool strand(int i) const {return sites_strand[i];}
   int max_width() const {return sites_max_width;}
   bool is_open_site(const int c, const int p);
+	int seqs_with_sites() { return sites_num_seqs_with_sites; }
+	bool seq_has_site(const int c) { return sites_has_sites[c]; }; 
   void add_site(const int c, const int p, const bool s);
   void remove_site(const int c, const int p);
   void remove_all_sites();

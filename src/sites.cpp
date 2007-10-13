@@ -18,7 +18,7 @@ Sites::Sites(const vector<string>& v, int nc, int mx, int dp){
     sites_max_num_sites+=sites_len_seq[i]/mx;
   }
   sites_max_width=3*sites_width;
-  allocate_mem();
+	allocate_mem();
   clear_sites();
 }
 
@@ -64,6 +64,7 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
   }
   sites_max_width = 3*sites_width;
   allocate_mem();
+	sites_num_seqs_with_sites = 0;
 	for(int i = 0; i < v.size(); i++){
 		sites_has_sites[i] = false;
 	}
@@ -82,6 +83,7 @@ Sites& Sites::operator= (const Sites& s){
       sites_posit[i] = s.sites_posit[i];
       sites_strand[i] = s.sites_strand[i];
     }
+		sites_num_seqs_with_sites = s.sites_num_seqs_with_sites;
 		for(int i = 0; i < sites_num_seqs; i++) {
 			sites_has_sites[i] = s.sites_has_sites[i];
 		}
@@ -118,6 +120,7 @@ void Sites::clear_sites(){
     sites_active_fwd[i]=i+1;
   }
   sites_active_fwd[sites_num_cols-1] = sites_num_cols - 1;
+	sites_num_seqs_with_sites = 0;
 	for(int i = 0; i < sites_num_seqs; i++) {
 		sites_has_sites[i] = false;
 	}
@@ -125,6 +128,7 @@ void Sites::clear_sites(){
 
 void Sites::remove_all_sites(){
   sites_num = 0;
+	sites_num_seqs_with_sites = 0;
 	for(int i = 0; i < sites_num_seqs; i++) {
 		sites_has_sites[i] = false;
 	}
@@ -150,7 +154,10 @@ void Sites::add_site(const int c, const int p, const bool s){
 	sites_chrom[sites_num]=c;
   sites_posit[sites_num]=p;
   sites_strand[sites_num]=s;
-	sites_has_sites[c] = true;
+	if(! sites_has_sites[c]) {
+		sites_has_sites[c] = true;
+		sites_num_seqs_with_sites++;
+	}
   sites_num++;
 }
 
@@ -170,7 +177,10 @@ void Sites::remove_site(const int c, const int p){
 		for(i = 0; i < sites_num; i++) { // scan for c, if not found we know this sequence has no sites
 			if(sites_chrom[i] == c) break;
 		}
-		if(i == sites_num) sites_has_sites[c] = false;
+		if(i == sites_num) {
+			sites_has_sites[c] = false;
+			sites_num_seqs_with_sites--;
+		}
 	}
 }
 
