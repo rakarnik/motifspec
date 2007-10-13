@@ -802,12 +802,12 @@ void AlignACE::print_version(ostream &fout){
 }
 
 void AlignACE::debug_check_columns() {
-	assert(ace_sites.sites_width == ace_select_sites.sites_width);
+	assert(ace_sites.width() == ace_select_sites.width());
 	int col1 = 0, nxt1 = 0;
 	int col2 = 0, nxt2 = 0;
 	while(true) {
-		nxt1 = ace_sites.sites_active_fwd[col1];
-		nxt2 = ace_select_sites.sites_active_fwd[col2];
+		nxt1 = ace_sites.next_column(col1);
+		nxt2 = ace_select_sites.next_column(col2);
 		if(nxt1 == col1 && nxt2 == col2) break;
 		assert(nxt1 == nxt2);
 		col1 = nxt1;

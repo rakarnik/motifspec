@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[] = {0.65, 0.60, 0.50, 0.50};
+	double corr_cutoff[] = {0.75, 0.70, 0.60, 0.40};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
@@ -133,22 +133,19 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 		for(int g = 0; g < ngenes; g++)
 			a.add_possible(g);
 		a.seed_random_site();
-		expand_ace_search(a, corr_cutoff[phase]);
-		if(a.ace_members < 2) {
-			cerr << "\t\t\tSeed was too far from other genes!" << endl;
-			continue;
-		}
 		
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(old_phase < phase) {
 				expand_ace_search(a, corr_cutoff[phase]);
+				print_ace_status(cerr, a, i, phase, sc);
 				old_phase = phase;
 			}
+			if(phase > 1 && a.ace_sites.seqs_with_sites() < 5) {
+				cerr << "\t\t\tReached phase " << phase << " with less than 5 sequences with sites. Restarting..." << endl;
+				break;
+			}
+			if(i % 25 == 0) expand_ace_search(a, corr_cutoff[phase]);
 			if(phase == 3) {
-				if(a.ace_sites.sites_num < 5) {
-					cerr << "\t\t\tReached phase 3 with less than 5 sites. Restarting..." << endl;
-					break;
-				}
 				double sc1 = a.map_score();
 				sc = 0.0;
 				for(int z = 0; sc < sc1 && z < 5; z++){
@@ -194,11 +191,13 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
       sc = a.map_score();
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;
-				cmp = a.ace_archive.check_motif(a.ace_sites, sc);
-				if(cmp > a.ace_sim_cutoff) {
-					print_ace_status(cerr, a, i, phase, sc);
-					cerr <<"\t\t\tToo similar! Restarting..." << endl;
-					break;
+				if(a.ace_sites.seqs_with_sites() > 5) {
+					cmp = a.ace_archive.check_motif(a.ace_sites, sc);
+					if(cmp > a.ace_sim_cutoff) {
+						print_ace_status(cerr, a, i, phase, sc);
+						cerr <<"\t\t\tToo similar! Restarting..." << endl;
+						break;
+					}
 				}
 				sc_best_i = sc;
 				best_sites = a.ace_sites;
@@ -224,9 +223,56 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 			if(i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
 		}
 		
-		ofstream out(outfile, ios::trunc);
-		print_full_ace(out, a, nameset);
+		if(j % 50 == 0) {
+			ofstream out(outfile, ios::trunc);
+			print_full_ace(out, a, nameset);
+		}
 	}
+}
+
+void expand_ace_search(AlignACE& a, double mincorr) {
+	// First add all genes to list of candidates
+	list<int> candidates;
+	for(int g = 0; g < ngenes; g++) {
+		candidates.push_back(g);
+	}
+	
+	// Now run through list of genes with sites, and only keep genes within jc = 0.7
+	float jc;
+	for(int g = 0; g < ngenes; g++) {
+		if(! a.ace_sites.seq_has_site(g)) continue;
+		list<int> survivors;
+		for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++) {
+			jc = jcorr_lookup(g, *iter);
+			if(jc > mincorr)
+				survivors.push_back(*iter);
+		}
+		candidates.assign(survivors.begin(), survivors.end());
+		//cerr << "\t\t\t\t" << g << "(" << candidates.size() << ")" << " ";
+	}
+	//cerr << endl;
+	
+	// Start with clean slate
+	a.clear_possible();
+	
+	// Add genes which already have sites to the search space
+	for(int g = 0; g < ngenes; g++) {
+		if(a.ace_sites.seq_has_site(g))
+			a.add_possible(g);
+	}
+	
+	// Finally, add our successful candidates to the search space
+	for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++)
+		a.add_possible(*iter);
+}
+
+float jcorr_lookup(const int g1, const int g2) {
+	float jc;
+	if(jcorr[g1][g2] == -2) {
+		jc = jack_corr(expr[g1], expr[g2], npoints);
+		jcorr[g1][g2] = jcorr[g2][g1] = jc;
+	}
+	return jcorr[g1][g2];
 }
 
 void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
@@ -274,38 +320,4 @@ void print_usage(ostream& fout) {
   fout<<" -seed       \tset seed for random number generator (time)\n";
   fout<<" -undersample\tpossible sites / (expect * numcols * seedings) (1)\n"; 
   fout<<" -oversample\t1/undersample (1)\n";
-}
-
-void expand_ace_search(AlignACE& a, double mincorr) {
-	if(a.ace_members == 1) {
-		for(int g1 = 0; g1 < ngenes; g1++) {
-			if(! a.is_possible(g1)) continue;
-			//cerr << "\t\t\tJust seeded(" << a.ace_members << "): adding all genes within 0.7 of gene " << g1 << endl;
-			for(int g2 = 0; g2 < ngenes; g2++)
-				if(jcorr_lookup(g1, g2) > 0.7)
-					a.add_possible(g2);
-			break;
-		}
-	} else {
-		for(int g1 = 0; g1 < ngenes; g1++) {
-			if(! a.ace_sites.sites_has_sites[g1]) continue;
-			float jc;
-			for(int g2 = 0; g2 < ngenes; g2++) {
-				if(a.is_possible(g2)) continue;
-				jc = jcorr_lookup(g1, g2);
-				if(jc > 0.7) {
-					a.add_possible(g2);
-				}
-			}
-		}
-	}
-}
-
-float jcorr_lookup(const int g1, const int g2) {
-	float jc;
-	if(jcorr[g1][g2] == -2) {
-		jc = jack_corr(expr[g1], expr[g2], npoints);
-		jcorr[g1][g2] = jcorr[g2][g1] = jc;
-	}
-	return jcorr[g1][g2];
 }
