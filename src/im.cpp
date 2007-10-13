@@ -140,12 +140,12 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				print_ace_status(cerr, a, i, phase, sc);
 				old_phase = phase;
 			}
-			if(phase > 1 && a.ace_sites.seqs_with_sites() < 5) {
-				cerr << "\t\t\tReached phase " << phase << " with less than 5 sequences with sites. Restarting..." << endl;
-				break;
-			}
 			if(i % 25 == 0) expand_ace_search(a, corr_cutoff[phase]);
 			if(phase == 3) {
+				if(a.ace_sites.seqs_with_sites() < 5) {
+					cerr << "\t\t\tReached phase " << phase << " with less than 5 sequences with sites. Restarting..." << endl;
+					break;
+				}
 				double sc1 = a.map_score();
 				sc = 0.0;
 				for(int z = 0; sc < sc1 && z < 5; z++){
