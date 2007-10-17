@@ -161,8 +161,8 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				}
 				sc = a.map_score();
 				print_ace_status(cerr, a, i, phase, sc);
-				if(a.ace_sites.seqs_with_sites() < 10) {
-					cerr << "\t\t\tCompleted phase " << phase << " with less than " << minsize << " sequences with sites. Restarting..." << endl;
+				if(a.ace_sites.seqs_with_sites() < minsize * 2) {
+					cerr << "\t\t\tCompleted phase " << phase << " with less than " << minsize * 2 << " sequences with sites. Restarting..." << endl;
 					break;
 				}
 				a.ace_archive.consider_motif(a.ace_sites, sc);
