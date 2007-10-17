@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
 
 void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 	int minsize = 5;
-	double corr_cutoff[] = {0.65, 0.60, 0.30, 0.30};
+	double corr_cutoff[] = {0.75, 0.70, 0.60, 0.50, 0.40, 0.40};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
@@ -137,12 +137,11 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 		
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(old_phase < phase) {
-				expand_ace_search(a, corr_cutoff[phase]);
 				print_ace_status(cerr, a, i, phase, sc);
 				old_phase = phase;
 			}
-			if(i % 10 == 0) expand_ace_search(a, corr_cutoff[phase]);
-			if(phase == 3) {
+			expand_ace_search(a, corr_cutoff[phase]);
+			if(phase == 5) {
 				if(a.ace_sites.seqs_with_sites() < minsize) {
 					cerr << "\t\t\tReached phase " << phase << " with less than " << minsize << " sequences with sites. Restarting..." << endl;
 					break;
@@ -166,7 +165,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 					break;
 				}
 				a.ace_archive.consider_motif(a.ace_sites, sc);
-				cerr << "\t\t\tCompleted phase 3! Restarting..." << endl;
+				cerr << "\t\t\tCompleted phase " << phase << "! Restarting..." << endl;
 				break;
       }
       if(i_worse == 0)
