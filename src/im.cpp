@@ -109,7 +109,8 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[] = {0.75, 0.70, 0.60, 0.40};
+	int minsize = 5;
+	double corr_cutoff[] = {0.65, 0.60, 0.30, 0.30};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
@@ -142,8 +143,8 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 			}
 			if(i % 10 == 0) expand_ace_search(a, corr_cutoff[phase]);
 			if(phase == 3) {
-				if(a.ace_sites.seqs_with_sites() < 5) {
-					cerr << "\t\t\tReached phase " << phase << " with less than 5 sequences with sites. Restarting..." << endl;
+				if(a.ace_sites.seqs_with_sites() < minsize) {
+					cerr << "\t\t\tReached phase " << phase << " with less than " << minsize << " sequences with sites. Restarting..." << endl;
 					break;
 				}
 				double sc1 = a.map_score();
@@ -161,7 +162,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				sc = a.map_score();
 				print_ace_status(cerr, a, i, phase, sc);
 				if(a.ace_sites.seqs_with_sites() < 10) {
-					cerr << "\t\t\tCompleted phase " << phase << " with less than 10 sequences with sites. Restarting..." << endl;
+					cerr << "\t\t\tCompleted phase " << phase << " with less than " << minsize << " sequences with sites. Restarting..." << endl;
 					break;
 				}
 				a.ace_archive.consider_motif(a.ace_sites, sc);
@@ -274,7 +275,7 @@ float jcorr_lookup(const int g1, const int g2) {
 	if(g1 == g2) return 1;
 	float jc;
 	if(jcorr[g1][g2] == -2) {
-		cerr << "No precomputed value found for (" << g1 << "," << g2 << ")" << endl;
+		//cerr << "No precomputed value found for (" << g1 << "," << g2 << ")" << endl;
 		jc = jack_corr(expr[g1], expr[g2], npoints);
 		jcorr[g1][g2] = jcorr[g2][g1] = jc;
 	}
