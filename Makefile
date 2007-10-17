@@ -11,8 +11,8 @@
 #
 
 CC = /usr/bin/g++
-CC_OPTIONS = -g
-LNK_OPTIONS = -lpthread
+CC_OPTIONS = 
+LNK_OPTIONS =
 
 
 #
