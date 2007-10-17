@@ -118,7 +118,7 @@ void AlignACE::seed_random_site() {
   for(int j = 0; j < 50; j++) {
 		ace_ran_int.set_range(0, ace_seqset.num_seqs() - 1);
 		chosen_seq = ace_ran_int.rnum();
-		if(ace_membership[chosen_seq] == 0)  continue;
+		if(! is_possible(chosen_seq))  continue;
 		if(ace_seqset.len_seq(chosen_seq) < ace_sites.width()) continue;
 		ace_ran_int.set_range(0, ace_seqset.len_seq(chosen_seq) - ace_sites.width() - 1);
 		double db = ace_ran_dbl.rnum();//random (0,1)
@@ -240,7 +240,7 @@ void AlignACE::single_pass(const double minprob) {
   int considered = 0;
   int gadd = -1,jadd = -1;
   for(int g = 0; g < ace_seqset.num_seqs(); g++){
-		if (! ace_membership[g]) continue;
+		if (! is_possible(g)) continue;
 		for(int j = 0; j <= ace_seqset.len_seq(g) - ace_sites.width(); j++){
 			Lw = 1.0;
 			matpos = 0;
@@ -299,7 +299,7 @@ void AlignACE::single_pass(const double minprob) {
 
 void AlignACE::single_pass_select(const double minprob){
 	int i,j,k,n;
-  double ap=(ace_params.ap_weight*ace_params.ap_expect+(1-ace_params.ap_weight)*ace_sites.number())/(2.0*ace_sites.positions_available());
+  double ap=(ace_params.ap_weight*ace_params.ap_expect+(1-ace_params.ap_weight)*ace_sites.number())/(2.0*ace_sites.positions_available(ace_membership));
   calc_matrix();
 	ace_sites.remove_all_sites();
   //will only update once per pass
@@ -311,7 +311,7 @@ void AlignACE::single_pass_select(const double minprob){
   int iadd=-1,jadd=-1;
   for(n=0;n<ace_select_sites.number();n++){
     i=ace_select_sites.chrom(n);
-    j=ace_select_sites.posit(n);
+		j=ace_select_sites.posit(n);
     if(i==iadd&&j<jadd+ace_sites.width()) continue;
     if(j<0||j>ace_seqset.len_seq(i)-ace_sites.width()) continue;
     //could be screwed up with column sampling
@@ -340,9 +340,11 @@ void AlignACE::single_pass_select(const double minprob){
 			continue;
     else if (r<Pw) {
       ace_sites.add_site(i,j,true);
-      iadd=i;jadd=j;
+      add_possible(i);
+			iadd=i;jadd=j;
     } else {
       ace_sites.add_site(i,j,false);
+			add_possible(i);
       iadd=i;jadd=j;
     }
   }
