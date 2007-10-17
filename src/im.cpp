@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 			jcorr[i][j] = -2;
 		}
 	}
-	/*
+	
 	cerr << "Reading precomputed correlation values from jcorr.out..." << endl;
 	ifstream corrin("jcorr.out");
 	int corrcount = 1;
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 		if(corrcount % 1000000 == 0) cerr << "\tRead " << corrcount << " correlation values" << endl;
 	}
 	cerr << "done." << endl;
-	*/
+	
 	cerr << "Setting up AlignACE... ";
 	AlignACE a;
 	a.init(seqs, nc);
