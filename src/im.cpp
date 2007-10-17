@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 			jcorr[i][j] = -2;
 		}
 	}
-	
+	/*
 	cerr << "Reading precomputed correlation values from jcorr.out..." << endl;
 	ifstream corrin("jcorr.out");
 	int corrcount = 1;
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 		if(corrcount % 1000000 == 0) cerr << "\tRead " << corrcount << " correlation values" << endl;
 	}
 	cerr << "done." << endl;
-	
+	*/
 	cerr << "Setting up AlignACE... ";
 	AlignACE a;
 	a.init(seqs, nc);
@@ -140,7 +140,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				print_ace_status(cerr, a, i, phase, sc);
 				old_phase = phase;
 			}
-			if(i % 25 == 0) expand_ace_search(a, corr_cutoff[phase]);
+			if(i % 10 == 0) expand_ace_search(a, corr_cutoff[phase]);
 			if(phase == 3) {
 				if(a.ace_sites.seqs_with_sites() < 5) {
 					cerr << "\t\t\tReached phase " << phase << " with less than 5 sequences with sites. Restarting..." << endl;
@@ -160,6 +160,10 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				}
 				sc = a.map_score();
 				print_ace_status(cerr, a, i, phase, sc);
+				if(a.ace_sites.seqs_with_sites() < 10) {
+					cerr << "\t\t\tCompleted phase " << phase << " with less than 10 sequences with sites. Restarting..." << endl;
+					break;
+				}
 				a.ace_archive.consider_motif(a.ace_sites, sc);
 				cerr << "\t\t\tCompleted phase 3! Restarting..." << endl;
 				break;
@@ -191,7 +195,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
       sc = a.map_score();
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;
-				if(a.ace_sites.seqs_with_sites() > 5) {
+				if(a.ace_sites.seqs_with_sites() > 10) {
 					cmp = a.ace_archive.check_motif(a.ace_sites, sc);
 					if(cmp > a.ace_sim_cutoff) {
 						print_ace_status(cerr, a, i, phase, sc);
@@ -267,12 +271,29 @@ void expand_ace_search(AlignACE& a, double mincorr) {
 }
 
 float jcorr_lookup(const int g1, const int g2) {
+	if(g1 == g2) return 1;
 	float jc;
 	if(jcorr[g1][g2] == -2) {
+		cerr << "No precomputed value found for (" << g1 << "," << g2 << ")" << endl;
 		jc = jack_corr(expr[g1], expr[g2], npoints);
 		jcorr[g1][g2] = jcorr[g2][g1] = jc;
 	}
 	return jcorr[g1][g2];
+}
+
+float avg_jcorr(AlignACE& a) {
+	float result = 0;
+	int count = 0;
+	for(int g1 = 0; g1 < ngenes; g1++) {
+		if(! a.is_possible(g1)) continue;
+		for(int g2 = g1 + 1; g2 < ngenes; g2++) {
+			if(! a.is_possible(g2)) continue;
+			result += jcorr[g1][g2];
+			count++;
+		}
+	}
+	result /= count;
+	return result;
 }
 
 void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
@@ -296,11 +317,13 @@ void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
 void print_ace_status(ostream& out, AlignACE& a, const int i, const int phase, const double sc) {
 	if(a.ace_sites.number() > 0) {
 		out << "\t\t\t" << setw(5) << i;
-		out << setw(3) << phase; 
+		out << setw(3) << phase;
 		out << setw(5) << a.ace_sites.number();
+		out << setw(5) << a.ace_sites.seqs_with_sites();
 		out << setw(5) << a.ace_members;
 		out << setw(40) << a.consensus();
 		out << setw(10) << sc;
+		out << setw(10) << avg_jcorr(a);
 		out << endl;
 	} else {
 		out << "\t\t\tNo sites!" << endl;

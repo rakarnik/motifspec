@@ -21,6 +21,7 @@ struct model {
 void doit(const char* outfile, AlignACE& a, vector<string>& nameset);
 void expand_ace_search(AlignACE& a, double mincorr);
 float jcorr_lookup(const int g1, const int g2);
+float avg_jcorr(AlignACE& a);
 void print_clusters(ostream& out, const vector<string>& nameset);
 void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset);
 void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset);
