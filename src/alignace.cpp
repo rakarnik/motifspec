@@ -311,6 +311,7 @@ void AlignACE::single_pass_select(const double minprob){
   int iadd=-1,jadd=-1;
   for(n=0;n<ace_select_sites.number();n++){
     i=ace_select_sites.chrom(n);
+		if(! is_possible(i)) continue;
 		j=ace_select_sites.posit(n);
     if(i==iadd&&j<jadd+ace_sites.width()) continue;
     if(j<0||j>ace_seqset.len_seq(i)-ace_sites.width()) continue;
