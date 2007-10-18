@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
 
 void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 	int minsize = 5;
-	double corr_cutoff[] = {0.75, 0.70, 0.60, 0.50, 0.40, 0.40};
+	double corr_cutoff[] = {0.75, 0.70, 0.65, 0.55, 0.50, 0.40};
   double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
@@ -185,7 +185,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				continue;
       }
       if(i<=3) continue;
-			if(phase < 2) {
+			if(phase < 3 && a.ace_sites.seqs_with_sites() > minsize) {
 				if(a.column_sample(0)) {}
 				if(a.column_sample(a.ace_sites.width()-1)) {}
 				for(int m = 0; m < 3; m++) {
@@ -195,7 +195,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
       sc = a.map_score();
       if(sc - sc_best_i > 1e-3){
 				i_worse=0;
-				if(a.ace_sites.seqs_with_sites() > 10) {
+				if(a.ace_sites.seqs_with_sites() > minsize * 2) {
 					cmp = a.ace_archive.check_motif(a.ace_sites, sc);
 					if(cmp > a.ace_sim_cutoff) {
 						print_ace_status(cerr, a, i, phase, sc);
