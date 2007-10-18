@@ -138,9 +138,9 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(old_phase < phase) {
 				print_ace_status(cerr, a, i, phase, sc);
+				expand_ace_search(a, corr_cutoff[phase]);
 				old_phase = phase;
 			}
-			expand_ace_search(a, corr_cutoff[phase]);
 			if(phase == 5) {
 				if(a.ace_sites.seqs_with_sites() < minsize) {
 					cerr << "\t\t\tReached phase " << phase << " with less than " << minsize << " sequences with sites. Restarting..." << endl;
@@ -172,7 +172,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				a.single_pass(a.ace_params.ap_sitecut[phase]);
       else 
 				a.single_pass_select(a.ace_params.ap_sitecut[phase]);
-      if(a.ace_sites.number() == 0) {
+			if(a.ace_sites.number() == 0) {
 				if(sc_best_i == a.ace_map_cutoff) {
 					cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
 					break;
