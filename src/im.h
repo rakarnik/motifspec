@@ -11,6 +11,7 @@ int ngenes;                // the number of genes
 int npoints;               // the number of data points
 float** expr;              // the expression data
 float** jcorr;             // the pairwise jackknife correlation value
+int minsize;               // minimum number of sequences required for motif to be considered
 
 struct model {
 	int num;
@@ -19,7 +20,8 @@ struct model {
 };
 
 void doit(const char* outfile, AlignACE& a, vector<string>& nameset);
-void expand_ace_search(AlignACE& a, double mincorr);
+void expand_ace_search_all_pairs(AlignACE& a, double mincorr);
+void expand_ace_search_pairs_avg(AlignACE& a, double mincorr);
 float jcorr_lookup(const int g1, const int g2);
 float avg_jcorr(AlignACE& a);
 void print_clusters(ostream& out, const vector<string>& nameset);

@@ -14,16 +14,15 @@ int main(int argc, char *argv[]) {
 	
 	if ((! GetArg2(argc, argv, "-s", seqfile)) 
 				|| (! GetArg2(argc, argv, "-e", exprfile)) 
-				|| (! GetArg2(argc, argv, "-c", clusfile))
 				|| (! GetArg2(argc, argv, "-o", outfile))) {
 		print_usage(cout);
     exit(0);
 	}
 	
 	// Read parameters
-	if(! GetArg2(argc, argv, "-k", k)) k = 1;
 	int nc;                               // number of columns in motif
-	if(! GetArg2(argc,argv,"-numcols", nc)) nc = 10;
+	if(! GetArg2(argc, argv, "-numcols", nc)) nc = 10;
+	if(! GetArg2(argc, argv, "-minsize", minsize)) minsize = 5;
 	
   vector<string> seqs, nameset1;
   cerr << "Reading sequence data from '" << seqfile << "'... ";
@@ -109,7 +108,6 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
-	int minsize = 5;
 	double corr_cutoff[] = {0.75, 0.70, 0.65, 0.55, 0.50, 0.40};
   double sc, cmp, sc_best_i;
   int i_worse;
@@ -138,7 +136,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(old_phase < phase) {
 				print_ace_status(cerr, a, i, phase, sc);
-				expand_ace_search(a, corr_cutoff[phase]);
+				expand_ace_search_pairs_avg(a, corr_cutoff[phase]);
 				old_phase = phase;
 			}
 			if(phase == 5) {
@@ -234,27 +232,58 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 	}
 }
 
-void expand_ace_search(AlignACE& a, double mincorr) {
-	// First add all genes to list of candidates
+void expand_ace_search_allpairs(AlignACE& a, double mincorr) {
 	list<int> candidates;
-	for(int g = 0; g < ngenes; g++) {
-		candidates.push_back(g);
+	for(int g1 = 0; g1 < ngenes; g1++) {
+			// First add all genes to list of candidates
+		for(int g = 0; g < ngenes; g++) {
+			candidates.push_back(g);
+		}
+		
+		// Now run through list of genes with sites, and only keep genes within jc = 0.7
+		float jc;
+		for(int g = 0; g < ngenes; g++) {
+			if(! a.ace_sites.seq_has_site(g)) continue;
+			list<int> survivors;
+			for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++) {
+				jc = jcorr_lookup(g, *iter);
+				if(jc > mincorr)
+					survivors.push_back(*iter);
+			}
+			candidates.assign(survivors.begin(), survivors.end());
+		}
 	}
 	
-	// Now run through list of genes with sites, and only keep genes within jc = 0.7
-	float jc;
+	// Start with clean slate
+	a.clear_possible();
+	
+	// Add genes which already have sites to the search space
 	for(int g = 0; g < ngenes; g++) {
-		if(! a.ace_sites.seq_has_site(g)) continue;
-		list<int> survivors;
-		for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++) {
-			jc = jcorr_lookup(g, *iter);
-			if(jc > mincorr)
-				survivors.push_back(*iter);
-		}
-		candidates.assign(survivors.begin(), survivors.end());
-		//cerr << "\t\t\t\t" << g << "(" << candidates.size() << ")" << " ";
+		if(a.ace_sites.seq_has_site(g))
+			a.add_possible(g);
 	}
-	//cerr << endl;
+	
+	// Finally, add our successful candidates to the search space
+	for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++)
+		a.add_possible(*iter);
+}
+
+void expand_ace_search_pairs_avg(AlignACE& a, double mincorr) {
+	float avg_corr;
+	int count;
+	list<int> candidates;
+	for(int g1 = 0; g1 < ngenes; g1++) {
+		if(a.ace_sites.seq_has_site(g1)) continue;
+		avg_corr = 0;
+		count = 0;
+		for(int g2 = 0; g2 < ngenes; g2++) {
+			if(! a.ace_sites.seq_has_site(g2)) continue;
+			avg_corr += jcorr_lookup(g2, g1);
+			count++;
+		}
+		avg_corr /= count;
+		if(avg_corr > mincorr) candidates.push_back(g1);
+	}
 	
 	// Start with clean slate
 	a.clear_possible();
