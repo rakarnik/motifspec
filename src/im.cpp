@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 	int nc;                               // number of columns in motif
 	if(! GetArg2(argc, argv, "-numcols", nc)) nc = 10;
 	if(! GetArg2(argc, argv, "-minsize", minsize)) minsize = 5;
+	if(! GetArg2(argc, argv, "-mincorr", mincorr)) mincorr = 0.5;
 	
   vector<string> seqs, nameset1;
   cerr << "Reading sequence data from '" << seqfile << "'... ";
@@ -108,8 +109,15 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[] = {0.75, 0.70, 0.65, 0.55, 0.50, 0.40};
-  double sc, cmp, sc_best_i;
+	double corr_cutoff[6];
+	corr_cutoff[0] = 0.75;
+	corr_cutoff[1] = 0.70;
+  corr_cutoff[5] = mincorr;
+	corr_cutoff[3] = sqrt(corr_cutoff[1] * corr_cutoff[5]);
+	corr_cutoff[2] = sqrt(corr_cutoff[1] * corr_cutoff[3]);
+	corr_cutoff[4] = sqrt(corr_cutoff[3] * corr_cutoff[5]);
+	
+	double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
 	
@@ -135,12 +143,12 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 		
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(old_phase < phase) {
-				print_ace_status(cerr, a, i, phase, sc);
+				print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
 				expand_ace_search_pairs_avg(a, corr_cutoff[phase]);
 				old_phase = phase;
 			}
 			if(phase == 5) {
-				if(a.ace_sites.seqs_with_sites() < minsize) {
+				if(a.ace_sites.seqs_with_sites() < minsize/2) {
 					cerr << "\t\t\tReached phase " << phase << " with less than " << minsize << " sequences with sites. Restarting..." << endl;
 					break;
 				}
@@ -150,15 +158,15 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 					a.optimize_columns();
 					a.optimize_sites();
 					sc = a.map_score();
-					print_ace_status(cerr, a, i, phase, sc);
+					print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
 				}
 				if(sc < sc1) {
 					a.ace_sites = best_sites;
 					sc = sc1;
 				}
 				sc = a.map_score();
-				print_ace_status(cerr, a, i, phase, sc);
-				if(a.ace_sites.seqs_with_sites() < minsize * 2) {
+				print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
+				if(a.ace_sites.seqs_with_sites() < minsize) {
 					cerr << "\t\t\tCompleted phase " << phase << " with less than " << minsize * 2 << " sequences with sites. Restarting..." << endl;
 					break;
 				}
@@ -196,7 +204,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				if(a.ace_sites.seqs_with_sites() > minsize * 2) {
 					cmp = a.ace_archive.check_motif(a.ace_sites, sc);
 					if(cmp > a.ace_sim_cutoff) {
-						print_ace_status(cerr, a, i, phase, sc);
+						print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
 						cerr <<"\t\t\tToo similar! Restarting..." << endl;
 						break;
 					}
@@ -207,12 +215,12 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
       else i_worse++;
       if(i_worse > a.ace_params.ap_minpass[phase]){
 				if(sc_best_i == a.ace_map_cutoff) {
-					print_ace_status(cerr, a, i, phase, sc);
+					print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
 					cerr << "\t\t\ti_worse is greater than cutoff and best score at cutoff! Restarting..." << endl;
 					break;
 				}
 				if(best_sites.number() < 2) {
-					print_ace_status(cerr, a, i, phase, sc);
+					print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
 					cerr << "\t\t\ti_worse is greater than cutoff and only 1 site! Restarting..." << endl;
 					break;
 				}
@@ -222,7 +230,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 				i_worse = 0;
       }
 			
-			if(i % 50 == 0) print_ace_status(cerr, a, i, phase, sc);
+			if(i % 50 == 0) print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
 		}
 		
 		if(j % 50 == 0) {
@@ -232,7 +240,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 	}
 }
 
-void expand_ace_search_allpairs(AlignACE& a, double mincorr) {
+void expand_ace_search_allpairs(AlignACE& a, double corr_cutoff) {
 	list<int> candidates;
 	for(int g1 = 0; g1 < ngenes; g1++) {
 			// First add all genes to list of candidates
@@ -247,7 +255,7 @@ void expand_ace_search_allpairs(AlignACE& a, double mincorr) {
 			list<int> survivors;
 			for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++) {
 				jc = jcorr_lookup(g, *iter);
-				if(jc > mincorr)
+				if(jc > corr_cutoff)
 					survivors.push_back(*iter);
 			}
 			candidates.assign(survivors.begin(), survivors.end());
@@ -268,7 +276,7 @@ void expand_ace_search_allpairs(AlignACE& a, double mincorr) {
 		a.add_possible(*iter);
 }
 
-void expand_ace_search_pairs_avg(AlignACE& a, double mincorr) {
+void expand_ace_search_pairs_avg(AlignACE& a, double corr_cutoff) {
 	float avg_corr;
 	int count;
 	list<int> candidates;
@@ -282,7 +290,7 @@ void expand_ace_search_pairs_avg(AlignACE& a, double mincorr) {
 			count++;
 		}
 		avg_corr /= count;
-		if(avg_corr > mincorr) candidates.push_back(g1);
+		if(avg_corr > corr_cutoff) candidates.push_back(g1);
 	}
 	
 	// Start with clean slate
@@ -343,10 +351,13 @@ void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
 	a.full_output(out);
 }
 
-void print_ace_status(ostream& out, AlignACE& a, const int i, const int phase, const double sc) {
+void print_ace_status(ostream& out, AlignACE& a, const int i, const int phase, const double cutoff, const double sc) {
 	if(a.ace_sites.number() > 0) {
 		out << "\t\t\t" << setw(5) << i;
 		out << setw(3) << phase;
+		int prec = cerr.precision(2);
+		out << setw(5) << setprecision(2) << cutoff;
+		cerr.precision(prec);
 		out << setw(5) << a.ace_sites.number();
 		out << setw(5) << a.ace_sites.seqs_with_sites();
 		out << setw(5) << a.ace_members;
