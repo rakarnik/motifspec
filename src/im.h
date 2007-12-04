@@ -14,15 +14,10 @@ float** jcorr;             // the pairwise jackknife correlation value
 int minsize;               // minimum number of sequences required for motif to be considered
 double mincorr;               // minimum correlation required to be considered a hit
 
-struct model {
-	int num;
-	Cluster& c;
-	AlignACE& a;
-};
-
 void doit(const char* outfile, AlignACE& a, vector<string>& nameset);
-void expand_ace_search_all_pairs(AlignACE& a, double corr_cutoff);
-void expand_ace_search_pairs_avg(AlignACE& a, double corr_cutoff);
+void expand_ace_search_around_mean(AlignACE& a, Cluster& c, const double corr_cutoff);
+void expand_ace_search_all_pairs(AlignACE& a, const double corr_cutoff);
+void expand_ace_search_pairs_avg(AlignACE& a, const double corr_cutoff);
 float jcorr_lookup(const int g1, const int g2);
 float avg_jcorr(AlignACE& a);
 void print_clusters(ostream& out, const vector<string>& nameset);

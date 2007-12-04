@@ -120,6 +120,8 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 	double sc, cmp, sc_best_i;
   int i_worse;
   Sites best_sites = a.ace_sites;
+	Cluster c;
+	c.init(expr, npoints, nameset);
 	
 	int nruns = a.ace_sites.positions_available()
 	            / a.ace_params.ap_expect
@@ -144,7 +146,7 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 		for(int i = 1; i <= a.ace_params.ap_npass; i++){
 			if(old_phase < phase) {
 				print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
-				expand_ace_search_pairs_avg(a, corr_cutoff[phase]);
+				expand_ace_search_around_mean(a, c, corr_cutoff[phase]);
 				old_phase = phase;
 			}
 			if(phase == 5) {
@@ -240,7 +242,18 @@ void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
 	}
 }
 
-void expand_ace_search_allpairs(AlignACE& a, double corr_cutoff) {
+void expand_ace_search_around_mean(AlignACE& a, Cluster& c, double corr_cutoff) {
+	c.remove_all_genes();
+	for(int g = 0; g < ngenes; g++)
+		if(a.ace_sites.seq_has_site(g)) c.add_gene(g);
+	c.calc_mean();
+	
+	a.clear_possible();
+	for(int g = 0; g < ngenes; g++)
+		if(c.corrmean(expr[g]) > corr_cutoff) a.add_possible(g);
+}
+
+void expand_ace_search_allpairs(AlignACE& a, const double corr_cutoff) {
 	list<int> candidates;
 	for(int g1 = 0; g1 < ngenes; g1++) {
 			// First add all genes to list of candidates
@@ -276,7 +289,7 @@ void expand_ace_search_allpairs(AlignACE& a, double corr_cutoff) {
 		a.add_possible(*iter);
 }
 
-void expand_ace_search_pairs_avg(AlignACE& a, double corr_cutoff) {
+void expand_ace_search_pairs_avg(AlignACE& a, const double corr_cutoff) {
 	float avg_corr;
 	int count;
 	list<int> candidates;
