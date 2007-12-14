@@ -71,9 +71,9 @@ void SEModel::set_final_params(){
   separams.minpass[2] = 3 * separams.minpass[0];
 	separams.minpass[3] = 4 * separams.minpass[0];
 	separams.minpass[4] = 5 * separams.minpass[0];
-  separams.sitecut[0] = ap * 5.0;//10.0*ap;
+  separams.sitecut[0] = ap;//10.0*ap;
 	separams.sitecut[4] = 0.2;
-	separams.sitecut[2] = sqrt(separams.sitecut[0]*separams.sitecut[4]);
+	separams.sitecut[2] = sqrt(separams.sitecut[0] * separams.sitecut[4]);
 	separams.sitecut[3] = sqrt(separams.sitecut[2] * separams.sitecut[4]);
 	separams.sitecut[1] = sqrt(separams.sitecut[0] * separams.sitecut[2]);
 	separams.nruns = sites.positions_available() / separams.expect / sites.ncols() / separams.undersample * separams.oversample;
@@ -262,19 +262,23 @@ void SEModel::single_pass(const double minprob) {
 	double ap = (separams.weight * separams.expect
 							+ (1 - separams.weight) * sites.number())
 							/(2.0 * sites.positions_available(possible));
-  calc_matrix();
+  int oldsize = size();
+	calc_matrix();
+	calc_mean();
+	calc_stdev();
 	sites.remove_all_sites();
   select_sites.remove_all_sites();
   //will only update once per pass
 	
   char **ss_seq;
   ss_seq = seqset.seq_ptr();
-  double Lw, Lc, Pw, Pc, F;
-  int matpos, col;
+  double Lw, Lc, Pw, Pc, Pe, F;
+	int matpos, col;
   int considered = 0;
   int gadd = -1,jadd = -1;
   for(int g = 0; g < seqset.num_seqs(); g++){
 		if (! is_possible(g)) continue;
+		Pe = oldsize > 20? prob_expr_gene(g) : 1;
 		for(int j = 0; j <= seqset.len_seq(g) - sites.width(); j++){
 			Lw = 1.0;
 			matpos = 0;
@@ -298,8 +302,8 @@ void SEModel::single_pass(const double minprob) {
 				col = sites.next_column(col);
 				matpos += sites.depth();
       }
-      Pw = Lw * ap/(1.0 - ap + Lw * ap);
-      Pc = Lc * ap/(1.0 - ap + Lc * ap);
+      Pw = Lw * ap * Pe/(1.0 - ap + Lw * ap);
+      Pc = Lc * ap * Pe/(1.0 - ap + Lc * ap);
       F = Pw + Pc - Pw * Pc;//probability of either
 			if(F > (minprob/separams.select)) {
 				select_sites.add_site(g, j, true);
@@ -562,14 +566,16 @@ void SEModel::optimize_sites(){
 							/ (2.0 * sites.positions_available(possible));
 	
   calc_matrix();
+	calc_mean();
   char **ss_seq;
   ss_seq = seqset.seq_ptr();
-  double Lw, Lc, Pw, Pc;
+  double Lw, Lc, Pw, Pc, Pe;
   int matpos, col;
   int h = 1;
   double cutoff = 0.2;
   for(int i = 0; i < seqset.num_seqs(); i++) {
     if(! is_possible(i)) continue;
+		Pe = prob_expr_gene(i);
 		for(int j = 0; j < seqset.len_seq(i) - sites.width() + 1; j++) {
       Lw = 1.0;
 			matpos = 0;
@@ -589,8 +595,8 @@ void SEModel::optimize_sites(){
 				col = sites.next_column(col);
 				matpos += sites.depth();
       }
-      Pw = Lw * ap / (1.0 - ap + Lw * ap);
-      Pc = Lc * ap / (1.0 - ap + Lc * ap);
+      Pw = Lw * ap * Pe/ (1.0 - ap + Lw * ap);
+      Pc = Lc * ap * Pe/ (1.0 - ap + Lc * ap);
       //F=(Pw+Pc-Pw*Pc);//probability of either
       if(Pw > cutoff || Pc > cutoff) {
 				chr[h] = i;
@@ -838,11 +844,20 @@ void SEModel::calc_stdev() {
 			if(is_member(j))
 				stdev[i] += (expr[j][i] - mean[i]) * (expr[j][i] - mean[i]);
 		stdev[i] /= size() - 1;
+		stdev[i] = sqrt(stdev[i]);
 	} 
 }
 
 float SEModel::corrmean(const float* pattern) const {
 	return corr(mean, pattern, npoints);
+}
+
+float SEModel::prob_expr_gene(int g) const {
+	float p = 1;
+	float c = 0.39894228; // = 1/sqrt(2Pi)
+	for(int i = 0; i < npoints; i++)
+		p *= c * exp(((expr[g][i] - mean[i]) * (expr[g][i] - mean[i]))/(stdev[i] * stdev[i]))/stdev[i];
+	return p;
 }
 
 void SEModel::expand_search_around_mean(const double corr_cutoff) {

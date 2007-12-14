@@ -97,6 +97,7 @@ class SEModel {
 	void calc_mean();                                       // Calculate the mean for this model
 	float* get_mean();                                      // Get the mean for this model
 	void calc_stdev();																			// Calculate the standard deviation for this model
+	float SEModel::prob_expr_gene(int g) const;             // Calculate probability of gene belonging to this model
 	float corrmean(const float* pattern) const;             // Calculate the correlation between the model mean and 'pattern
 	
 	/* Algorithm steps */
