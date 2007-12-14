@@ -20,8 +20,7 @@ int main(int argc, char *argv[]) {
 	}
 	
 	// Read parameters
-	int nc;                               // number of columns in motif
-	if(! GetArg2(argc, argv, "-numcols", nc)) nc = 10;
+	if(! GetArg2(argc, argv, "-numcols", ncol)) ncol = 10;
 	if(! GetArg2(argc, argv, "-minsize", minsize)) minsize = 5;
 	if(! GetArg2(argc, argv, "-mincorr", mincorr)) mincorr = 0.5;
 	
@@ -89,235 +88,42 @@ int main(int argc, char *argv[]) {
 	}
 	cerr << "done." << endl;
 	
-	cerr << "Setting up AlignACE... ";
-	AlignACE a;
-	a.init(seqs, nc);
-	a.modify_params(argc, argv);
-	a.set_final_params();
-	a.ace_initialize();
+	cerr << "Setting up SEModel... " << endl;
+	SEModel se;
+	se.init(seqs, expr, npoints, nameset1, ncol);
+	se.modify_params(argc, argv);
+	se.set_final_params();
+	se.ace_initialize();
 	cerr << "done." << endl;
 	
 	string tmpstr(outfile);
 	tmpstr.append(".tmp.ace");
-	doit(tmpstr.c_str(), a, nameset1);
+	doit(tmpstr.c_str(), se);
 	
 	string outstr(outfile);
 	outstr.append(".adj.ace");
 	ofstream out(outstr.c_str(), ios::trunc);
-	print_ace(out, a, nameset1);
+	print_ace(out, se);
 	out.close();
 }
 
-void doit(const char* outfile, AlignACE& a, vector<string>& nameset) {
-	double corr_cutoff[6];
-	corr_cutoff[0] = 0.75;
-	corr_cutoff[1] = 0.70;
-  corr_cutoff[5] = mincorr;
-	corr_cutoff[3] = sqrt(corr_cutoff[1] * corr_cutoff[5]);
-	corr_cutoff[2] = sqrt(corr_cutoff[1] * corr_cutoff[3]);
-	corr_cutoff[4] = sqrt(corr_cutoff[3] * corr_cutoff[5]);
-	
-	double sc, cmp, sc_best_i;
-  int i_worse;
-  Sites best_sites = a.ace_sites;
-	Cluster c;
-	c.init(expr, npoints, nameset);
-	
-	int nruns = a.ace_sites.positions_available()
-	            / a.ace_params.ap_expect
-							/ a.ace_sites.ncols()
-							/ a.ace_params.ap_undersample
-							* a.ace_params.ap_oversample;
+void doit(const char* outfile, SEModel& se) {
+  for(int g = 0; g < ngenes; g++)
+		se.add_possible(g);
+	int nruns = se.possible_positions()
+	            / se.get_params().expect
+							/ ncol
+							/ se.get_params().undersample
+							* se.get_params().oversample;
 	
 	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
-		
-		sc_best_i = a.ace_map_cutoff;
-    i_worse = 0;
-    int phase = 0;
-    int old_phase = 0;
-		
-		a.ace_sites.clear_sites();
-		a.ace_select_sites.clear_sites();
-		for(int g = 0; g < ngenes; g++)
-			a.add_possible(g);
-		a.seed_random_site();
-		
-		for(int i = 1; i <= a.ace_params.ap_npass; i++){
-			if(old_phase < phase) {
-				print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
-				expand_ace_search_around_mean(a, c, corr_cutoff[phase]);
-				old_phase = phase;
-			}
-			if(phase == 5) {
-				if(a.ace_sites.seqs_with_sites() < minsize/2) {
-					cerr << "\t\t\tReached phase " << phase << " with less than " << minsize << " sequences with sites. Restarting..." << endl;
-					break;
-				}
-				double sc1 = a.map_score();
-				sc = 0.0;
-				for(int z = 0; sc < sc1 && z < 5; z++){
-					a.optimize_columns();
-					a.optimize_sites();
-					sc = a.map_score();
-					print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
-				}
-				if(sc < sc1) {
-					a.ace_sites = best_sites;
-					sc = sc1;
-				}
-				sc = a.map_score();
-				print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
-				if(a.ace_sites.seqs_with_sites() < minsize) {
-					cerr << "\t\t\tCompleted phase " << phase << " with less than " << minsize * 2 << " sequences with sites. Restarting..." << endl;
-					break;
-				}
-				a.ace_archive.consider_motif(a.ace_sites, sc);
-				cerr << "\t\t\tCompleted phase " << phase << "! Restarting..." << endl;
-				break;
-      }
-      if(i_worse == 0)
-				a.single_pass(a.ace_params.ap_sitecut[phase]);
-      else 
-				a.single_pass_select(a.ace_params.ap_sitecut[phase]);
-			if(a.ace_sites.number() == 0) {
-				if(sc_best_i == a.ace_map_cutoff) {
-					cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
-					break;
-				}
-				//if(best_sites.number()<4) break;
-				a.ace_sites=best_sites;
-				a.ace_select_sites=best_sites;
-				phase++;
-				i_worse = 0;
-				continue;
-      }
-      if(i<=3) continue;
-			if(phase < 3 && a.ace_sites.seqs_with_sites() > minsize) {
-				if(a.column_sample(0)) {}
-				if(a.column_sample(a.ace_sites.width()-1)) {}
-				for(int m = 0; m < 3; m++) {
-					if(!(a.column_sample())) break;
-				}
-			}
-      sc = a.map_score();
-      if(sc - sc_best_i > 1e-3){
-				i_worse=0;
-				if(a.ace_sites.seqs_with_sites() > minsize * 2) {
-					cmp = a.ace_archive.check_motif(a.ace_sites, sc);
-					if(cmp > a.ace_sim_cutoff) {
-						print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
-						cerr <<"\t\t\tToo similar! Restarting..." << endl;
-						break;
-					}
-				}
-				sc_best_i = sc;
-				best_sites = a.ace_sites;
-      }
-      else i_worse++;
-      if(i_worse > a.ace_params.ap_minpass[phase]){
-				if(sc_best_i == a.ace_map_cutoff) {
-					print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
-					cerr << "\t\t\ti_worse is greater than cutoff and best score at cutoff! Restarting..." << endl;
-					break;
-				}
-				if(best_sites.number() < 2) {
-					print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
-					cerr << "\t\t\ti_worse is greater than cutoff and only 1 site! Restarting..." << endl;
-					break;
-				}
-				a.ace_sites = best_sites;
-				a.ace_select_sites = best_sites;
-				phase++;
-				i_worse = 0;
-      }
-			
-			if(i % 50 == 0) print_ace_status(cerr, a, i, phase, corr_cutoff[phase], sc);
-		}
-		
+		se.search_for_motif(minsize, mincorr);
 		if(j % 50 == 0) {
 			ofstream out(outfile, ios::trunc);
-			print_full_ace(out, a, nameset);
+			print_full_ace(out, se);
 		}
 	}
-}
-
-void expand_ace_search_around_mean(AlignACE& a, Cluster& c, double corr_cutoff) {
-	c.remove_all_genes();
-	for(int g = 0; g < ngenes; g++)
-		if(a.ace_sites.seq_has_site(g)) c.add_gene(g);
-	c.calc_mean();
-	
-	a.clear_possible();
-	for(int g = 0; g < ngenes; g++)
-		if(c.corrmean(expr[g]) > corr_cutoff) a.add_possible(g);
-}
-
-void expand_ace_search_allpairs(AlignACE& a, const double corr_cutoff) {
-	list<int> candidates;
-	for(int g1 = 0; g1 < ngenes; g1++) {
-			// First add all genes to list of candidates
-		for(int g = 0; g < ngenes; g++) {
-			candidates.push_back(g);
-		}
-		
-		// Now run through list of genes with sites, and only keep genes within jc = 0.7
-		float jc;
-		for(int g = 0; g < ngenes; g++) {
-			if(! a.ace_sites.seq_has_site(g)) continue;
-			list<int> survivors;
-			for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++) {
-				jc = jcorr_lookup(g, *iter);
-				if(jc > corr_cutoff)
-					survivors.push_back(*iter);
-			}
-			candidates.assign(survivors.begin(), survivors.end());
-		}
-	}
-	
-	// Start with clean slate
-	a.clear_possible();
-	
-	// Add genes which already have sites to the search space
-	for(int g = 0; g < ngenes; g++) {
-		if(a.ace_sites.seq_has_site(g))
-			a.add_possible(g);
-	}
-	
-	// Finally, add our successful candidates to the search space
-	for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++)
-		a.add_possible(*iter);
-}
-
-void expand_ace_search_pairs_avg(AlignACE& a, const double corr_cutoff) {
-	float avg_corr;
-	int count;
-	list<int> candidates;
-	for(int g1 = 0; g1 < ngenes; g1++) {
-		if(a.ace_sites.seq_has_site(g1)) continue;
-		avg_corr = 0;
-		count = 0;
-		for(int g2 = 0; g2 < ngenes; g2++) {
-			if(! a.ace_sites.seq_has_site(g2)) continue;
-			avg_corr += jcorr_lookup(g2, g1);
-			count++;
-		}
-		avg_corr /= count;
-		if(avg_corr > corr_cutoff) candidates.push_back(g1);
-	}
-	
-	// Start with clean slate
-	a.clear_possible();
-	
-	// Add genes which already have sites to the search space
-	for(int g = 0; g < ngenes; g++) {
-		if(a.ace_sites.seq_has_site(g))
-			a.add_possible(g);
-	}
-	
-	// Finally, add our successful candidates to the search space
-	for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++)
-		a.add_possible(*iter);
 }
 
 float jcorr_lookup(const int g1, const int g2) {
@@ -331,13 +137,13 @@ float jcorr_lookup(const int g1, const int g2) {
 	return jcorr[g1][g2];
 }
 
-float avg_jcorr(AlignACE& a) {
+float avg_jcorr(SEModel& se) {
 	float result = 0;
 	int count = 0;
 	for(int g1 = 0; g1 < ngenes; g1++) {
-		if(! a.is_possible(g1)) continue;
+		if(! se.is_member(g1)) continue;
 		for(int g2 = g1 + 1; g2 < ngenes; g2++) {
-			if(! a.is_possible(g2)) continue;
+			if(! se.is_member(g2)) continue;
 			result += jcorr[g1][g2];
 			count++;
 		}
@@ -346,41 +152,22 @@ float avg_jcorr(AlignACE& a) {
 	return result;
 }
 
-void print_full_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
+void print_full_ace(ostream& out, SEModel& se) {
 	out << "Parameter values:\n";
-  a.output_params(out);
+  se.output_params(out);
   out << "\nInput sequences:\n";
-  for(int x = 0; x < nameset.size(); x++) out << "#" << x << '\t' << nameset[x] << endl;
+  for(int x = 0; x < se.names().size(); x++) out << "#" << x << '\t' << (se.names())[x] << endl;
   out << '\n';
-  a.full_output(out);
+  se.full_output(out);
 }
 
-void print_ace(ostream& out, AlignACE& a, const vector <string>& nameset) {
+void print_ace(ostream& out, SEModel& se) {
 	out << "Parameter values:\n";
-  a.output_params(out);
+  se.output_params(out);
   out << "\nInput sequences:\n";
-  for(int x = 0; x < nameset.size(); x++) out << "#" << x << '\t' << nameset[x] << endl;
+  for(int x = 0; x < se.names().size(); x++) out << "#" << x << '\t' << se.names()[x] << endl;
   out << endl;
-	a.full_output(out);
-}
-
-void print_ace_status(ostream& out, AlignACE& a, const int i, const int phase, const double cutoff, const double sc) {
-	if(a.ace_sites.number() > 0) {
-		out << "\t\t\t" << setw(5) << i;
-		out << setw(3) << phase;
-		int prec = cerr.precision(2);
-		out << setw(5) << setprecision(2) << cutoff;
-		cerr.precision(prec);
-		out << setw(5) << a.ace_sites.number();
-		out << setw(5) << a.ace_sites.seqs_with_sites();
-		out << setw(5) << a.ace_members;
-		out << setw(40) << a.consensus();
-		out << setw(10) << sc;
-		out << setw(10) << avg_jcorr(a);
-		out << endl;
-	} else {
-		out << "\t\t\tNo sites!" << endl;
-	}
+	se.full_output(out);
 }
 
 void print_usage(ostream& fout) {

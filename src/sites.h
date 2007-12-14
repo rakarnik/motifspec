@@ -24,7 +24,7 @@ class Sites{
   //these three are an unsorted compact list, just need to sort for output
 
 	int sites_num_seqs_with_sites;
-	bool* sites_has_sites;
+	int* sites_has_sites;
 
   int *sites_active_fwd;
   //columns 0..wide-1;fwd(0)=2nd column
@@ -48,8 +48,8 @@ public:
   bool strand(int i) const {return sites_strand[i];}
   int max_width() const {return sites_max_width;}
   bool is_open_site(const int c, const int p);
-	int seqs_with_sites() { return sites_num_seqs_with_sites; }
-	bool seq_has_site(const int c) { return sites_has_sites[c]; }; 
+	int seqs_with_sites() const { return sites_num_seqs_with_sites; }
+	bool seq_has_site(const int c) const { return (sites_has_sites[c] > 0); }; 
   void add_site(const int c, const int p, const bool s);
   void remove_site(const int c, const int p);
   void remove_all_sites();
@@ -60,8 +60,8 @@ public:
   bool column_freq(const int col, const Seqset& s, int *ret);
   int remove_col(const int c);
   void add_col(const int c);
-  int positions_available();
-	int positions_available(const bool* membership);
+  int positions_available() const;
+	int positions_available(const bool* possible) const;
   void shift_sites(const int l, const int r);
   void flip_sites();
   void columns_open(int &l, int &r);

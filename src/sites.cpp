@@ -66,7 +66,7 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
   allocate_mem();
 	sites_num_seqs_with_sites = 0;
 	for(int i = 0; i < v.size(); i++){
-		sites_has_sites[i] = false;
+		sites_has_sites[i] = 0;
 	}
   clear_sites();
 }
@@ -99,7 +99,7 @@ void Sites::allocate_mem(){
   sites_chrom = new int[sites_max_num_sites];
   sites_posit = new int[sites_max_num_sites];
   sites_strand = new bool[sites_max_num_sites];
-	sites_has_sites = new bool[sites_num_seqs];
+	sites_has_sites = new int[sites_num_seqs];
   sites_active_fwd = new int[sites_max_width];
 }
 
@@ -154,11 +154,9 @@ void Sites::add_site(const int c, const int p, const bool s){
 	sites_chrom[sites_num]=c;
   sites_posit[sites_num]=p;
   sites_strand[sites_num]=s;
-	if(! sites_has_sites[c]) {
-		sites_has_sites[c] = true;
-		sites_num_seqs_with_sites++;
-	}
-  sites_num++;
+	if(sites_has_sites[c] == 0) sites_num_seqs_with_sites++;
+	sites_has_sites[c]++;
+	sites_num++;
 }
 
 void Sites::remove_site(const int c, const int p){
@@ -174,13 +172,8 @@ void Sites::remove_site(const int c, const int p){
   sites_strand[i] = sites_strand[sites_num];
   
 	if(i != sites_num) {               // site was found
-		for(i = 0; i < sites_num; i++) { // scan for c, if not found we know this sequence has no sites
-			if(sites_chrom[i] == c) break;
-		}
-		if(i == sites_num) {
-			sites_has_sites[c] = false;
-			sites_num_seqs_with_sites--;
-		}
+		sites_has_sites[c]--;
+		if(sites_has_sites[c] == 0) sites_num_seqs_with_sites--;
 	}
 }
 
@@ -367,18 +360,18 @@ void Sites::shift_sites(const int l, const int r){
   }
 }
 
-int Sites::positions_available(){
-  int ret=0;
-  for(int i=0;i<sites_num_seqs;i++){
-    ret+=sites_len_seq[i]-sites_width+1;
+int Sites::positions_available() const {
+  int ret = 0;
+  for(int i = 0; i < sites_num_seqs; i++){
+    ret += sites_len_seq[i] - sites_width + 1;
   }
   return ret;
 }
 
-int Sites::positions_available(const bool* membership){
+int Sites::positions_available(const bool* possible) const {
 	int ret = 0;
 	for(int i = 0; i < sites_num_seqs; i++) {
-		if(membership[i])
+		if(possible[i])
 			ret += sites_len_seq[i] - sites_width + 1;
 	}
 	return ret;
