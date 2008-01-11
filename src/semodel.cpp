@@ -1063,3 +1063,4 @@ void SEModel::print_possible(ostream& out) {
 	for(int g = 0; g < ngenes; g++)
 		if(is_possible(g)) out << nameset[g] << endl;
 }
+
