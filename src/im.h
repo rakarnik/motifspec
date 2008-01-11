@@ -15,8 +15,6 @@ int minsize;               // minimum number of sequences required for motif to 
 double mincorr;               // minimum correlation required to be considered a hit
 
 void doit(const char* outfile, SEModel& se);
-float jcorr_lookup(const int g1, const int g2);
-float avg_jcorr(SEModel& se);
 void print_clusters(ostream& out, const vector<string>& nameset);
 void print_full_ace(ostream& out, SEModel& se);
 void print_ace(ostream& out, SEModel& se);

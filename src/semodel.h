@@ -18,8 +18,8 @@ struct SEParams{
   double pseudo[6];
   int maxlen;						//maximum length of sites
   int npass;
-  int minpass[5];
-  double sitecut[5];
+  int minpass[3];
+  double sitecut[4];
   int nruns;
   bool fragment;
   int seed;
@@ -59,6 +59,10 @@ class SEModel {
 	int npoints;
 	float* mean;
 	float* stdev;
+	float** pcorr;
+	
+	void set_cutoffs();
+	void print_possible(ostream& out);
 
  public:
 	/* General */
@@ -97,8 +101,9 @@ class SEModel {
 	void calc_mean();                                       // Calculate the mean for this model
 	float* get_mean();                                      // Get the mean for this model
 	void calc_stdev();																			// Calculate the standard deviation for this model
-	float SEModel::prob_expr_gene(int g) const;             // Calculate probability of gene belonging to this model
-	float corrmean(const float* pattern) const;             // Calculate the correlation between the model mean and 'pattern
+	float get_pcorr(const int g1, const int g2);            // Calculate the pairwise correlation for this pair of genes
+	float get_corr_with_mean(const float* pattern) const;   // Calculate the correlation between the model mean and 'pattern
+	float prob_gene_given_model(int g) const;               // Calculate probability of gene belonging to this model
 	
 	/* Algorithm steps */
 	void seed_random_site();
@@ -112,6 +117,8 @@ class SEModel {
   void optimize_columns();
   void optimize_sites();
 	void expand_search_around_mean(const double corr_cutoff);
+	void expand_search_min_pcorr(const double corr_cutoff);
+	void expand_search_avg_pcorr(const double corr_cutoff);
 	void search_for_motif(const double minsize, const double mincorr);
 	
 	/* Output */

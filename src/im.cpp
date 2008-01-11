@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* outfile, SEModel& se) {
-  for(int g = 0; g < ngenes; g++)
+	for(int g = 0; g < ngenes; g++)
 		se.add_possible(g);
 	int nruns = se.possible_positions()
 	            / se.get_params().expect
@@ -124,32 +124,6 @@ void doit(const char* outfile, SEModel& se) {
 			print_full_ace(out, se);
 		}
 	}
-}
-
-float jcorr_lookup(const int g1, const int g2) {
-	if(g1 == g2) return 1;
-	float jc;
-	if(jcorr[g1][g2] == -2) {
-		//cerr << "No precomputed value found for (" << g1 << "," << g2 << ")" << endl;
-		jc = jack_corr(expr[g1], expr[g2], npoints);
-		jcorr[g1][g2] = jcorr[g2][g1] = jc;
-	}
-	return jcorr[g1][g2];
-}
-
-float avg_jcorr(SEModel& se) {
-	float result = 0;
-	int count = 0;
-	for(int g1 = 0; g1 < ngenes; g1++) {
-		if(! se.is_member(g1)) continue;
-		for(int g2 = g1 + 1; g2 < ngenes; g2++) {
-			if(! se.is_member(g2)) continue;
-			result += jcorr[g1][g2];
-			count++;
-		}
-	}
-	result /= count;
-	return result;
 }
 
 void print_full_ace(ostream& out, SEModel& se) {
