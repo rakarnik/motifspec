@@ -935,9 +935,9 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 	set_cutoffs();
 	
 	for(int i = 1; i <= separams.npass; i++){
+		expand_search_avg_pcorr(corr_cutoff[phase]);
 		if(old_phase < phase) {
 			print_status(cerr, i, old_phase, corr_cutoff[phase], sc);
-			expand_search_avg_pcorr(corr_cutoff[phase]);
 			if(possible_size() < 2 && phase < 3) { 
 				phase++; 
 				continue;
