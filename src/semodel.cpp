@@ -914,9 +914,9 @@ void SEModel::expand_search_avg_pcorr(const double corr_cutoff) {
 void SEModel::search_for_motif(const double minsize, const double mincorr) {
 	double corr_cutoff[4];
 	corr_cutoff[0] = 0.70;
-	corr_cutoff[1] = 0.65;
-  corr_cutoff[2] = 0.60;
-	corr_cutoff[3] = 0.50;
+	corr_cutoff[3] = mincorr;
+	corr_cutoff[2] = sqrt(corr_cutoff[0] * corr_cutoff[3]);
+  corr_cutoff[1] = sqrt(corr_cutoff[0] * corr_cutoff[2]);
 	double sc, cmp, sc_best_i;
   int i_worse = 0;
 	sc_best_i = map_cutoff;
@@ -930,14 +930,23 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
-	clear_all_possible();
-	expand_search_min_pcorr(corr_cutoff[0]);
+	expand_search_avg_pcorr(corr_cutoff[0]);
+	while(possible_size() < 2 && phase < 3) {
+		phase++;
+		old_phase = phase;
+		print_status(cerr, 0, old_phase, corr_cutoff[old_phase], sc);
+		expand_search_avg_pcorr(corr_cutoff[phase]);
+	}
+	if(possible_size() < 2) {
+		cerr << "Bad search start -- no genes within " << mincorr << endl;
+		return;
+	}
 	set_cutoffs();
 	
 	for(int i = 1; i <= separams.npass; i++){
-		expand_search_avg_pcorr(corr_cutoff[phase]);
 		if(old_phase < phase) {
-			print_status(cerr, i, old_phase, corr_cutoff[phase], sc);
+			print_status(cerr, i, old_phase, corr_cutoff[old_phase], sc);
+			expand_search_avg_pcorr(corr_cutoff[phase]);
 			if(possible_size() < 2 && phase < 3) { 
 				phase++; 
 				continue;
