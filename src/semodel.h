@@ -28,7 +28,7 @@ struct SEParams{
   int undersample;
   int oversample;
 };
-
+/* Integrated model */
 class SEModel {
 	/* Common */
 	vector<string> nameset;
