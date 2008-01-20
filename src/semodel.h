@@ -28,6 +28,7 @@ struct SEParams{
   int undersample;
   int oversample;
 };
+
 /* Integrated model */
 class SEModel {
 	/* Common */
@@ -65,6 +66,12 @@ class SEModel {
 	void print_possible(ostream& out);
 
  public:
+	/* Return codes for search */
+	static const int BAD_SEARCH_SPACE = 1;
+	static const int TOO_SIMILAR = 2;
+	static const int BAD_SEED = 3;
+	static const int TOO_FEW_SITES = 4;
+		
 	/* General */
 	SEModel() {};
   ~SEModel();
@@ -85,6 +92,7 @@ class SEModel {
 	bool is_possible(const int gene) const;									// Return whether this gene is a potential member
 	int possible_size() const;															// Return number of potential members
 	int possible_positions() const;													// Return number of potential positions
+	void clear_sites();																			// Remove all sites currently in model
 	bool is_member(const int gene) const;										// Return whether the gene is a member
 	int size() const;                                       // Return number of genes
 	int sites_size() const;																	// Return number of sites
@@ -120,6 +128,7 @@ class SEModel {
 	void expand_search_min_pcorr(const double corr_cutoff);
 	void expand_search_avg_pcorr(const double corr_cutoff);
 	void search_for_motif(const double minsize, const double mincorr);
+	int search_for_motif_near_seed(const double minsize, const double mincorr);
 	
 	/* Output */
 	void output(ostream &fout);

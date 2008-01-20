@@ -118,6 +118,11 @@ int SEModel::possible_positions() const {
 	return sites.positions_available(possible);
 }
 
+void SEModel::clear_sites() {
+	sites.clear_sites();
+	select_sites.clear_sites();
+}
+
 int SEModel::size() const {
 	return sites.seqs_with_sites();
 }
@@ -145,16 +150,23 @@ void SEModel::seed_random_site() {
 	if(npossible < 1) return;
 	
 	sites.clear_sites();
-	int chosen_seq, chosen_posit;
+	int chosen_possible, chosen_seq, chosen_posit;
   bool watson;
 	
 	chosen_seq = chosen_posit = -1;
 	
+	/* First choose a sequence */
+	ran_int.set_range(0, possible_size() - 1);
+	chosen_possible = ran_int.rnum();
+	int g;
+	for(g = 0; g < ngenes; g++) {
+		if(is_possible(g) && chosen_possible == 0) break; 
+		if(is_possible(g)) chosen_possible--;
+	}
+	chosen_seq = g;
+	
+	/* Now choose a site */
   for(int j = 0; j < 50; j++) {
-		ran_int.set_range(0, seqset.num_seqs() - 1);
-		chosen_seq = ran_int.rnum();
-		if(! is_possible(chosen_seq))  continue;
-		if(seqset.len_seq(chosen_seq) < sites.width()) continue;
 		ran_int.set_range(0, seqset.len_seq(chosen_seq) - sites.width() - 1);
 		double db = ran_dbl.rnum();//random (0,1)
 		watson = (db > 0.5);
@@ -895,20 +907,22 @@ void SEModel::expand_search_min_pcorr(const double corr_cutoff) {
 }
 
 void SEModel::expand_search_avg_pcorr(const double corr_cutoff) {
-	float avg_pcorr;
-	clear_all_possible();
-	for(int g1 = 0; g1 < ngenes; g1++) {
-		if(is_member(g1)) continue;
-		avg_pcorr = 0;
-		for(int g2 = 0; g2 < ngenes; g2++) {
-			if(! is_member(g2)) continue;
-			avg_pcorr += get_pcorr(g1, g2);
+	if(size() > 0) {
+		float avg_pcorr;
+		clear_all_possible();
+		for(int g1 = 0; g1 < ngenes; g1++) {
+			if(is_member(g1)) continue;
+			avg_pcorr = 0;
+			for(int g2 = 0; g2 < ngenes; g2++) {
+				if(! is_member(g2)) continue;
+				avg_pcorr += get_pcorr(g1, g2);
+			}
+			avg_pcorr /= size();
+			if(avg_pcorr > corr_cutoff) add_possible(g1);
 		}
-		avg_pcorr /= size();
-		if(avg_pcorr > corr_cutoff) add_possible(g1);
+		for(int g1 = 0; g1 < ngenes; g1++)
+			if(is_member(g1)) add_possible(g1);
 	}
-	for(int g1 = 0; g1 < ngenes; g1++)
-		if(is_member(g1)) add_possible(g1);
 }
 
 void SEModel::search_for_motif(const double minsize, const double mincorr) {
@@ -1039,6 +1053,133 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 		
 		if(i % 50 == 0) print_status(cerr, i, phase, corr_cutoff[phase], sc);
 	}
+}
+
+int SEModel::search_for_motif_near_seed(const double minsize, const double mincorr) {
+	double corr_cutoff[4];
+	corr_cutoff[0] = 0.70;
+	corr_cutoff[3] = mincorr;
+	corr_cutoff[2] = sqrt(corr_cutoff[0] * corr_cutoff[3]);
+  corr_cutoff[1] = sqrt(corr_cutoff[0] * corr_cutoff[2]);
+	double sc, cmp, sc_best_i;
+  int i_worse = 0;
+	sc_best_i = map_cutoff;
+	i_worse = 0;
+	int phase = 0;
+	int old_phase = 0;
+	
+	Sites best_sites = sites;
+	expand_search_avg_pcorr(corr_cutoff[0]);
+	while(possible_size() < 2 && phase < 3) {
+		phase++;
+		old_phase = phase;
+		print_status(cerr, 0, old_phase, corr_cutoff[old_phase], sc);
+		expand_search_avg_pcorr(corr_cutoff[phase]);
+	}
+	if(possible_size() < 2) {
+		cerr << "Bad search start -- no genes within " << mincorr << endl;
+		return BAD_SEARCH_SPACE;
+	}
+	set_cutoffs();
+	
+	for(int i = 1; i <= separams.npass; i++){
+		if(old_phase < phase) {
+			print_status(cerr, i, old_phase, corr_cutoff[old_phase], sc);
+			expand_search_avg_pcorr(corr_cutoff[phase]);
+			if(possible_size() < 2 && phase < 3) { 
+				phase++; 
+				continue;
+			}
+			set_cutoffs();
+			old_phase = phase;
+		}
+		if(phase == 3) {
+			if(size() < minsize/2) {
+				cerr << "\t\t\tReached phase " << phase << " with less than " << minsize/2 << " sequences with sites. Restarting..." << endl;
+				return TOO_FEW_SITES;
+			}
+			double sc1 = map_score();
+			sc = 0.0;
+			for(int z = 0; sc < sc1 && z < 5; z++){
+				optimize_columns();
+				optimize_sites();
+				sc = map_score();
+				print_status(cerr, i, phase, corr_cutoff[phase], sc);
+			}
+			if(sc < sc1) {
+				sites = best_sites;
+				sc = sc1;
+			}
+			sc = map_score();
+			print_status(cerr, i, phase, corr_cutoff[phase], sc);
+			if(size() < minsize) {
+				cerr << "\t\t\tCompleted phase " << phase << " with less than " << minsize << " sequences with sites. Restarting..." << endl;
+				return TOO_FEW_SITES;
+			}
+			archive.consider_motif(sites, sc);
+			cerr << "\t\t\tCompleted phase " << phase << "! Restarting..." << endl;
+			return 0;
+		}
+		if(i_worse == 0)
+			single_pass(separams.sitecut[phase]);
+		else 
+			single_pass_select(separams.sitecut[phase]);
+		if(sites_size() == 0) {
+			if(sc_best_i == map_cutoff) {
+				cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
+				return BAD_SEED;
+			}
+			//if(best_sites.number()<4) break;
+			sites = best_sites;
+			select_sites = best_sites;
+			phase++;
+			i_worse = 0;
+			continue;
+		}
+		if(i<=3) continue;
+		if(phase < 3 && size() > minsize) {
+			if(column_sample(0)) {}
+			if(column_sample(sites.width()-1)) {}
+			for(int m = 0; m < 3; m++) {
+				if(!(column_sample())) break;
+			}
+		}
+		sc = map_score();
+		if(sc - sc_best_i > 1e-3){
+			i_worse=0;
+			if(size() > minsize * 2) {
+				cmp = archive.check_motif(sites, sc);
+				if(cmp > sim_cutoff) {
+					print_status(cerr, i, phase, corr_cutoff[phase], sc);
+					cerr <<"\t\t\tToo similar! Restarting..." << endl;
+					return TOO_SIMILAR;
+				}
+			}
+			sc_best_i = sc;
+			best_sites = sites;
+		}
+		else i_worse++;
+		if(i_worse > separams.minpass[phase]){
+			if(sc_best_i == map_cutoff) {
+				print_status(cerr, i, phase, corr_cutoff[phase], sc);
+				cerr << "\t\t\ti_worse is greater than cutoff and best score at cutoff! Restarting..." << endl;
+				return BAD_SEED;
+			}
+			if(best_sites.number() < 2) {
+				print_status(cerr, i, phase, corr_cutoff[phase], sc);
+				cerr << "\t\t\ti_worse is greater than cutoff and only 1 site! Restarting..." << endl;
+				return BAD_SEED;
+			}
+			sites = best_sites;
+			select_sites = best_sites;
+			phase++;
+			i_worse = 0;
+		}
+		
+		if(i % 50 == 0) print_status(cerr, i, phase, corr_cutoff[phase], sc);
+	}
+	
+	return 0;
 }
 
 void SEModel::print_status(ostream& out, const int i, const int phase, const double cutoff, const double sc) {
