@@ -97,7 +97,6 @@ int main(int argc, char *argv[]) {
 	cerr << "done." << endl;
 	
 	string tmpstr(outfile);
-	cerr << "Starting motif search..." << endl;
 	tmpstr.append(".tmp.ace");
 	doit(tmpstr.c_str(), se);
 	
@@ -109,40 +108,21 @@ int main(int argc, char *argv[]) {
 }
 
 void doit(const char* outfile, SEModel& se) {
-	Random<int> ran_int;
-	int nseeds, nruns, rgene, ret, simcnt;
-	unsigned int seed = (unsigned) time(0);
-	ran_int.set_seed(seed);
-	ran_int.set_range(0, ngenes - 1);
-	nseeds = 100;
-	for(int i = 1; i < nseeds; i++) {
-		simcnt = 0;
-		se.clear_sites();
-		se.clear_all_possible();
-		rgene = ran_int.rnum();
-		se.add_possible(rgene);
-		se.seed_random_site();
-		se.expand_search_avg_pcorr(mincorr);
-		nruns = se.possible_positions()
-						/se.get_params().expect
-						/ncol
-						/se.get_params().undersample
-						*se.get_params().oversample;
-		cerr << "Seed #" << i << ": " << nruns << " runs" << endl; 
-		
-		for(int j = 1; j <= nruns; j++) {
-			cerr << "\t\tSeed #" << i << "/" << nseeds << ", search restart #" << j << "/" << nruns << endl;
-			se.clear_sites();
-			se.clear_all_possible();
-			se.add_possible(rgene);
-			se.seed_random_site();
-			ret = se.search_for_motif_near_seed(minsize, mincorr);
-			if(ret == SEModel::TOO_SIMILAR) simcnt++;
-			if(simcnt > 10) break;
+	for(int g = 0; g < ngenes; g++)
+		se.add_possible(g);
+	int nruns = 10 * se.possible_positions()
+	            / se.get_params().expect
+							/ ncol
+							/ se.get_params().undersample
+							* se.get_params().oversample;
+	
+	for(int j = 1; j <= nruns; j++) {
+		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
+		se.search_for_motif(minsize, mincorr);
+		if(j % 50 == 0) {
+			ofstream out(outfile, ios::trunc);
+			print_full_ace(out, se);
 		}
-		
-		ofstream out(outfile, ios::trunc);
-		print_full_ace(out, se);
 	}
 }
 
