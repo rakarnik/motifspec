@@ -404,7 +404,7 @@ bool SEModel::column_sample(const int c, const bool sample){
   int *freq = new int[sites.depth()];
   double wt, wt_worst = DBL_MAX;
 	
-  if(c!=-1)
+  if(c!=1000)
 		col_worst = c;   // user chosen, hopefully a real column
   else {
     for(i = 0; i < sites.ncols(); i++){
@@ -473,6 +473,7 @@ bool SEModel::column_sample(const int c, const bool sample){
 	int col_pick;
 	double cutoff=.01;
 	if(sample){
+		assert(x+col_removed<cs_span);
 		if(1-(wtx[x+col_removed]/tot2)<cutoff){
 			sites.add_col(col_removed);
 			select_sites.add_col(col_removed);

@@ -120,8 +120,8 @@ class SEModel {
 	void single_pass_select(const double minprob = 0.0);
 	bool column_sample(const int c, const bool sample);
   bool column_sample(const int c){return column_sample(c,true);}
-  bool column_sample(const bool sample) {return column_sample(-1,sample);}
-  bool column_sample() {return column_sample(-1,true);}
+  bool column_sample(const bool sample) {return column_sample(1000,sample);}
+  bool column_sample() {return column_sample(1000,true);}
   void optimize_columns();
   void optimize_sites();
 	void expand_search_around_mean(const double corr_cutoff);
