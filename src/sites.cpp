@@ -390,31 +390,31 @@ void Sites::columns_open(int &l, int &r){
     if(c==c_prev){
       int d=p-p_prev-sites_width;
       if(s==s_prev){
-	if(l>d) l=d;
-	if(r>d) r=d;
+				if(l>d) l=d;
+				if(r>d) r=d;
       }
       else{
-	if(l>d/2) l=d/2;
-	if(r>d/2) r=d/2;
+				if(l>d/2) l=d/2;
+				if(r>d/2) r=d/2;
       }
     }
     else{
       int f;
       if(c_prev!=-1){
-	f=sites_len_seq[c_prev]-sites_width-p_prev;
-	if(s_prev){
-	  if(r>f) r=f;
-	}
-	else{
-	  if(l>f) l=f;
-	}
+				f=sites_len_seq[c_prev]-sites_width-p_prev;
+				if(s_prev){
+					if(r>f) r=f;
+				}
+				else{
+					if(l>f) l=f;
+				}
       }
       f=p;
       if(s){
-	if(l>f) l=f;
+				if(l>f) l=f;
       }
       else{
-	if(r>f) r=f;
+				if(r>f) r=f;
       }
     }
   }
