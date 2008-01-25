@@ -422,6 +422,7 @@ bool SEModel::column_sample(const int c, const bool sample){
     }
   }
 	
+	int oldwidth = sites.width();
   col_removed = sites.remove_col(col_worst);
   i = select_sites.remove_col(col_worst);
   if(i != col_removed) {
@@ -430,11 +431,11 @@ bool SEModel::column_sample(const int c, const bool sample){
 	}
 	
   int max_left, max_right;
-  max_left = max_right = (sites.max_width()-sites.width())/2;
-  sites.columns_open(max_left,max_right);
-  int cs_span=max_left+max_right+sites.width();
+  max_left = max_right = (sites.max_width() - oldwidth)/2;
+  sites.columns_open(max_left, max_right);
+	int cs_span = max_left + max_right + oldwidth;
   double *wtx=new double[cs_span];
-  int x=max_left;
+	int x=max_left;
   //wtx[x+c] will refer to the weight of pos c in the usual numbering
   col=0;
   double best_wt=0.0;
@@ -468,6 +469,7 @@ bool SEModel::column_sample(const int c, const bool sample){
 		wtx[i]/=bico(newwidth-2,sites.ncols()-2);
 		tot2+=wtx[i];
 	}
+	assert(x + col_removed < cs_span);
 	
 	double pick;
 	int col_pick;
