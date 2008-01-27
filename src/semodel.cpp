@@ -44,7 +44,8 @@ void SEModel::init(const vector<string>& seqs, float** exprtab, const int numexp
 		for(int j = 0; j < ngenes; j++) {
 			pcorr[i][j] = -2;
 		}
-	}	
+	}
+	corr_cutoff = 0.80;
 }
 
 void SEModel::set_default_params(){
@@ -552,6 +553,7 @@ double SEModel::map_score(){
   }
   vg-=gammaln((double)(separams.npseudo));
   ms-=((double)sites.ncols()*vg);
+	ms*=corr_cutoff;
   return ms;
 }
 
@@ -929,17 +931,16 @@ void SEModel::expand_search_avg_pcorr(const double corr_cutoff) {
 }
 
 void SEModel::search_for_motif(const double minsize, const double mincorr) {
-	double corr_cutoff[4];
-	corr_cutoff[0] = 0.70;
-	corr_cutoff[3] = mincorr;
-	corr_cutoff[2] = sqrt(corr_cutoff[0] * corr_cutoff[3]);
-  corr_cutoff[1] = sqrt(corr_cutoff[0] * corr_cutoff[2]);
+	corr_cutoff = 0.80;
+	double old_cutoff = corr_cutoff;
 	double sc, cmp, sc_best_i;
   int i_worse = 0;
 	sc_best_i = map_cutoff;
 	i_worse = 0;
 	int phase = 0;
-	int old_phase = 0;
+	int oldphase = 0;
+	int oldsize = 0;
+	int cutoff_runs = 0;
 	
 	sites.clear_sites();
 	select_sites.clear_sites();
@@ -947,29 +948,24 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
-	expand_search_avg_pcorr(corr_cutoff[0]);
-	while(possible_size() < 2 && phase < 3) {
-		phase++;
-		old_phase = phase;
-		print_status(cerr, 0, old_phase, corr_cutoff[old_phase], sc);
-		expand_search_avg_pcorr(corr_cutoff[phase]);
+	expand_search_avg_pcorr(corr_cutoff);
+	while(possible_size() < minsize && corr_cutoff >= mincorr) {
+		print_status(cerr, 0, oldphase, corr_cutoff, sc);
+		corr_cutoff -= 0.05;
+		old_cutoff -= 0.05;
+		expand_search_avg_pcorr(corr_cutoff);
 	}
 	if(possible_size() < 2) {
 		cerr << "Bad search start -- no genes within " << mincorr << endl;
 		return;
 	}
+	print_status(cerr, 0, oldphase, corr_cutoff, sc);
 	set_cutoffs();
 	
 	for(int i = 1; i <= separams.npass; i++){
-		if(old_phase < phase) {
-			print_status(cerr, i, old_phase, corr_cutoff[old_phase], sc);
-			expand_search_avg_pcorr(corr_cutoff[phase]);
-			if(possible_size() < 2 && phase < 3) { 
-				phase++; 
-				continue;
-			}
-			set_cutoffs();
-			old_phase = phase;
+		if(oldphase < phase) {
+			print_status(cerr, i, oldphase, corr_cutoff, sc);
+			oldphase = phase;
 		}
 		if(phase == 3) {
 			if(size() < minsize/2) {
@@ -982,14 +978,14 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 				optimize_columns();
 				optimize_sites();
 				sc = map_score();
-				print_status(cerr, i, phase, corr_cutoff[phase], sc);
+				print_status(cerr, i, phase, corr_cutoff, sc);
 			}
 			if(sc < sc1) {
 				sites = best_sites;
 				sc = sc1;
 			}
 			sc = map_score();
-			print_status(cerr, i, phase, corr_cutoff[phase], sc);
+			print_status(cerr, i, phase, corr_cutoff, sc);
 			if(size() < minsize) {
 				cerr << "\t\t\tCompleted phase " << phase << " with less than " << minsize << " sequences with sites. Restarting..." << endl;
 				break;
@@ -998,10 +994,11 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 			cerr << "\t\t\tCompleted phase " << phase << "! Restarting..." << endl;
 			break;
 		}
-		if(i_worse == 0)
+		if(i_worse == 0) {
 			single_pass(separams.sitecut[phase]);
-		else 
+		} else {
 			single_pass_select(separams.sitecut[phase]);
+		}
 		if(sites_size() == 0) {
 			if(sc_best_i == map_cutoff) {
 				cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
@@ -1028,7 +1025,7 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 			if(size() > minsize * 2) {
 				cmp = archive.check_motif(sites, sc);
 				if(cmp > sim_cutoff) {
-					print_status(cerr, i, phase, corr_cutoff[phase], sc);
+					print_status(cerr, i, phase, corr_cutoff, sc);
 					cerr <<"\t\t\tToo similar! Restarting..." << endl;
 					break;
 				}
@@ -1039,12 +1036,12 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 		else i_worse++;
 		if(i_worse > separams.minpass[phase]){
 			if(sc_best_i == map_cutoff) {
-				print_status(cerr, i, phase, corr_cutoff[phase], sc);
+				print_status(cerr, i, phase, corr_cutoff, sc);
 				cerr << "\t\t\ti_worse is greater than cutoff and best score at cutoff! Restarting..." << endl;
 				break;
 			}
 			if(best_sites.number() < 2) {
-				print_status(cerr, i, phase, corr_cutoff[phase], sc);
+				print_status(cerr, i, phase, corr_cutoff, sc);
 				cerr << "\t\t\ti_worse is greater than cutoff and only 1 site! Restarting..." << endl;
 				break;
 			}
@@ -1054,7 +1051,24 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 			i_worse = 0;
 		}
 		
-		if(i % 50 == 0) print_status(cerr, i, phase, corr_cutoff[phase], sc);
+		cutoff_runs++;
+		if(cutoff_runs > 5) {
+			print_status(cerr, i, phase, corr_cutoff, sc);
+			if(size() <= 0.75 * oldsize && old_cutoff == corr_cutoff) {
+				phase++;
+			} else if(size() <= 0.75 * oldsize) {
+				corr_cutoff = old_cutoff;
+				expand_search_avg_pcorr(corr_cutoff);
+				set_cutoffs();
+			} else if(size() > 1.25 * oldsize && old_cutoff == corr_cutoff && corr_cutoff > mincorr) {
+				old_cutoff = corr_cutoff; 
+				corr_cutoff -= 0.05;
+				expand_search_avg_pcorr(corr_cutoff);
+				set_cutoffs();
+			}
+			oldsize = size();
+			cutoff_runs = 0;
+		}
 	}
 }
 

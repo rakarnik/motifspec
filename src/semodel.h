@@ -61,6 +61,7 @@ class SEModel {
 	float* mean;
 	float* stdev;
 	float** pcorr;
+	double corr_cutoff;
 	
 	void set_cutoffs();
 	void print_possible(ostream& out);
