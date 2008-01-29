@@ -1054,7 +1054,7 @@ void SEModel::search_for_motif(const double minsize, const double mincorr) {
 		cutoff_runs++;
 		if(cutoff_runs > 5) {
 			print_status(cerr, i, phase, corr_cutoff, sc);
-			if(size() <= 0.75 * oldsize && old_cutoff == corr_cutoff) {
+			if(size() <= 0.75 * oldsize && old_cutoff == corr_cutoff && phase < 3) {
 				phase++;
 			} else if(size() <= 0.75 * oldsize) {
 				corr_cutoff = old_cutoff;
