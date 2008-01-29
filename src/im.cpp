@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
 void doit(const char* outfile, SEModel& se) {
 	for(int g = 0; g < ngenes; g++)
 		se.add_possible(g);
-	int nruns = 2 * se.possible_positions()
+	int nruns = se.possible_positions()
 	            / se.get_params().expect
 							/ ncol
 							/ se.get_params().undersample
