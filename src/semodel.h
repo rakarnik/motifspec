@@ -27,6 +27,8 @@ struct SEParams{
   int flanking;
   int undersample;
   int oversample;
+	int minsize;
+	float mincorr;
 };
 
 /* Integrated model */
@@ -63,7 +65,7 @@ class SEModel {
 	float** pcorr;
 	double corr_cutoff;
 	
-	void set_cutoffs();
+	void set_seq_cutoffs();
 	void print_possible(ostream& out);
 
  public:
@@ -127,9 +129,8 @@ class SEModel {
   void optimize_sites();
 	void expand_search_around_mean(const double corr_cutoff);
 	void expand_search_min_pcorr(const double corr_cutoff);
-	void expand_search_avg_pcorr(const double corr_cutoff);
-	void search_for_motif(const double minsize, const double mincorr);
-	int search_for_motif_near_seed(const double minsize, const double mincorr);
+	void expand_search_avg_pcorr();
+	void search_for_motif();
 	
 	/* Output */
 	void output(ostream &fout);

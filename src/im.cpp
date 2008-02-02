@@ -21,9 +21,6 @@ int main(int argc, char *argv[]) {
 	
 	// Read parameters
 	if(! GetArg2(argc, argv, "-numcols", ncol)) ncol = 10;
-	if(! GetArg2(argc, argv, "-minsize", minsize)) minsize = 5;
-	if(! GetArg2(argc, argv, "-mincorr", mincorr)) mincorr = 0.5;
-	
   vector<string> seqs, nameset1;
   cerr << "Reading sequence data from '" << seqfile << "'... ";
 	get_fasta_fast(seqfile.c_str(), seqs, nameset1);
@@ -54,39 +51,6 @@ int main(int argc, char *argv[]) {
 	}
 	
 	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints" << endl;
-
-	
-	jcorr = new float*[ngenes];
-	for(int i = 0; i < ngenes; i++) {
-		jcorr[i] = new float[ngenes];
-		for(int j = 0; j < ngenes; j++) {
-			jcorr[i][j] = - 2;
-		}
-	}
-	
-	jcorr = new float*[ngenes];
-	for(int i = 0; i < ngenes; i++) {
-		jcorr[i] = new float[ngenes];
-		for(int j = 0; j < ngenes; j++) {
-			jcorr[i][j] = -2;
-		}
-	}
-	
-	cerr << "Reading precomputed correlation values from jcorr.out..." << endl;
-	ifstream corrin("jcorr.out");
-	int corrcount = 1;
-	string line;
-	vector<string> values;
-	while(getline(corrin, line)) {
-		values = split(line, '\t');
-		int i = atoi(values[0].c_str());
-		int j = atoi(values[1].c_str());
-		float jc = atof(values[2].c_str());
-		jcorr[i][j] = jcorr[j][i] = jc;
-		corrcount++;
-		if(corrcount % 1000000 == 0) cerr << "\tRead " << corrcount << " correlation values" << endl;
-	}
-	cerr << "done." << endl;
 	
 	cerr << "Setting up SEModel... " << endl;
 	SEModel se;
@@ -118,7 +82,7 @@ void doit(const char* outfile, SEModel& se) {
 	
 	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
-		se.search_for_motif(minsize, mincorr);
+		se.search_for_motif();
 		if(j % 50 == 0) {
 			ofstream out(outfile, ios::trunc);
 			print_full_ace(out, se);
