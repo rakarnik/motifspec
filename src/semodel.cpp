@@ -399,21 +399,19 @@ void SEModel::single_pass_select(const double minprob){
 }
 
 bool SEModel::column_sample(const int c, const bool sample){
-	//cerr << "\t\t\tRunning column sample with c = " << c << "... ";
 	//sample default to true, if false then replace with best column
   //just consider throwing out the worst column, sample for replacement, no need to sample both ways, unless column is specified
-  int i, j;
-  int col = 0, col_worst = 0, col_removed = 0;
+  int col = 0, col_worst;
   int *freq = new int[sites.depth()];
   double wt, wt_worst = DBL_MAX;
 	
   if(c!=1000)
 		col_worst = c;   // user chosen, hopefully a real column
   else {
-    for(i = 0; i < sites.ncols(); i++){
+    for(int i = 0; i < sites.ncols(); i++){
       sites.column_freq(col, seqset, freq);
       wt = 0.0;
-      for(j = 0; j < sites.depth(); j++) {
+      for(int j = 0; j < sites.depth(); j++) {
 				wt += gammaln(freq[j] + separams.pseudo[j]);
 				wt -= (double)freq[j] * log(separams.backfreq[j]);
       }
@@ -425,32 +423,24 @@ bool SEModel::column_sample(const int c, const bool sample){
     }
   }
 	
-	int oldwidth = sites.width();
-  col_removed = sites.remove_col(col_worst);
-  i = select_sites.remove_col(col_worst);
-  if(i != col_removed) {
-		cerr << i << "  " << col_removed << " wrong assumption in column_sample\n";
-		abort();
-	}
-	
   int max_left, max_right;
-  max_left = max_right = (sites.max_width() - oldwidth)/2;
+  max_left = max_right = (sites.max_width() - sites.width())/2;
   sites.columns_open(max_left, max_right);
-	int cs_span = max_left + max_right + oldwidth;
-  double *wtx=new double[cs_span];
-	int x=max_left;
-  //wtx[x+c] will refer to the weight of pos c in the usual numbering
-  col=0;
-  double best_wt=0.0;
-  for(i=0;i<cs_span;i++){
-    wtx[i]=0.0;
-    if((i-x)==col){
-      col=sites.next_column(col);
-      continue;
-    }
+	int cs_span = max_left + max_right + sites.width();
+  double *wtx = new double[cs_span];
+	int x = max_left;
+  //wtx[x + c] will refer to the weight of pos c in the usual numbering
+  col = 0;
+  double best_wt = 0.0;
+  for(int i = 0; i < cs_span; i++){
+    wtx[i] = 0.0;
+    if((i - x) == col)
+      col = sites.next_column(col);
+		if((i - x) != col_worst)
+			continue;
     if(sites.column_freq(i-x,seqset,freq)){
       wt=0.0;
-      for(j=0;j<sites.depth();j++){
+      for(int j=0;j<sites.depth();j++){
 				wt+=gammaln(freq[j]+separams.pseudo[j]);
 				wt-=(double)freq[j]*log(separams.backfreq[j]);
       }
@@ -462,47 +452,45 @@ bool SEModel::column_sample(const int c, const bool sample){
   double scale=0.0;
   if(best_wt>100.0) scale=best_wt-100.0;//keep exp from overflowing
 	double tot2=0.0;
-	for(i=0;i<cs_span;i++){
-		if(wtx[i]==0.0) continue;
-		wtx[i]-=scale;
-		wtx[i]=exp(wtx[i]);
-		int newwidth=sites.width();
-		if(i<x) newwidth+=(x-i);
-		else if(i>(x+sites.width()-1)) newwidth+=(i-x-sites.width()+1);
-		wtx[i]/=bico(newwidth-2,sites.ncols()-2);
+	for(int i = 0; i < cs_span; i++){
+		if(wtx[i] == 0.0) continue;
+		wtx[i] -= scale;
+		wtx[i] = exp(wtx[i]);
+		int newwidth = sites.width();
+		if(i < x)
+			newwidth += (x - i);
+		else if(i > (x + sites.width() - 1))
+			newwidth += (i - x - sites.width() + 1);
+		wtx[i] /= bico(newwidth - 2, sites.ncols() - 2);
 		tot2+=wtx[i];
 	}
-	assert(x + col_removed < cs_span);
 	
 	double pick;
 	int col_pick;
-	double cutoff=.01;
-	if(sample){
-		assert(x+col_removed<cs_span);
-		if(1-(wtx[x+col_removed]/tot2)<cutoff){
-			sites.add_col(col_removed);
-			select_sites.add_col(col_removed);
+	double cutoff = .01;
+	if(sample) {
+		if(1 - (wtx[x + col_worst]/tot2) < cutoff){
 			delete [] wtx;
 			delete [] freq;
 			return false;
 		} 
-		pick=ran_dbl.rnum()*tot2;
-		col_pick=373;
-		for(i=0;i<cs_span;i++){
-			if(wtx[i]==0.0) continue;
-			pick-=wtx[i];
-			if(pick<=0.0) {
-				col_pick=i-x;
+		pick = ran_dbl.rnum() * tot2;
+		col_pick = 373;
+		for(int i = 0; i < cs_span; i++){
+			if(wtx[i] == 0.0) continue;
+			pick -= wtx[i];
+			if(pick <= 0.0) {
+				col_pick = i - x;
 				break;
 			}
 		}
 	}
 	else{//select best
 		pick=-DBL_MAX;
-		for(i=0;i<cs_span;i++){
-			if(wtx[i]>pick){
-				col_pick=i-x;
-				pick=wtx[i];
+		for(int i = 0; i < cs_span; i++){
+			if(wtx[i] > pick){
+				col_pick = i - x;
+				pick = wtx[i];
 			}
 		}
 	}
@@ -510,16 +498,23 @@ bool SEModel::column_sample(const int c, const bool sample){
 		cout<<tot2<<'\t'<<"373 reached.\n";
 		abort();
 	}
+	
+	if(col_pick == col_worst) return false;
+	
 	sites.add_col(col_pick);
 	select_sites.add_col(col_pick);
+	if(col_pick < 0) {
+		sites.remove_col(col_worst);
+		select_sites.remove_col(col_worst);
+	} else {
+		sites.remove_col(col_worst - col_pick);
+		select_sites.remove_col(col_worst - col_pick);
+	}
 	
 	delete [] wtx;
 	delete [] freq;
 	
-	// cerr << "done." <<  endl;
-	
-	if(col_removed==col_pick) return false;
-  else return true;
+	return true;
 }
 
 double SEModel::map_score(){
