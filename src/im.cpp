@@ -5,7 +5,6 @@ int main(int argc, char *argv[]) {
 
 	string seqfile;                       // file with sequences
 	string exprfile;                      // file with expression data
-	string clusfile;
 	string outfile;
 	if(argc < 6) {
     print_usage(cout);
@@ -52,7 +51,7 @@ int main(int argc, char *argv[]) {
 	
 	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints" << endl;
 	
-	cerr << "Setting up SEModel... " << endl;
+	cerr << "Setting up SEModel... ";
 	SEModel se;
 	se.init(seqs, expr, npoints, nameset1, ncol);
 	se.modify_params(argc, argv);
