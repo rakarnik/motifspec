@@ -29,6 +29,8 @@ class Sites{
   int *sites_active_fwd;
   //columns 0..wide-1;fwd(0)=2nd column
   bool sites_alloc;
+	
+	double corr_cutoff;
 
 public:
   Sites(){sites_alloc=false;destroy();}
@@ -47,9 +49,11 @@ public:
   int posit(int i) const {return sites_posit[i];}
   bool strand(int i) const {return sites_strand[i];}
   int max_width() const {return sites_max_width;}
+	double get_corr_cutoff() const {return corr_cutoff;}
+	void set_corr_cutoff(const double cutoff) {corr_cutoff = cutoff;}
   bool is_open_site(const int c, const int p);
 	int seqs_with_sites() const { return sites_num_seqs_with_sites; }
-	bool seq_has_site(const int c) const { return (sites_has_sites[c] > 0); }; 
+	bool seq_has_site(const int c) const { return (sites_has_sites[c] != 0); }
   void add_site(const int c, const int p, const bool s);
   void remove_site(const int c, const int p);
   void remove_all_sites();

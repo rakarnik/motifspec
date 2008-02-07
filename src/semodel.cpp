@@ -45,7 +45,6 @@ void SEModel::init(const vector<string>& seqs, float** exprtab, const int numexp
 			pcorr[i][j] = -2;
 		}
 	}
-	corr_cutoff = 0.80;
 }
 
 void SEModel::set_default_params(){
@@ -347,7 +346,6 @@ void SEModel::single_pass_select(const double minprob){
   double ap= (separams.weight * separams.expect + (1-separams.weight) * sites.number())
 							/ (2.0 * sites.positions_available(possible));
   calc_matrix();
-	calc_mean();
 	sites.remove_all_sites();
   //will only update once per pass
 	
@@ -438,20 +436,20 @@ bool SEModel::column_sample(const int c, const bool sample){
       col = sites.next_column(col);
 		if((i - x) != col_worst)
 			continue;
-    if(sites.column_freq(i-x,seqset,freq)){
-      wt=0.0;
-      for(int j=0;j<sites.depth();j++){
-				wt+=gammaln(freq[j]+separams.pseudo[j]);
-				wt-=(double)freq[j]*log(separams.backfreq[j]);
+    if(sites.column_freq(i - x, seqset, freq)){
+      wt = 0.0;
+      for(int j = 0;j < sites.depth(); j++){
+				wt += gammaln(freq[j] + separams.pseudo[j]);
+				wt -= (double)freq[j] * log(separams.backfreq[j]);
       }
-      wtx[i]=wt;
-      if(wt>best_wt) best_wt=wt;
+      wtx[i] = wt;
+      if(wt > best_wt) best_wt = wt;
     }
   }
 	
-  double scale=0.0;
-  if(best_wt>100.0) scale=best_wt-100.0;//keep exp from overflowing
-	double tot2=0.0;
+  double scale = 0.0;
+  if(best_wt > 100.0) scale = best_wt - 100.0; //keep exp from overflowing
+	double tot2 = 0.0;
 	for(int i = 0; i < cs_span; i++){
 		if(wtx[i] == 0.0) continue;
 		wtx[i] -= scale;
@@ -462,7 +460,7 @@ bool SEModel::column_sample(const int c, const bool sample){
 		else if(i > (x + sites.width() - 1))
 			newwidth += (i - x - sites.width() + 1);
 		wtx[i] /= bico(newwidth - 2, sites.ncols() - 2);
-		tot2+=wtx[i];
+		tot2 += wtx[i];
 	}
 	
 	double pick;
@@ -494,8 +492,8 @@ bool SEModel::column_sample(const int c, const bool sample){
 			}
 		}
 	}
-	if(col_pick==373){
-		cout<<tot2<<'\t'<<"373 reached.\n";
+	if(col_pick == 373){
+		cout << tot2 << '\t'<< "373 reached.\n";
 		abort();
 	}
 	
@@ -513,7 +511,6 @@ bool SEModel::column_sample(const int c, const bool sample){
 	
 	delete [] wtx;
 	delete [] freq;
-	
 	return true;
 }
 
@@ -550,7 +547,7 @@ double SEModel::map_score(){
   }
   vg-=gammaln((double)(separams.npseudo));
   ms-=((double)sites.ncols()*vg);
-	//ms*=corr_cutoff;
+	ms *= sites.get_corr_cutoff();
   return ms;
 }
 
@@ -798,7 +795,8 @@ void SEModel::full_output(ostream &fout){
     if(sc > 0.0){
       fout << "Motif " << j + 1 << '\n';
       output(fout);
-      fout << "MAP Score: " << sc << "\n\n";
+      fout << "MAP Score: " << sc << endl;
+			fout << "Correlation cutoff: " << print_sites.get_corr_cutoff() << endl << endl;
     }
     else break;
   }
@@ -855,6 +853,17 @@ void SEModel::calc_stdev() {
 	} 
 }
 
+float SEModel::get_avg_pcorr() {
+	float curr_avg_pcorr = 0.0;
+	for(int g1 = 0; g1 < ngenes; g1++)
+		for(int g2 = g1 + 1; g2 < ngenes; g2++)
+			if(is_member(g1) && is_member(g2))
+				curr_avg_pcorr += get_pcorr(g1, g2);
+	curr_avg_pcorr = (2 * curr_avg_pcorr) / (size() * (size() - 1));
+	return curr_avg_pcorr;
+}
+
+
 float SEModel::get_pcorr(const int g1, const int g2) {
 	if(pcorr[g1][g2] == -2)
 		pcorr[g1][g2] = pcorr[g2][g1] = corr(expr[g1], expr[g2], npoints);
@@ -909,17 +918,8 @@ void SEModel::expand_search_min_pcorr(const double cutoff) {
 }
 
 void SEModel::expand_search_avg_pcorr() {
-	float curr_avg_pcorr = 0.0;
-	int npairs = 0;
 	if(size() > 10) {
-		for(int g1 = 0; g1 < ngenes; g1++)
-			for(int g2 = g1 + 1; g2 < ngenes; g2++)
-				if(is_member(g1) && is_member(g2)) {
-					npairs++;
-					curr_avg_pcorr += get_pcorr(g1, g2);
-				}
-		curr_avg_pcorr /= npairs;
-		corr_cutoff = 0.9 * curr_avg_pcorr;
+		sites.set_corr_cutoff(0.95 * get_avg_pcorr());
 	}
 
 	if(size() > 0) {
@@ -933,7 +933,7 @@ void SEModel::expand_search_avg_pcorr() {
 				avg_pcorr += get_pcorr(g1, g2);
 			}
 			avg_pcorr /= size();
-			if(avg_pcorr > corr_cutoff) add_possible(g1);
+			if(avg_pcorr > sites.get_corr_cutoff()) add_possible(g1);
 		}
 		for(int g1 = 0; g1 < ngenes; g1++)
 			if(is_member(g1)) add_possible(g1);
@@ -941,7 +941,7 @@ void SEModel::expand_search_avg_pcorr() {
 }
 
 void SEModel::search_for_motif() {
-	corr_cutoff = 0.70;
+	sites.set_corr_cutoff(0.9);
 	double sc, cmp, sc_best_i;
   int i_worse = 0;
 	sc_best_i = map_cutoff;
@@ -957,20 +957,20 @@ void SEModel::search_for_motif() {
 	seed_random_site();
 	expand_search_avg_pcorr();
 	while(possible_size() < separams.minsize) {
-		print_status(cerr, 0, oldphase, corr_cutoff, sc);
-		corr_cutoff -= 0.05;
+		print_status(cerr, 0, oldphase, sites.get_corr_cutoff(), sc);
+		sites.set_corr_cutoff(sites.get_corr_cutoff() - 0.1);
 		expand_search_avg_pcorr();
 	}
 	if(possible_size() < 2) {
 		cerr << "Bad search start -- no genes within " << separams.mincorr << endl;
 		return;
 	}
-	print_status(cerr, 0, oldphase, corr_cutoff, sc);
+	print_status(cerr, 0, oldphase, sites.get_corr_cutoff(), sc);
 	set_seq_cutoffs();
 	
 	for(int i = 1; i <= separams.npass; i++){
 		if(oldphase < phase) {
-			print_status(cerr, i, oldphase, corr_cutoff, sc);
+			print_status(cerr, i, oldphase, sites.get_corr_cutoff(), sc);
 			expand_search_avg_pcorr();
 			oldphase = phase;
 		}
@@ -985,14 +985,14 @@ void SEModel::search_for_motif() {
 				optimize_columns();
 				optimize_sites();
 				sc = map_score();
-				print_status(cerr, i, phase, corr_cutoff, sc);
+				print_status(cerr, i, phase, sites.get_corr_cutoff(), sc);
 			}
 			if(sc < sc1) {
 				sites = best_sites;
 				sc = sc1;
 			}
 			sc = map_score();
-			print_status(cerr, i, phase, corr_cutoff, sc);
+			print_status(cerr, i, phase, sites.get_corr_cutoff(), sc);
 			if(size() < separams.minsize) {
 				cerr << "\t\t\tCompleted phase " << phase << " with less than " << separams.minsize << " sequences with sites. Restarting..." << endl;
 				break;
@@ -1032,7 +1032,7 @@ void SEModel::search_for_motif() {
 			if(size() > separams.minsize * 2) {
 				cmp = archive.check_motif(sites, sc);
 				if(cmp > sim_cutoff) {
-					print_status(cerr, i, phase, corr_cutoff, sc);
+					print_status(cerr, i, phase, sites.get_corr_cutoff(), sc);
 					cerr <<"\t\t\tToo similar! Restarting..." << endl;
 					break;
 				}
@@ -1043,12 +1043,12 @@ void SEModel::search_for_motif() {
 		else i_worse++;
 		if(i_worse > separams.minpass[phase]){
 			if(sc_best_i == map_cutoff) {
-				print_status(cerr, i, phase, corr_cutoff, sc);
+				print_status(cerr, i, phase, sites.get_corr_cutoff(), sc);
 				cerr << "\t\t\ti_worse is greater than cutoff and best score at cutoff! Restarting..." << endl;
 				break;
 			}
 			if(best_sites.number() < 2) {
-				print_status(cerr, i, phase, corr_cutoff, sc);
+				print_status(cerr, i, phase, sites.get_corr_cutoff(), sc);
 				cerr << "\t\t\ti_worse is greater than cutoff and only 1 site! Restarting..." << endl;
 				break;
 			}
@@ -1057,6 +1057,8 @@ void SEModel::search_for_motif() {
 			phase++;
 			i_worse = 0;
 		}
+	
+		if(i % 50 == 0) print_status(cerr, i, phase, sites.get_corr_cutoff(), sc);
 	}
 }
 

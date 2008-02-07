@@ -69,6 +69,7 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
 		sites_has_sites[i] = 0;
 	}
   clear_sites();
+	corr_cutoff = 0.70;
 }
 
 Sites& Sites::operator= (const Sites& s){
@@ -90,6 +91,7 @@ Sites& Sites::operator= (const Sites& s){
     for(int i = 0; i < sites_max_width; i++){
       sites_active_fwd[i] = s.sites_active_fwd[i];
     }
+		corr_cutoff = s.corr_cutoff;
   }
   return *this;
 }

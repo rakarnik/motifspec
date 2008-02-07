@@ -63,7 +63,6 @@ class SEModel {
 	float* mean;
 	float* stdev;
 	float** pcorr;
-	double corr_cutoff;
 	
 	void set_seq_cutoffs();
 	void print_possible(ostream& out);
@@ -112,6 +111,7 @@ class SEModel {
 	void calc_mean();                                       // Calculate the mean for this model
 	float* get_mean();                                      // Get the mean for this model
 	void calc_stdev();																			// Calculate the standard deviation for this model
+	float get_avg_pcorr();																	// Calculate the average pairwise correlaion of current model
 	float get_pcorr(const int g1, const int g2);            // Calculate the pairwise correlation for this pair of genes
 	float get_corr_with_mean(const float* pattern) const;   // Calculate the correlation between the model mean and 'pattern
 	float prob_gene_given_model(int g) const;               // Calculate probability of gene belonging to this model
