@@ -82,7 +82,7 @@ void doit(const char* outfile, SEModel& se) {
 	for(int j = 1; j <= nruns; j++) {
 		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 		se.search_for_motif();
-		if(j % 50 == 0) {
+		if(j % 100 == 0) {
 			ofstream out(outfile, ios::trunc);
 			print_full_ace(out, se);
 		}
