@@ -432,11 +432,13 @@ bool SEModel::column_sample(const int c, const bool sample){
   double best_wt = 0.0;
   for(int i = 0; i < cs_span; i++){
     wtx[i] = 0.0;
-    if((i - x) == col)
+    if((i - x) == col && (i - x) != col_worst) {
       col = sites.next_column(col);
-		if((i - x) != col_worst)
 			continue;
-    if(sites.column_freq(i - x, seqset, freq)){
+		}
+		if((i - x) == col_worst)
+			col = sites.next_column(col);
+		if(sites.column_freq(i - x, seqset, freq)){
       wt = 0.0;
       for(int j = 0;j < sites.depth(); j++){
 				wt += gammaln(freq[j] + separams.pseudo[j]);
@@ -471,7 +473,7 @@ bool SEModel::column_sample(const int c, const bool sample){
 			delete [] wtx;
 			delete [] freq;
 			return false;
-		} 
+		}
 		pick = ran_dbl.rnum() * tot2;
 		col_pick = 373;
 		for(int i = 0; i < cs_span; i++){
@@ -497,11 +499,15 @@ bool SEModel::column_sample(const int c, const bool sample){
 		abort();
 	}
 	
-	if(col_pick == col_worst) return false;
+	if(col_pick == col_worst) {
+		delete [] wtx;
+		delete [] freq;
+		return false;
+	}
 	
 	sites.add_col(col_pick);
 	select_sites.add_col(col_pick);
-	if(col_pick < 0) {
+	if(col_pick > 0) {
 		sites.remove_col(col_worst);
 		select_sites.remove_col(col_worst);
 	} else {
@@ -514,7 +520,7 @@ bool SEModel::column_sample(const int c, const bool sample){
 	return true;
 }
 
-double SEModel::map_score(){
+double SEModel::map_score() {
   int i,j,k;
   double ms = 0.0;
   double map_N = sites.positions_available(possible);  
@@ -547,8 +553,7 @@ double SEModel::map_score(){
   }
   vg-=gammaln((double)(separams.npseudo));
   ms-=((double)sites.ncols()*vg);
-	ms *= sites.get_corr_cutoff();
-  return ms;
+	return ms;
 }
 
 double SEModel::get_best_motif(int i){
@@ -863,7 +868,6 @@ float SEModel::get_avg_pcorr() {
 	return curr_avg_pcorr;
 }
 
-
 float SEModel::get_pcorr(const int g1, const int g2) {
 	if(pcorr[g1][g2] == -2)
 		pcorr[g1][g2] = pcorr[g2][g1] = corr(expr[g1], expr[g2], npoints);
@@ -919,7 +923,7 @@ void SEModel::expand_search_min_pcorr(const double cutoff) {
 
 void SEModel::expand_search_avg_pcorr() {
 	if(size() > 10) {
-		sites.set_corr_cutoff(0.95 * get_avg_pcorr());
+		sites.set_corr_cutoff(max(0.8 * get_avg_pcorr(), 0.4));
 	}
 
 	if(size() > 0) {
@@ -956,7 +960,7 @@ void SEModel::search_for_motif() {
 		add_possible(g);
 	seed_random_site();
 	expand_search_avg_pcorr();
-	while(possible_size() < separams.minsize) {
+	while(possible_size() < separams.minsize && sites.get_corr_cutoff() > 0.4) {
 		print_status(cerr, 0, oldphase, sites.get_corr_cutoff(), sc);
 		sites.set_corr_cutoff(sites.get_corr_cutoff() - 0.1);
 		expand_search_avg_pcorr();
@@ -1058,7 +1062,10 @@ void SEModel::search_for_motif() {
 			i_worse = 0;
 		}
 	
-		if(i % 50 == 0) print_status(cerr, i, phase, sites.get_corr_cutoff(), sc);
+		if(i % 50 == 0) {
+			print_status(cerr, i, phase, sites.get_corr_cutoff(), sc);
+			expand_search_avg_pcorr();
+		}
 	}
 }
 
@@ -1068,6 +1075,7 @@ void SEModel::print_status(ostream& out, const int i, const int phase, const dou
 		out << setw(3) << phase;
 		int prec = cerr.precision(2);
 		out << setw(5) << setprecision(2) << cutoff;
+		out << setw(5) << setprecision(2) << get_avg_pcorr();
 		out << setw(10) << setprecision(2) << separams.sitecut[phase];
 		cerr.precision(prec);
 		out << setw(5) << sites_size();
