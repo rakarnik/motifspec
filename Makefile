@@ -11,7 +11,8 @@
 #
 
 CC = /usr/bin/g++
-CC_OPTIONS = -O3
+CC_OPTIONS = -Os
+CC_DEBUG_OPTIONS = -g 
 LNK_OPTIONS =
 
 
@@ -26,6 +27,8 @@ INCLUDE = -I.\
 #
 # Build im
 #
+
+all: im im-debug
 
 im : \
 		bin/archivesites.o\
@@ -47,10 +50,32 @@ im : \
 		bin/standard.o\
 		-o im
 
+im-debug : \
+		debug/archivesites.o\
+		debug/compareace.o\
+		debug/im.o\
+		debug/myheap.o\
+		debug/semodel.o\
+		debug/seqset.o\
+		debug/sites.o\
+		debug/standard.o
+	$(CC) $(LNK_OPTIONS) \
+		debug/archivesites.o\
+		debug/compareace.o\
+		debug/im.o\
+		debug/myheap.o\
+		debug/semodel.o\
+		debug/seqset.o\
+		debug/sites.o\
+		debug/standard.o\
+		-o im-debug
+
 clean : 
 		rm -f\
-		bin/*.o\
-		im
+    bin/*.o\
+    debug/*.o\
+    im\
+		im-debug
 
 install : im
 		cp im im
@@ -83,5 +108,30 @@ bin/sites.o : src/sites.cpp
 
 bin/standard.o : src/standard.cpp
 	$(CC) $(CC_OPTIONS) src/standard.cpp -c $(INCLUDE) -o bin/standard.o
+
+debug/archivesites.o : src/archivesites.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o debug/archivesites.o
+
+debug/compareace.o : src/compareace.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/compareace.cpp -c $(INCLUDE) -o debug/compareace.o
+
+debug/im.o : src/im.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/im.cpp -c $(INCLUDE) -o debug/im.o
+
+debug/myheap.o : src/myheap.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/myheap.cpp -c $(INCLUDE) -o debug/myheap.o
+
+debug/seqset.o : src/seqset.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o debug/seqset.o
+
+debug/semodel.o : src/semodel.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/semodel.cpp -c $(INCLUDE) -o debug/semodel.o
+
+debug/sites.o : src/sites.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/sites.cpp -c $(INCLUDE) -o debug/sites.o
+
+debug/standard.o : src/standard.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/standard.cpp -c $(INCLUDE) -o debug/standard.o
+
 
 ##### END RUN ####
