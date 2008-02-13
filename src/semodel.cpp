@@ -923,7 +923,7 @@ void SEModel::expand_search_min_pcorr(const double cutoff) {
 
 void SEModel::expand_search_avg_pcorr() {
 	if(size() > 10) {
-		sites.set_corr_cutoff(max(0.8 * get_avg_pcorr(), 0.4));
+		sites.set_corr_cutoff(max(0.9 * get_avg_pcorr(), 0.4));
 	}
 
 	if(size() > 0) {
@@ -1062,9 +1062,8 @@ void SEModel::search_for_motif() {
 			i_worse = 0;
 		}
 	
-		if(i % 50 == 0) {
+		if(i % 100 == 0) {
 			print_status(cerr, i, phase, sites.get_corr_cutoff(), sc);
-			expand_search_avg_pcorr();
 		}
 	}
 }
