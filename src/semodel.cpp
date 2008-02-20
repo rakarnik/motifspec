@@ -961,7 +961,7 @@ void SEModel::search_for_motif() {
 	seed_random_site();
 	expand_search_avg_pcorr();
 	while(possible_size() < separams.minsize && sites.get_corr_cutoff() > 0.4) {
-		print_status(cerr, 0, oldphase, sites.get_corr_cutoff(), sc);
+		print_status(cerr, 0, oldphase, sites.get_corr_cutoff(), 0.0);
 		sites.set_corr_cutoff(sites.get_corr_cutoff() - 0.1);
 		expand_search_avg_pcorr();
 	}
@@ -969,7 +969,7 @@ void SEModel::search_for_motif() {
 		cerr << "Bad search start -- no genes within " << separams.mincorr << endl;
 		return;
 	}
-	print_status(cerr, 0, oldphase, sites.get_corr_cutoff(), sc);
+	print_status(cerr, 0, oldphase, sites.get_corr_cutoff(), 0.0);
 	set_seq_cutoffs();
 	
 	for(int i = 1; i <= separams.npass; i++){
