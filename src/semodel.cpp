@@ -4,10 +4,14 @@ SEModel::~SEModel(){
   delete [] possible;
 	delete [] freq_matrix;
   delete [] score_matrix;
-  for(int i=0;i<seqset.num_seqs();i++){
-    delete [] site_bias[i];
-  }
 	delete [] mean;
+	delete [] stdev;
+  for(int i=0;i<seqset.num_seqs();i++){
+		delete [] site_bias[i];
+		delete [] pcorr[i];
+  }
+	delete [] site_bias;
+	delete [] pcorr;
 }
 
 void SEModel::init(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc, const int bf, const double map_cut, const double sim_cut) {

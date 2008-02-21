@@ -111,6 +111,7 @@ Sites::~Sites(){
     delete [] sites_chrom;
     delete [] sites_posit;
     delete [] sites_strand;
+		delete [] sites_has_sites;
     delete [] sites_active_fwd;
   }
 }
