@@ -30,6 +30,7 @@ class Sites{
   //columns 0..wide-1;fwd(0)=2nd column
   bool sites_alloc;
 	
+	int iter;
 	double corr_cutoff;
 
 public:
@@ -49,6 +50,8 @@ public:
   int posit(int i) const {return sites_posit[i];}
   bool strand(int i) const {return sites_strand[i];}
   int max_width() const {return sites_max_width;}
+	int get_iter() const {return iter;}
+	void set_iter(const int curr_iter) {iter = curr_iter;}
 	double get_corr_cutoff() const {return corr_cutoff;}
 	void set_corr_cutoff(const double cutoff) {corr_cutoff = cutoff;}
   bool is_open_site(const int c, const int p);
