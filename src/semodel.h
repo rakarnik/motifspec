@@ -64,9 +64,18 @@ class SEModel {
 	float* stdev;
 	float** pcorr;
 	
+	struct hitprob {
+		int chrom;
+		float prob;
+	};
+	
+	struct hpcomp {
+		bool operator() (struct hitprob hp1, struct hitprob hp2) { return (hp1.prob > hp2.prob); }
+	} hpc;
+	
 	void set_seq_cutoffs();
 	void print_possible(ostream& out);
-
+	
  public:
 	/* Return codes for search */
 	static const int BAD_SEARCH_SPACE = 1;
@@ -104,6 +113,7 @@ class SEModel {
 	void calc_matrix();
 	string consensus();
 	double map_score();
+	double spec_score();
 	void orient_motif();
 	void orient_print_motif();
 	
@@ -130,7 +140,7 @@ class SEModel {
 	void expand_search_around_mean(const double corr_cutoff);
 	void expand_search_min_pcorr(const double corr_cutoff);
 	void expand_search_avg_pcorr();
-	void search_for_motif();
+	void search_for_motif(const int iter);
 	
 	/* Output */
 	void output(ostream &fout);

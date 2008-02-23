@@ -560,6 +560,89 @@ double SEModel::map_score() {
 	return ms;
 }
 
+double SEModel::spec_score() {
+	double spec = 0.0;
+	double ap = (separams.weight * separams.expect * 10
+							+ (1 - separams.weight) * sites.number())
+							/(2.0 * sites.positions_available());
+	calc_matrix();
+	float minprob = 0.2;
+	vector<struct hitprob> hits;
+	
+	char **ss_seq;
+  ss_seq = seqset.seq_ptr();
+  double Lw, Lc, Pw, Pc, F;
+	int matpos, col;
+  int gadd = -1, jadd = -1;
+  for(int g = 0; g < seqset.num_seqs(); g++){
+		for(int j = 0; j <= seqset.len_seq(g) - sites.width(); j++){
+			Lw = 1.0;
+			matpos = 0;
+			col = 0;
+      for(int k = 0; k < sites.ncols(); k++){
+				assert(j + col >= 0);
+				assert(j + col <= seqset.len_seq(g));
+				int seq = ss_seq[g][j + col];
+				Lw *= score_matrix[matpos + seq];
+				col = sites.next_column(col);
+				matpos += sites.depth();
+      }
+      Lc = 1.0;
+			matpos = sites.depth() - 1;
+			col = 0;
+      for(int k = 0; k < sites.ncols(); k++){
+				assert(j + sites.width() - 1 - col >= 0);
+				assert(j + sites.width() - 1 - col <= seqset.len_seq(g));
+				int seq = ss_seq[g][j + sites.width() - 1 - col];
+				Lc *= score_matrix[matpos - seq];
+				col = sites.next_column(col);
+				matpos += sites.depth();
+      }
+      Pw = Lw * ap/(1.0 - ap + Lw * ap);
+      Pc = Lc * ap/(1.0 - ap + Lc * ap);
+      F = Pw + Pc - Pw * Pc;//probability of either
+			//strand irrelevant for select_sites
+			if(g == gadd && j < jadd + sites.width()) continue;
+			if(F > minprob) {
+				struct hitprob hp;
+				hp.chrom = g;
+				hp.prob = F;
+				hits.push_back(hp);
+			}
+    }
+  }
+	
+	sort(hits.begin(), hits.end(), hpc);
+	int N = ngenes;
+	int s1 = size();
+	int s2 = min((int) hits.size(), max(s1, 100));
+	int intersect = 0;
+	bool seen[ngenes];
+	for(int i = 0; i < ngenes; i++)
+		seen[i] = false;
+	for(int i = 0; i < s2; i++) {
+		if(is_member(hits[i].chrom) && ! seen[hits[i].chrom]) {
+			seen[hits[i].chrom] = true;
+			intersect++;
+		}
+	}
+	
+	cerr << "\t\t\t\tN: " << N;
+	cerr << " s1: " << s1;
+	cerr << " s2: " << s2;
+	cerr << " intersect: " << intersect << endl;
+	
+	double prob;
+	for(int i = intersect; i <= min(s1, s2); i++) {
+		prob = exp(lnfact(s1) - lnfact(i) - lnfact(s1 - i) 
+					+ lnfact(N - s1) - lnfact(s2 - i) - lnfact(N - s1 - s2 + i)
+					- lnfact(N) + lnfact(s2) + lnfact(N - s2));
+		spec += prob;
+	}
+
+	return -log(spec);
+}
+
 double SEModel::get_best_motif(int i){
   return archive.return_best(sites,i);
 }
@@ -570,7 +653,7 @@ void SEModel::optimize_columns(){
 }
 
 void SEModel::optimize_sites(){
-  int poss_sites = sites.positions_available()+1;
+  int poss_sites = sites.positions_available(possible)+1;
   int *pos = new int[poss_sites];
   int *chr = new int[poss_sites];
   bool *str = new bool[poss_sites];
@@ -805,8 +888,10 @@ void SEModel::full_output(ostream &fout){
       fout << "Motif " << j + 1 << '\n';
       output(fout);
       fout << "MAP Score: " << sc << endl;
-			fout << "Correlation cutoff: " << print_sites.get_corr_cutoff() << endl << endl;
-    }
+			fout << "Specificity Score: " << print_sites.get_spec() << endl;
+			fout << "Correlation cutoff: " << print_sites.get_corr_cutoff() << endl;
+			fout << "Iteration found: " << print_sites.get_iter() << endl << endl;
+		}
     else break;
   }
 }
@@ -948,9 +1033,10 @@ void SEModel::expand_search_avg_pcorr() {
 	}
 }
 
-void SEModel::search_for_motif() {
+void SEModel::search_for_motif(const int iter) {
+	sites.set_iter(iter);
 	sites.set_corr_cutoff(0.9);
-	double sc, cmp, sc_best_i;
+	double sc, cmp, sc_best_i, sp;
   int i_worse = 0;
 	sc_best_i = map_cutoff;
 	i_worse = 0;
@@ -966,11 +1052,11 @@ void SEModel::search_for_motif() {
 	expand_search_avg_pcorr();
 	while(possible_size() < separams.minsize && sites.get_corr_cutoff() > 0.4) {
 		print_status(cerr, 0, oldphase, sites.get_corr_cutoff(), 0.0);
-		sites.set_corr_cutoff(sites.get_corr_cutoff() - 0.1);
+		sites.set_corr_cutoff(sites.get_corr_cutoff() - 0.05);
 		expand_search_avg_pcorr();
 	}
 	if(possible_size() < 2) {
-		cerr << "Bad search start -- no genes within " << separams.mincorr << endl;
+		cerr << "\t\t\tBad search start -- no genes within " << separams.mincorr << endl;
 		return;
 	}
 	print_status(cerr, 0, oldphase, sites.get_corr_cutoff(), 0.0);
@@ -1005,6 +1091,9 @@ void SEModel::search_for_motif() {
 				cerr << "\t\t\tCompleted phase " << phase << " with less than " << separams.minsize << " sequences with sites. Restarting..." << endl;
 				break;
 			}
+			sp = spec_score();
+			sites.set_spec(sp);
+			cerr << "\t\t\t\tSpecificity score was " << sp << endl;
 			archive.consider_motif(sites, sc);
 			cerr << "\t\t\tCompleted phase " << phase << "! Restarting..." << endl;
 			break;
@@ -1078,7 +1167,6 @@ void SEModel::print_status(ostream& out, const int i, const int phase, const dou
 		out << setw(3) << phase;
 		int prec = cerr.precision(2);
 		out << setw(5) << setprecision(2) << cutoff;
-		out << setw(5) << setprecision(2) << get_avg_pcorr();
 		out << setw(10) << setprecision(2) << separams.sitecut[phase];
 		cerr.precision(prec);
 		out << setw(5) << sites_size();

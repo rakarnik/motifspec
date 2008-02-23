@@ -31,6 +31,9 @@ Sites::Sites(const Sites& s){
   }
   sites_max_num_sites=s.sites_max_num_sites;
   sites_max_width=s.sites_max_width;
+	corr_cutoff = s.corr_cutoff;
+	iter = s.iter;
+	spec = s.spec;
   allocate_mem();
   *this=s;
 }
@@ -44,7 +47,10 @@ void Sites::sites_init(const Sites& s){
   }
   sites_max_num_sites=s.sites_max_num_sites;
   sites_max_width=s.sites_max_width;
-  allocate_mem();
+  corr_cutoff = s.corr_cutoff;
+	iter = s.iter;
+	spec = s.spec;
+	allocate_mem();
   *this=s;
 }
 
@@ -70,6 +76,8 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
 	}
   clear_sites();
 	corr_cutoff = 0.70;
+	iter = 0;
+	spec = 0.0;
 }
 
 Sites& Sites::operator= (const Sites& s){
@@ -92,6 +100,8 @@ Sites& Sites::operator= (const Sites& s){
       sites_active_fwd[i] = s.sites_active_fwd[i];
     }
 		corr_cutoff = s.corr_cutoff;
+		iter = s.iter;
+		spec = s.spec;
   }
   return *this;
 }

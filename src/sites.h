@@ -32,6 +32,7 @@ class Sites{
 	
 	int iter;
 	double corr_cutoff;
+	double spec;
 
 public:
   Sites(){sites_alloc=false;destroy();}
@@ -54,7 +55,9 @@ public:
 	void set_iter(const int curr_iter) {iter = curr_iter;}
 	double get_corr_cutoff() const {return corr_cutoff;}
 	void set_corr_cutoff(const double cutoff) {corr_cutoff = cutoff;}
-  bool is_open_site(const int c, const int p);
+  double get_spec() const { return spec; }
+	void set_spec(const double s) { spec = s; }
+	bool is_open_site(const int c, const int p);
 	int seqs_with_sites() const { return sites_num_seqs_with_sites; }
 	bool seq_has_site(const int c) const { return (sites_has_sites[c] != 0); }
   void add_site(const int c, const int p, const bool s);
