@@ -68,7 +68,7 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
   for(int i = 0;i < sites_num_seqs; i++){
     sites_max_num_sites += sites_len_seq[i]/mx;
   }
-  sites_max_width = 3*sites_width;
+  sites_max_width = 2*sites_width;
   allocate_mem();
 	sites_num_seqs_with_sites = 0;
 	for(int i = 0; i < v.size(); i++){
