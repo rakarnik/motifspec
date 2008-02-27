@@ -4,20 +4,17 @@
 #include "sites.h"
 
 Sites::Sites(const vector<string>& v, int nc, int mx, int dp){
-  sites_num=0;
-  sites_width=nc;
-  sites_num_cols=nc;
-  sites_depth=dp;
-  sites_num_seqs=v.size();
-  sites_len_seq=new int[sites_num_seqs];
-  for(int i=0;i<v.size();i++){
-    sites_len_seq[i]=v[i].length();
+  sites_num = 0;
+  sites_width = nc;
+  sites_num_cols = nc;
+  sites_depth = dp;
+  sites_num_seqs = v.size();
+  sites_len_seq = new int[sites_num_seqs];
+  for(int i = 0; i < v.size(); i++){
+    sites_len_seq[i] = v[i].length();
   }
-  sites_max_num_sites=0;
-  for(int i=0;i<sites_num_seqs;i++){
-    sites_max_num_sites+=sites_len_seq[i]/mx;
-  }
-  sites_max_width=3*sites_width;
+  sites_max_num_sites = 3000;
+  sites_max_width = 2 * sites_width;
 	allocate_mem();
   clear_sites();
 }
@@ -64,10 +61,7 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
   for(int i = 0; i < v.size(); i++){
 		sites_len_seq[i] = v[i].length();
 	}
-  sites_max_num_sites = 0;
-  for(int i = 0;i < sites_num_seqs; i++){
-    sites_max_num_sites += sites_len_seq[i]/mx;
-  }
+  sites_max_num_sites = 3000;
   sites_max_width = 2*sites_width;
   allocate_mem();
 	sites_num_seqs_with_sites = 0;
@@ -170,6 +164,7 @@ void Sites::add_site(const int c, const int p, const bool s){
 	if(sites_has_sites[c] == 0) sites_num_seqs_with_sites++;
 	sites_has_sites[c]++;
 	sites_num++;
+	assert(sites_num < sites_max_num_sites);
 }
 
 void Sites::remove_site(const int c, const int p){
