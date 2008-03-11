@@ -31,7 +31,8 @@ class Sites{
   bool sites_alloc;
 	
 	int iter;
-	double corr_cutoff;
+	double seq_cutoff;
+	double expr_cutoff;
 	double spec;
 
 public:
@@ -53,8 +54,10 @@ public:
   int max_width() const {return sites_max_width;}
 	int get_iter() const {return iter;}
 	void set_iter(const int curr_iter) {iter = curr_iter;}
-	double get_corr_cutoff() const {return corr_cutoff;}
-	void set_corr_cutoff(const double cutoff) {corr_cutoff = cutoff;}
+	double get_seq_cutoff() const {return seq_cutoff;}
+	void set_seq_cutoff(const double cutoff) {seq_cutoff = cutoff;}
+	double get_expr_cutoff() const {return expr_cutoff;}
+	void set_expr_cutoff(const double cutoff) {expr_cutoff = cutoff;}
   double get_spec() const { return spec; }
 	void set_spec(const double s) { spec = s; }
 	bool is_open_site(const int c, const int p);

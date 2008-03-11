@@ -10,10 +10,11 @@ Sites::Sites(const vector<string>& v, int nc, int mx, int dp){
   sites_depth = dp;
   sites_num_seqs = v.size();
   sites_len_seq = new int[sites_num_seqs];
+  sites_max_num_sites = 0;
   for(int i = 0; i < v.size(); i++){
     sites_len_seq[i] = v[i].length();
+		sites_max_num_sites += sites_len_seq[i]/mx;
   }
-  sites_max_num_sites = 3000;
   sites_max_width = 2 * sites_width;
 	allocate_mem();
   clear_sites();
@@ -28,7 +29,8 @@ Sites::Sites(const Sites& s){
   }
   sites_max_num_sites=s.sites_max_num_sites;
   sites_max_width=s.sites_max_width;
-	corr_cutoff = s.corr_cutoff;
+	seq_cutoff = s.seq_cutoff;
+	expr_cutoff = s.expr_cutoff;
 	iter = s.iter;
 	spec = s.spec;
   allocate_mem();
@@ -44,7 +46,8 @@ void Sites::sites_init(const Sites& s){
   }
   sites_max_num_sites=s.sites_max_num_sites;
   sites_max_width=s.sites_max_width;
-  corr_cutoff = s.corr_cutoff;
+	seq_cutoff = s.seq_cutoff;
+  expr_cutoff = s.expr_cutoff;
 	iter = s.iter;
 	spec = s.spec;
 	allocate_mem();
@@ -58,10 +61,11 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
   sites_depth = dp;
   sites_num_seqs = v.size();
   sites_len_seq = new int[sites_num_seqs];
+	sites_max_num_sites = 0;
   for(int i = 0; i < v.size(); i++){
 		sites_len_seq[i] = v[i].length();
+		sites_max_num_sites += sites_len_seq[i]/mx;
 	}
-  sites_max_num_sites = 3000;
   sites_max_width = 2*sites_width;
   allocate_mem();
 	sites_num_seqs_with_sites = 0;
@@ -69,7 +73,8 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
 		sites_has_sites[i] = 0;
 	}
   clear_sites();
-	corr_cutoff = 0.70;
+	seq_cutoff = 0.00001;
+	expr_cutoff = 0.70;
 	iter = 0;
 	spec = 0.0;
 }
@@ -93,7 +98,8 @@ Sites& Sites::operator= (const Sites& s){
     for(int i = 0; i < sites_max_width; i++){
       sites_active_fwd[i] = s.sites_active_fwd[i];
     }
-		corr_cutoff = s.corr_cutoff;
+		seq_cutoff = s.seq_cutoff;
+		expr_cutoff = s.expr_cutoff;
 		iter = s.iter;
 		spec = s.spec;
   }

@@ -19,7 +19,6 @@ struct SEParams{
   int maxlen;						//maximum length of sites
   int npass;
   int minpass[3];
-  double sitecut[4];
   int nruns;
   bool fragment;
   int seed;
@@ -53,10 +52,9 @@ class SEModel {
 	Sites print_sites;
   ArchiveSites archive;
 	int members;
-  int *freq_matrix;
-  double *score_matrix;
-  double **site_bias;
-
+  int* freq_matrix;
+  double* score_matrix;
+  
   /* Expression model */
 	float** expr;
 	int npoints;
@@ -64,16 +62,21 @@ class SEModel {
 	float* stdev;
 	float** pcorr;
 	
-	struct hitprob {
-		int chrom;
-		float prob;
+	struct hitscore {
+		int seq;
+		double score;
 	};
 	
-	struct hpcomp {
-		bool operator() (struct hitprob hp1, struct hitprob hp2) { return (hp1.prob > hp2.prob); }
-	} hpc;
+	struct hscomp {
+		bool operator() (struct hitscore hp1, struct hitscore hp2) { return (hp1.score > hp2.score); }
+	} hsc;
 	
+	double *seqscores;
+	struct hitscore *seqranks;
+	double *expscores;
+	struct hitscore *expranks;
 	void set_seq_cutoffs();
+	void set_expr_cutoffs();
 	void print_possible(ostream& out);
 	
  public:
@@ -119,18 +122,19 @@ class SEModel {
 	
 	/* Expression model */
 	void calc_mean();                                       // Calculate the mean for this model
-	float* get_mean();                                      // Get the mean for this model
+	float* get_mean() { return mean; };                     // Get the mean for this model
 	void calc_stdev();																			// Calculate the standard deviation for this model
 	float get_avg_pcorr();																	// Calculate the average pairwise correlaion of current model
 	float get_pcorr(const int g1, const int g2);            // Calculate the pairwise correlation for this pair of genes
 	float get_corr_with_mean(const float* pattern) const;   // Calculate the correlation between the model mean and 'pattern
-	float prob_gene_given_model(int g) const;               // Calculate probability of gene belonging to this model
 	
 	/* Algorithm steps */
 	void seed_random_site();
   void seed_biased_site();
   void single_pass(const double minprob = 0.0);
 	void single_pass_select(const double minprob = 0.0);
+	void compute_seq_scores();
+	void compute_expr_scores();
 	bool column_sample(const int c, const bool sample);
   bool column_sample(const int c){return column_sample(c,true);}
   bool column_sample(const bool sample) {return column_sample(1000,sample);}
@@ -146,7 +150,7 @@ class SEModel {
 	void output(ostream &fout);
 	void full_output(ostream &fout);
   void full_output(char *name);
-	void print_status(ostream& out, const int i, const int phase, const double cutoff, const double sc);
+	void print_status(ostream& out, const int i, const int phase, const double sc);
 };
 
 #endif
