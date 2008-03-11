@@ -59,6 +59,18 @@ int main(int argc, char *argv[]) {
 	se.ace_initialize();
 	cerr << "done." << endl;
 	
+	/* DISABLED: This code computes pairwise correlations and writes them to a file */
+	if(0) {
+		ofstream pc("pcorr.out", ios::trunc);
+		for(int g1 = 0; g1 < ngenes; g1++) {
+			for(int g2 = g1 + 1; g2 < ngenes; g2++)
+				pc << nameset1[g1] << '\t' << nameset2[g2] << '\t' << se.get_pcorr(g1, g2) << endl;
+			if(g1 > 0 && (g1 + 1) % 100 == 0) cerr << g1 + 1 << " genes done." << endl;
+		}
+		pc.close();
+		return 0;
+	}
+	
 	string tmpstr(outfile);
 	tmpstr.append(".tmp.ace");
 	doit(tmpstr.c_str(), se);
@@ -68,6 +80,8 @@ int main(int argc, char *argv[]) {
 	ofstream out(outstr.c_str(), ios::trunc);
 	print_ace(out, se);
 	out.close();
+	
+	return 0;
 }
 
 void doit(const char* outfile, SEModel& se) {
