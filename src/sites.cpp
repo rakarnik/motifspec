@@ -16,6 +16,10 @@ Sites::Sites(const vector<string>& v, int nc, int mx, int dp){
 		sites_max_num_sites += sites_len_seq[i]/mx;
   }
   sites_max_width = 2 * sites_width;
+	seq_cutoff = 0.00001;
+	expr_cutoff = 0.70;
+	iter = 0;
+	spec = 0.0;
 	allocate_mem();
   clear_sites();
 }
