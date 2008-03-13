@@ -6,7 +6,6 @@ SEModel::~SEModel(){
   delete [] score_matrix;
 	delete [] seqscores;
 	delete [] seqranks;
-	delete [] expscores;
 	delete [] mean;
 	delete [] stdev;
   for(int i=0;i<seqset.num_seqs();i++){
@@ -875,7 +874,7 @@ void SEModel::full_output(ostream &fout){
       output(fout);
       fout << "MAP Score: " << sc << endl;
 			fout << "Specificity Score: " << print_sites.get_spec() << endl;
-			fout << "Sequence cutoff:" << print_sites.get_seq_cutoff() << endl;
+			fout << "Sequence cutoff: " << print_sites.get_seq_cutoff() << endl;
 			fout << "Expression cutoff: " << print_sites.get_expr_cutoff() << endl;
 			fout << "Iteration found: " << print_sites.get_iter() << endl << endl;
 		}
@@ -1007,7 +1006,7 @@ void SEModel::expand_search_avg_pcorr() {
 
 void SEModel::search_for_motif(const int iter) {
 	sites.set_iter(iter);
-	sites.set_seq_cutoff(0.001);
+	sites.set_seq_cutoff(0.00001);
 	sites.set_expr_cutoff(0.8);
 	double sc, cmp, sc_best_i, sp;
   int i_worse = 0;
@@ -1183,7 +1182,7 @@ void SEModel::set_seq_cutoffs() {
 			best_sitecut = c;
 		}
 	}
-	// cerr << "\t\t\t\t\tSetting sequence cutoff to " << best_sitecut << endl;
+	cerr << "\t\t\t\t\tSetting sequence cutoff to " << best_sitecut << endl;
 	sites.set_seq_cutoff(best_sitecut);
 }
 
@@ -1192,7 +1191,7 @@ void SEModel::set_expr_cutoffs() {
 	double best_po = 1;
 	double best_exprcut = 0;
 	double po, c;
-	for(c = 0; c <= 1; c += 0.01) {
+	for(c = -1.0; c <= 1; c += 0.01) {
 		seqn = expn = isect = 0;
 		for(int i = 0; i < ngenes; i++) {
 			if(seqscores[expranks[i].seq] >= sites.get_seq_cutoff()) seqn++;
@@ -1211,7 +1210,7 @@ void SEModel::set_expr_cutoffs() {
 			best_exprcut = c;
 		}
 	}
-	// cerr << "\t\t\t\t\tSetting expression cutoff to " << best_exprcut << endl;
+	cerr << "\t\t\t\t\tSetting expression cutoff to " << best_exprcut << endl;
 	sites.set_expr_cutoff(best_exprcut);
 }
 
