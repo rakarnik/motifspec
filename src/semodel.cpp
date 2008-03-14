@@ -331,7 +331,7 @@ void SEModel::single_pass_select(const double minprob){
 void SEModel::compute_seq_scores() {
 	double ap = (separams.weight * separams.expect * 10
 							+ (1 - separams.weight) * sites.number())
-							/(2.0 * sites.positions_available());
+							/(2.0 * sites.positions_available(possible));
   calc_matrix();
 	
   char **ss_seq;
@@ -556,9 +556,8 @@ double SEModel::spec_score() {
 	double spec = 0.0;
 	double ap = (separams.weight * separams.expect * 10
 							+ (1 - separams.weight) * sites.number())
-							/(2.0 * sites.positions_available());
+							/(2.0 * sites.positions_available(possible));
 	calc_matrix();
-	float minprob = 0.2;
 	vector<struct hitscore> hits;
 	
 	char **ss_seq;
@@ -595,7 +594,7 @@ double SEModel::spec_score() {
       F = Pw + Pc - Pw * Pc;//probability of either
 			//strand irrelevant for select_sites
 			if(g == gadd && j < jadd + sites.width()) continue;
-			if(F > minprob) {
+			if(F > sites.get_seq_cutoff()) {
 				struct hitscore hs;
 				hs.seq = g;
 				hs.score = F;
@@ -1006,7 +1005,6 @@ void SEModel::expand_search_avg_pcorr() {
 
 void SEModel::search_for_motif(const int iter) {
 	sites.set_iter(iter);
-	sites.set_seq_cutoff(0.00001);
 	sites.set_expr_cutoff(0.8);
 	double sc, cmp, sc_best_i, sp;
   int i_worse = 0;
@@ -1021,6 +1019,11 @@ void SEModel::search_for_motif(const int iter) {
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
+	if(size() < 1) {
+		cerr << "\t\t\tSeeding failed -- restarting..." << endl;
+		return;
+	}
+	
 	expand_search_around_mean(sites.get_expr_cutoff());
 	while(possible_size() < separams.minsize && sites.get_expr_cutoff() > 0.4) {
 		print_status(cerr, 0, oldphase, 0.0);
@@ -1032,6 +1035,9 @@ void SEModel::search_for_motif(const int iter) {
 		return;
 	}
 	print_status(cerr, 0, oldphase, 0.0);
+	
+	double ap = (double) separams.expect/(2.0 * sites.positions_available(possible));
+	sites.set_seq_cutoff(ap * 5.0);
 	
 	for(int i = 1; i <= separams.npass; i++){
 		if(oldphase < phase) {
