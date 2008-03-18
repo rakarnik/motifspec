@@ -15,6 +15,7 @@ Sites::Sites(const vector<string>& v, int nc, int mx, int dp){
     sites_len_seq[i] = v[i].length();
 		sites_max_num_sites += sites_len_seq[i]/mx;
   }
+	cerr << "Maximum number of sites: " << sites_max_num_sites << endl;
   sites_max_width = 2 * sites_width;
 	seq_cutoff = 0.00001;
 	expr_cutoff = 0.70;
@@ -70,6 +71,7 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
 		sites_len_seq[i] = v[i].length();
 		sites_max_num_sites += sites_len_seq[i]/mx;
 	}
+  cerr << "Maximum number of sites: " << sites_max_num_sites << endl;
   sites_max_width = 2*sites_width;
   allocate_mem();
 	sites_num_seqs_with_sites = 0;

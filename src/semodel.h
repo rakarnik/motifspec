@@ -75,8 +75,8 @@ class SEModel {
 	struct hitscore *seqranks;
 	double *expscores;
 	struct hitscore *expranks;
-	void set_seq_cutoffs();
-	void set_expr_cutoffs();
+	void set_seq_cutoffs(const int i);
+	void set_expr_cutoffs(const int i);
 	void print_possible(ostream& out);
 	
  public:
@@ -113,12 +113,12 @@ class SEModel {
 	void genes(int* genes) const;                           // Return the genes that are assigned to this model
 	
 	/* Sequence model*/
-	void calc_matrix();
-	string consensus();
-	double map_score();
-	double spec_score();
-	void orient_motif();
-	void orient_print_motif();
+	void calc_matrix();                                     // Calculate the PWM for the current set of sites
+	string consensus() const;                               // Return the consensus sequence for the current set of sites
+	double map_score();                                     // Calculate the MAP score
+	double spec_score();                                    // Calculate the specificity score
+	void orient_motif();                                    // Orient sites according to (A = 1.0, C = -1.5, G = 1.5, T = 1.0) scoring
+	void orient_print_motif();                              // Orient print sites according to (A = 1.0, C = -1.5, G = 1.5, T = 1.0) scoring
 	
 	/* Expression model */
 	void calc_mean();                                       // Calculate the mean for this model
@@ -135,10 +135,11 @@ class SEModel {
 	void single_pass_select(const double minprob = 0.0);
 	void compute_seq_scores();
 	void compute_expr_scores();
+	void compute_scores() { compute_seq_scores(); compute_expr_scores(); };
 	bool column_sample(const int c, const bool sample);
-  bool column_sample(const int c){return column_sample(c,true);}
-  bool column_sample(const bool sample) {return column_sample(1000,sample);}
-  bool column_sample() {return column_sample(1000,true);}
+  bool column_sample(const int c) { return column_sample(c, true); }
+  bool column_sample(const bool sample) { return column_sample(1000, sample); }
+  bool column_sample() { return column_sample(1000,true); }
   void optimize_columns();
   void optimize_sites();
 	void expand_search_around_mean(const double corr_cutoff);

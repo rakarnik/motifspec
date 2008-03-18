@@ -25,9 +25,9 @@ void SEModel::init(const vector<string>& seqs, float** exprtab, const int numexp
 	verbose = false;
 	
 	seqset.init(seqs);
-	sites.init(seqs, nc, nc);
+	sites.init(seqs, nc, 10 * nc);
 	select_sites.init(seqs, nc);
-	print_sites.init(seqs, nc, nc);
+	print_sites.init(seqs, nc, 10 * nc);
 	archive.init(sites, seqset,bf, map_cut, sim_cut);
 	set_default_params();
   max_motifs = bf;
@@ -770,7 +770,7 @@ void SEModel::orient_print_motif(){
   delete [] freq;
 }
 
-string SEModel::consensus() {
+string SEModel::consensus() const {
 	map<char,char> nt;
   nt[0]=nt[5]='N';
   nt[1]='A';nt[2]='C';nt[3]='G';nt[4]='T';
@@ -1005,7 +1005,7 @@ void SEModel::expand_search_avg_pcorr() {
 
 void SEModel::search_for_motif(const int iter) {
 	sites.set_iter(iter);
-	sites.set_expr_cutoff(0.8);
+	sites.set_expr_cutoff(0.65);
 	double sc, cmp, sc_best_i, sp;
   int i_worse = 0;
 	sc_best_i = map_cutoff;
@@ -1045,8 +1045,8 @@ void SEModel::search_for_motif(const int iter) {
 			if(size() > 5) {
 				compute_seq_scores();
 				compute_expr_scores();
-				set_seq_cutoffs();
-				set_expr_cutoffs();
+				set_seq_cutoffs(i);
+				set_expr_cutoffs(i);
 				expand_search_around_mean(sites.get_expr_cutoff());
 			}
 			oldphase = phase;
@@ -1163,7 +1163,7 @@ void SEModel::print_status(ostream& out, const int i, const int phase, const dou
 	}
 }
 
-void SEModel::set_seq_cutoffs() {
+void SEModel::set_seq_cutoffs(const int i) {
 	int seqn, expn, isect, next = 0;
 	double best_po = 1;
 	double best_sitecut = 0;
@@ -1182,8 +1182,8 @@ void SEModel::set_seq_cutoffs() {
 			}
 		}
 		po = prob_overlap(expn, seqn, isect, ngenes);
-		// cerr << "\t\t\t\t\t" << c << ":\t" << isect << "/(" << seqn << "," << expn << ")/" << ngenes << "\t" << po << endl;
-		if(po < best_po) {
+		// cerr << "\t\t\t\t\t\t" << c << ":\t" << isect << "/(" << seqn << "," << expn << ")/" << ngenes << "\t" << po << endl;
+		if(po <= best_po) {
 			best_po = po;
 			best_sitecut = c;
 		}
@@ -1192,7 +1192,7 @@ void SEModel::set_seq_cutoffs() {
 	sites.set_seq_cutoff(best_sitecut);
 }
 
-void SEModel::set_expr_cutoffs() {
+void SEModel::set_expr_cutoffs(const int i) {
 	int seqn, expn, isect;
 	double best_po = 1;
 	double best_exprcut = 0;
@@ -1210,8 +1210,8 @@ void SEModel::set_expr_cutoffs() {
 			}
 		}
 		po = prob_overlap(seqn, expn, isect, ngenes);
-		// cerr << "\t\t\t\t\t" << c << ":\t\t" << isect << "/(" << expn << "," << seqn << ")/" << ngenes << "\t\t" << po << endl; 
-		if(po < best_po) {
+		// cerr << "\t\t\t\t\t\t" << c << ":\t\t" << isect << "/(" << expn << "," << seqn << ")/" << ngenes << "\t\t" << po << endl; 
+		if(po <= best_po) {
 			best_po = po;
 			best_exprcut = c;
 		}
