@@ -1138,8 +1138,15 @@ void SEModel::search_for_motif(const int iter) {
 			i_worse = 0;
 		}
 	
-		if(i % 50 == 0) {
+		if(i % 25 == 0) {
 			print_status(cerr, i, phase, sc);
+			if(size() > 5) {
+				compute_seq_scores();
+				compute_expr_scores();
+				set_seq_cutoffs(i);
+				set_expr_cutoffs(i);
+				expand_search_around_mean(sites.get_expr_cutoff());
+			}
 		}
 	}
 }
@@ -1164,14 +1171,15 @@ void SEModel::print_status(ostream& out, const int i, const int phase, const dou
 }
 
 void SEModel::set_seq_cutoffs(const int i) {
-	int seqn, expn, isect, next = 0;
+	int seqn, expn = 0, isect, next = 0;
 	double best_po = 1;
 	double best_sitecut = 0;
 	double po, c;
+	for(int i = 0; i < ngenes; i++)
+		if(expscores[i] > sites.get_expr_cutoff()) expn++;
 	for(c = seqranks[0].score; c > 0; c = seqranks[next].score) {
-		expn = seqn = isect = 0;
+		seqn = isect = 0;
 		for(int i = 0; i < ngenes; i++) {
-			if(expscores[seqranks[i].seq] >= sites.get_expr_cutoff()) expn++;
 			if(seqranks[i].score >= c) {
 				seqn++;
 				if(expscores[seqranks[i].seq] >= sites.get_expr_cutoff())
@@ -1193,14 +1201,15 @@ void SEModel::set_seq_cutoffs(const int i) {
 }
 
 void SEModel::set_expr_cutoffs(const int i) {
-	int seqn, expn, isect;
+	int seqn = 0, expn, isect;
 	double best_po = 1;
 	double best_exprcut = 0;
 	double po, c;
+	for(int i = 0; i < ngenes; i++)
+		if(seqscores[i] >= sites.get_seq_cutoff()) seqn++;
 	for(c = -1.0; c <= 1; c += 0.01) {
-		seqn = expn = isect = 0;
+		expn = isect = 0;
 		for(int i = 0; i < ngenes; i++) {
-			if(seqscores[expranks[i].seq] >= sites.get_seq_cutoff()) seqn++;
 			if(expranks[i].score >= c) {
 				expn++;
 				if(seqscores[expranks[i].seq] >= sites.get_seq_cutoff())
