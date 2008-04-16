@@ -25,9 +25,9 @@ void SEModel::init(const vector<string>& seqs, float** exprtab, const int numexp
 	verbose = false;
 	
 	seqset.init(seqs);
-	sites.init(seqs, nc, nc);
+	sites.init(seqs, nc, 5 * nc);
 	select_sites.init(seqs, nc);
-	print_sites.init(seqs, nc, nc);
+	print_sites.init(seqs, nc, 5 * nc);
 	archive.init(sites, seqset, bf, map_cut, sim_cut);
 	set_default_params();
   max_motifs = bf;
