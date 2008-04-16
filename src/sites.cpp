@@ -15,8 +15,7 @@ Sites::Sites(const vector<string>& v, int nc, int mx, int dp){
     sites_len_seq[i] = v[i].length();
 		sites_max_num_sites += sites_len_seq[i]/mx;
   }
-	cerr << "Maximum number of sites: " << sites_max_num_sites << endl;
-  sites_max_width = 2 * sites_width;
+	sites_max_width = 2 * sites_width;
 	seq_cutoff = 0.00001;
 	expr_cutoff = 0.70;
 	iter = 0;
@@ -71,7 +70,6 @@ void Sites::init(const vector<string>& v, int nc, int mx, int dp){
 		sites_len_seq[i] = v[i].length();
 		sites_max_num_sites += sites_len_seq[i]/mx;
 	}
-  cerr << "Maximum number of sites: " << sites_max_num_sites << endl;
   sites_max_width = 2*sites_width;
   allocate_mem();
 	sites_num_seqs_with_sites = 0;
@@ -113,7 +111,7 @@ Sites& Sites::operator= (const Sites& s){
 }
 
 void Sites::allocate_mem(){
-  sites_alloc = true;
+	sites_alloc = true;
   sites_chrom = new int[sites_max_num_sites];
   sites_posit = new int[sites_max_num_sites];
   sites_strand = new bool[sites_max_num_sites];
@@ -123,7 +121,7 @@ void Sites::allocate_mem(){
 
 Sites::~Sites(){
 	if(sites_alloc){
-    delete [] sites_len_seq;
+		delete [] sites_len_seq;
     delete [] sites_chrom;
     delete [] sites_posit;
     delete [] sites_strand;
@@ -170,13 +168,17 @@ bool Sites::is_open_site(const int c, const int p){
 }
 
 void Sites::add_site(const int c, const int p, const bool s){
-	sites_chrom[sites_num]=c;
-  sites_posit[sites_num]=p;
-  sites_strand[sites_num]=s;
-	if(sites_has_sites[c] == 0) sites_num_seqs_with_sites++;
-	sites_has_sites[c]++;
-	sites_num++;
-	assert(sites_num < sites_max_num_sites);
+	if(sites_num < sites_max_num_sites) {
+		sites_chrom[sites_num]=c;
+		sites_posit[sites_num]=p;
+		sites_strand[sites_num]=s;
+		if(sites_has_sites[c] == 0) sites_num_seqs_with_sites++;
+		sites_has_sites[c]++;
+		sites_num++;
+		assert(sites_num < sites_max_num_sites);
+	} else {
+		cerr << "sites_max_num_sites overflow detected. Ignoring add_site..." << endl;
+	}
 }
 
 void Sites::remove_site(const int c, const int p){
