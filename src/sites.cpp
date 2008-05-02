@@ -168,7 +168,7 @@ bool Sites::is_open_site(const int c, const int p){
 }
 
 void Sites::add_site(const int c, const int p, const bool s){
-	if(sites_num < sites_max_num_sites) {
+	if(sites_num < sites_max_num_sites - 1) {
 		sites_chrom[sites_num]=c;
 		sites_posit[sites_num]=p;
 		sites_strand[sites_num]=s;
