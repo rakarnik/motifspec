@@ -131,9 +131,10 @@ class SEModel {
 	/* Algorithm steps */
 	void seed_random_site();
   void seed_biased_site();
-  void single_pass(const double minprob = 0.0);
+  void single_pass(const double minprob = 0.0, bool greedy = false);
 	void single_pass_select(const double minprob = 0.0);
-	void compute_seq_scores();
+	void compute_seq_scores(const bool sample);
+	void compute_seq_scores() { compute_seq_scores(true); };
 	void compute_expr_scores();
 	void compute_scores() { compute_seq_scores(); compute_expr_scores(); };
 	bool column_sample(const int c, const bool sample);
