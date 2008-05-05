@@ -177,7 +177,7 @@ void Sites::add_site(const int c, const int p, const bool s){
 		sites_num++;
 		assert(sites_num <= sites_max_num_sites);
 	} else {
-		cerr << "sites_max_num_sites overflow detected. Ignoring add_site..." << endl;
+		// cerr << "sites_max_num_sites overflow detected. Ignoring add_site..." << endl;
 	}
 }
 
