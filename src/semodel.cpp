@@ -1001,7 +1001,7 @@ void SEModel::search_for_motif(const int iter) {
 		if(oldphase < phase) {
 			print_status(cerr, i, oldphase, sc);
 			if(size() > 5) {
-				compute_seq_scores();
+				compute_seq_scores(false);
 				compute_expr_scores();
 				set_seq_cutoffs(i);
 				set_expr_cutoffs(i);
