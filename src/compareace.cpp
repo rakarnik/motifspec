@@ -260,10 +260,11 @@ CompareACESites read_motif(const string fname, const int mot){
     wd=s.length();
   }
   //  cout<<wd<<"\n";
-  Sites st(seqset,wd);
+  
   Seqset sq;
 	sq.init(seqset);
-  for(x=0;x<seqset.size();x++){
+  Sites st(sq,wd);
+	for(x=0;x<seqset.size();x++){
     st.add_site(x,0,true);
   }
   cs.init(st,sq);

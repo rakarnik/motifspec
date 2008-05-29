@@ -5,7 +5,6 @@ int main(int argc, char *argv[]) {
 
 	string seqfile;                       // file with sequences
 	string exprfile;                      // file with expression data
-	string outfile;
 	if(argc < 6) {
     print_usage(cout);
     exit(0);
@@ -16,6 +15,13 @@ int main(int argc, char *argv[]) {
 				|| (! GetArg2(argc, argv, "-o", outfile))) {
 		print_usage(cout);
     exit(0);
+	}
+	
+	// Decide mode of running
+	archive = false;
+	if(! GetArg2(argc, argv, "-worker", worker)) {
+		worker = -1;
+		archive = true;
 	}
 	
 	// Read parameters
@@ -52,55 +58,115 @@ int main(int argc, char *argv[]) {
 	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints" << endl;
 	
 	cerr << "Setting up SEModel... ";
-	SEModel se;
 	se.init(seqs, expr, npoints, nameset1, ncol);
 	se.modify_params(argc, argv);
 	se.set_final_params();
 	se.ace_initialize();
 	cerr << "done." << endl;
 	
-	/* DISABLED: This code computes pairwise correlations and writes them to a file */
-	if(0) {
-		ofstream pc("pcorr.out", ios::trunc);
-		for(int g1 = 0; g1 < ngenes; g1++) {
-			for(int g2 = g1 + 1; g2 < ngenes; g2++)
-				pc << nameset1[g1] << '\t' << nameset2[g2] << '\t' << se.get_pcorr(g1, g2) << endl;
-			if(g1 > 0 && (g1 + 1) % 100 == 0) cerr << g1 + 1 << " genes done." << endl;
+	if(archive) {
+		cerr << "Running in archive mode..." << endl;
+		signal (SIGTERM, final_output);
+		while(true) {
+			bool found = false;
+			found = read_motifs();
+			if(found) output();
+			sleep(300);
 		}
-		pc.close();
-		return 0;
+	} else {
+		cerr << "Running as worker " << worker << "..." << endl;
+		for(int g = 0; g < ngenes; g++)
+			se.add_possible(g);
+		int nruns = se.possible_positions()
+								/ se.get_params().expect
+								/ ncol
+								/ se.get_params().undersample
+								* se.get_params().oversample;
+		string archinstr(outfile);
+		archinstr.append(".adj.ace");
+		char workerstr[3];
+		sprintf(workerstr, "%d", worker);
+		string workoutstr(outfile);
+		workoutstr.append(".");
+		workoutstr.append(workerstr);
+		workoutstr.append(".ace");
+		for(int j = 1; j <= nruns; j++) {
+			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
+			se.search_for_motif(worker, j);
+			if(j % 10 == 0 && access(archinstr.c_str(), F_OK) == 0) {
+				se.get_archive()->clear();
+				struct flock fl;
+				int fd;
+				fl.l_type   = F_RDLCK;
+				fl.l_whence = SEEK_SET;
+				fl.l_start  = 0;
+				fl.l_len    = 0;
+				fl.l_pid    = getpid();
+				fd = open(archinstr.c_str(), O_RDONLY);
+				fcntl(fd, F_SETLKW, &fl);
+				ifstream archin(archinstr.c_str());
+				se.get_archive()->read(archin);
+				archin.close();
+				fl.l_type = F_UNLCK;
+				fcntl(fd, F_SETLK, F_UNLCK);
+				close(fd);
+				ofstream workout(workoutstr.c_str());
+				print_full_ace(workout, se);
+			}
+		}
 	}
-	
-	string tmpstr(outfile);
-	tmpstr.append(".tmp.ace");
-	doit(tmpstr.c_str(), se);
-	
-	string outstr(outfile);
-	outstr.append(".adj.ace");
-	ofstream out(outstr.c_str(), ios::trunc);
-	print_ace(out, se);
-	out.close();
 	
 	return 0;
 }
 
-void doit(const char* outfile, SEModel& se) {
-	for(int g = 0; g < ngenes; g++)
-		se.add_possible(g);
-	int nruns = se.possible_positions()
-	            / se.get_params().expect
-							/ ncol
-							/ se.get_params().undersample
-							* se.get_params().oversample;
-	
-	for(int j = 1; j <= nruns; j++) {
-		cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
-		se.search_for_motif(j);
-		if(j % 50 == 0) {
-			ofstream out(outfile, ios::trunc);
-			print_full_ace(out, se);
+bool read_motifs() {
+	DIR* workdir;
+	struct dirent* dirp;
+	string filename;
+	string extension;
+	bool found = false;
+	workdir = opendir(".");
+	while(dirp = readdir(workdir)) {
+		filename = string(dirp->d_name);
+		if(filename.length() > 4 && filename.find_last_of('.') != string::npos)
+			extension = filename.substr(filename.find_last_of('.'), 4);
+		else
+			extension = "";
+		if(extension.compare(".mot") == 0) {
+			// check motif against archive, then delete
+			se.consider_motif(filename.c_str());
+			remove(filename.c_str());
+			found = true;
 		}
 	}
+	closedir(workdir);
+	return found;
+}
+
+void output() {
+	string outstr(outfile);
+	outstr.append(".adj.ace");
+	struct flock fl;
+	int fd;
+	fl.l_type   = F_WRLCK;
+	fl.l_whence = SEEK_SET;
+	fl.l_start  = 0;
+	fl.l_len    = 0;
+	fl.l_pid    = getpid();
+	fd = open(outstr.c_str(), O_WRONLY);
+	fcntl(fd, F_SETLKW, &fl);
+	ofstream out(outstr.c_str(), ios::trunc);
+	print_ace(out, se);
+	out.close();
+	fl.l_type = F_UNLCK;
+	fcntl(fd, F_SETLK, F_UNLCK);
+	close(fd);
+}
+
+void final_output(int param) {
+	read_motifs();
+	output();
+	exit(0);
 }
 
 void print_full_ace(ostream& out, SEModel& se) {
@@ -122,12 +188,11 @@ void print_ace(ostream& out, SEModel& se) {
 }
 
 void print_usage(ostream& fout) {
-	fout<<"Usage: im -s seqfile -e exprfile (options)\n";
+	fout<<"Usage: im -s seqfile -e exprfile -o outputfile (options)\n";
   fout<<" Seqfile must be in FASTA format.\n";
 	fout<<" Exprfile must be in tab-delimited format.\n";
   fout<<"Options:\n";
-	fout<<" -k          \tnumber of clusters (10)\n";
-  fout<<" -numcols    \tnumber of columns to align (10)\n";
+	fout<<" -numcols    \tnumber of columns to align (10)\n";
   fout<<" -expect     \tnumber of sites expected in model (10)\n";
   fout<<" -gcback     \tbackground fractional GC content of input sequence (0.38)\n";
   fout<<" -minpass    \tminimum number of non-improved passes in phase 1 (200)\n";

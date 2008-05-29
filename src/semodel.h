@@ -98,6 +98,7 @@ class SEModel {
 	SEParams get_params() const { return separams; };
   void ace_initialize();
 	vector<string> names() const { return nameset; };
+	ArchiveSites* get_archive() { return &archive; };
 	
 	/* Manage membership */
 	void add_possible(const int gene);                      // Add gene as a potential member
@@ -113,6 +114,7 @@ class SEModel {
 	void genes(int* genes) const;                           // Return the genes that are assigned to this model
 	
 	/* Sequence model*/
+	Seqset get_seqset() { return seqset; }                  // Return the set of sequences
 	void calc_matrix();                                     // Calculate the PWM for the current set of sites
 	string consensus() const;                               // Return the consensus sequence for the current set of sites
 	double map_score();                                     // Calculate the MAP score
@@ -146,13 +148,14 @@ class SEModel {
 	void expand_search_around_mean(const double corr_cutoff);
 	void expand_search_min_pcorr(const double corr_cutoff);
 	void expand_search_avg_pcorr();
-	void search_for_motif(const int iter);
+	void search_for_motif(const int worker, const int iter);
+	void consider_motif(const char* filename);
 	
 	/* Output */
-	void output(ostream &fout);
-	void full_output(ostream &fout);
+	void output(ostream &fout);                             // Output a single motif stored in print_sites
+	void full_output(ostream &fout);                        // Output all motifs stored in archive_sites
   void full_output(char *name);
-	void print_status(ostream& out, const int i, const int phase, const double sc);
+	void print_status(ostream& out, const int i, const int phase);
 };
 
 #endif

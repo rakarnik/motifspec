@@ -14,6 +14,7 @@
 #include <iterator>
 #include <cmath>
 #include <sstream>
+#include <fcntl.h>
 #include "time.h"
 #include "stdlib.h"
 #include "float.h"

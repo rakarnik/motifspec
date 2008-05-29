@@ -3,22 +3,23 @@
 
 #include "sites.h"
 
-Sites::Sites(const vector<string>& v, int nc, int mx, int dp){
+Sites::Sites(const Seqset& s, int nc, int mx, int dp){
   sites_num = 0;
   sites_width = nc;
   sites_num_cols = nc;
   sites_depth = dp;
-  sites_num_seqs = v.size();
+  sites_num_seqs = s.num_seqs();
   sites_len_seq = new int[sites_num_seqs];
   sites_max_num_sites = 0;
-  for(int i = 0; i < v.size(); i++){
-    sites_len_seq[i] = v[i].length();
+  for(int i = 0; i < sites_num_seqs; i++){
+    sites_len_seq[i] = s.len_seq(i);
 		sites_max_num_sites += sites_len_seq[i]/mx;
   }
 	sites_max_width = 2 * sites_width;
 	seq_cutoff = 0.00001;
 	expr_cutoff = 0.70;
 	iter = 0;
+	dejavu = 0;
 	spec = 0.0;
 	allocate_mem();
   clear_sites();
@@ -33,11 +34,13 @@ Sites::Sites(const Sites& s){
   }
   sites_max_num_sites=s.sites_max_num_sites;
   sites_max_width=s.sites_max_width;
+	mapsc = s.mapsc;
+	spec = s.spec;
+  iter = s.iter;
+	dejavu = s.dejavu;
 	seq_cutoff = s.seq_cutoff;
 	expr_cutoff = s.expr_cutoff;
-	iter = s.iter;
-	spec = s.spec;
-  allocate_mem();
+	allocate_mem();
   *this=s;
 }
 
@@ -50,37 +53,41 @@ void Sites::sites_init(const Sites& s){
   }
   sites_max_num_sites=s.sites_max_num_sites;
   sites_max_width=s.sites_max_width;
+	mapsc = s.mapsc;
+	spec = s.spec;
+	iter = s.iter;
+	dejavu = s.dejavu;
 	seq_cutoff = s.seq_cutoff;
   expr_cutoff = s.expr_cutoff;
-	iter = s.iter;
-	spec = s.spec;
 	allocate_mem();
   *this=s;
 }
 
-void Sites::init(const vector<string>& v, int nc, int mx, int dp){
+void Sites::init(const Seqset& s, int nc, int mx, int dp){
   sites_num = 0;
   sites_width = nc;
   sites_num_cols = nc;
   sites_depth = dp;
-  sites_num_seqs = v.size();
+  sites_num_seqs = s.num_seqs();
   sites_len_seq = new int[sites_num_seqs];
 	sites_max_num_sites = 0;
-  for(int i = 0; i < v.size(); i++){
-		sites_len_seq[i] = v[i].length();
+  for(int i = 0; i < sites_num_seqs; i++){
+		sites_len_seq[i] = s.len_seq(i);
 		sites_max_num_sites += sites_len_seq[i]/mx;
 	}
   sites_max_width = 2*sites_width;
   allocate_mem();
 	sites_num_seqs_with_sites = 0;
-	for(int i = 0; i < v.size(); i++){
+	for(int i = 0; i < sites_num_seqs; i++){
 		sites_has_sites[i] = 0;
 	}
   clear_sites();
-	seq_cutoff = 0.00001;
-	expr_cutoff = 0.70;
-	iter = 0;
+	mapsc = 0.0;
 	spec = 0.0;
+	iter = 0;
+	dejavu = 0;
+	seq_cutoff = 0.0;
+	expr_cutoff = 0.0;
 }
 
 Sites& Sites::operator= (const Sites& s){
@@ -104,8 +111,9 @@ Sites& Sites::operator= (const Sites& s){
     }
 		seq_cutoff = s.seq_cutoff;
 		expr_cutoff = s.expr_cutoff;
-		iter = s.iter;
+		mapsc = s.mapsc;
 		spec = s.spec;
+		iter = s.iter;
   }
   return *this;
 }
@@ -141,6 +149,11 @@ void Sites::clear_sites(){
 	for(int i = 0; i < sites_num_seqs; i++) {
 		sites_has_sites[i] = false;
 	}
+	mapsc = 0.0;
+	spec = 0.0;
+	iter = 0;
+	seq_cutoff = 0.0;
+	expr_cutoff = 0.0;
 }
 
 void Sites::remove_all_sites(){
@@ -149,6 +162,111 @@ void Sites::remove_all_sites(){
 	for(int i = 0; i < sites_num_seqs; i++) {
 		sites_has_sites[i] = false;
 	}
+}
+
+void Sites::write(const Seqset& seqset, ostream& motout) const {
+	map<char,char> nt;
+  nt[0] = nt[5] = 'N';
+  nt[1] = 'A';
+	nt[2] = 'C';
+	nt[3] = 'G';
+	nt[4] = 'T';
+  char** ss_seq = seqset.seq_ptr();
+  for(int i = 0; i < number(); i++){
+    int c = chrom(i);
+    int p = posit(i);
+    bool s = strand(i);
+    for(int j = 0; j < width(); j++){
+      if(s) {
+				if(p + j >= 0 && p + j < seqset.len_seq(c))
+					motout << nt[ss_seq[c][p + j]];
+				else motout << ' ';
+      }
+      else {
+				if(p + width() - 1 - j >= 0 && p + width()-1-j < seqset.len_seq(c))
+					motout << nt[depth() - 1 - ss_seq[c][p + width() - 1 - j]];
+				else motout << ' ';
+      }
+    }
+    motout << '\t' << c << '\t' << p << '\t' << s << '\n';
+  }
+	int j = 0;
+	for(int i = 0;;){
+    j = next_column(i);
+    motout << '*';
+    if(i == width() - 1) break;
+    for(int k = 0; k < (j - i - 1); k++) motout << ' ';
+    i = j;
+  }
+  motout << endl;
+	
+	motout << "MAP Score: " << mapsc << endl;
+	motout << "Specificity Score: " << spec << endl;
+	motout << "Sequence cutoff: " << seq_cutoff << endl;
+	motout << "Expression cutoff: " << expr_cutoff << endl;
+	motout << "Iteration found: " << iter << endl;
+	motout << "Dejavu: " << dejavu << endl << endl;
+}
+
+void Sites::read(istream& motin){
+	char* match;
+	vector<int> chr;
+	vector<int> pos;
+	vector<bool> strand;
+	char line[200];
+	
+	// Read sites
+	// (don't add yet, as they will get screwed up by the column changes)
+	while(motin.getline(line, 200)) {
+		if(line[0] == '*') break;
+		match = strtok(line, "\t");
+		chr.push_back(atoi(strtok(NULL, "\t")));
+		pos.push_back(atoi(strtok(NULL, "\t")));
+		strand.push_back(atoi(strtok(NULL, "\0")));
+	}
+	
+	int motwidth = strlen(line);
+	remove_all_cols();
+	// Read and set columns
+	for(int i = 0; i < motwidth; i++) {
+		if(line[i] == '*' && i >= sites_width) add_col(i);
+	}
+	
+	// Add sites
+	for(int i = 0; i < chr.size(); i++) {
+		add_site(chr[i], pos[i], strand[i]);
+	}
+	
+	char* heading;
+	// Read MAP score
+	motin.getline(line, 200);
+	heading = strtok(line, ":");
+	set_map(atof(strtok(NULL, "\0")));
+	
+	// Read specificity
+	motin.getline(line, 200);
+	heading = strtok(line, ":");
+	set_spec(atof(strtok(NULL, "\0")));
+	
+	// Read sequence cutoff
+	motin.getline(line, 200);
+	heading = strtok(line, ":");
+	set_seq_cutoff(atof(strtok(NULL, "\0")));
+	
+	// Read sequence cutoff
+	motin.getline(line, 200);
+	heading = strtok(line, ":");
+	set_expr_cutoff(atof(strtok(NULL, "\0")));
+	
+	// Read iteration found
+	motin.getline(line, 200);
+	heading = strtok(line, ":");
+	set_iter(atof(strtok(NULL, "\0")));
+	
+	// Read dejavu
+	motin.getline(line, 200);
+	heading = strtok(line, ":");
+	set_dejavu(atof(strtok(NULL, "\0")));
 }
 
 void Sites::destroy(){
@@ -314,6 +432,11 @@ int Sites::remove_col(const int c) {
 		abort();
 	}
   return ret;
+}
+
+void Sites::remove_all_cols() {
+	while(sites_num_cols > 0)
+		remove_col(0);
 }
 
 void Sites::add_col(const int c){

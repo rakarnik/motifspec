@@ -25,9 +25,9 @@ void SEModel::init(const vector<string>& seqs, float** exprtab, const int numexp
 	verbose = false;
 	
 	seqset.init(seqs);
-	sites.init(seqs, nc, 5 * nc);
-	select_sites.init(seqs, nc);
-	print_sites.init(seqs, nc, 5 * nc);
+	sites.init(seqset, nc, 5 * nc);
+	select_sites.init(seqset, nc);
+	print_sites.init(seqset, nc, 5 * nc);
 	archive.init(sites, seqset, bf, map_cut, sim_cut);
 	set_default_params();
   max_motifs = bf;
@@ -782,67 +782,6 @@ string SEModel::consensus() const {
   return cons;
 }
 
-void SEModel::output(ostream &fout){
-  map<char,char> nt;
-  nt[0] = nt[5] = 'N';
-  nt[1] = 'A';
-	nt[2] = 'C';
-	nt[3] = 'G';
-	nt[4] = 'T';
-  char** ss_seq = seqset.seq_ptr();
-  int x = separams.flanking;
-  for(int i = 0; i < print_sites.number(); i++){
-    int c = print_sites.chrom(i);
-    int p = print_sites.posit(i);
-    bool s = print_sites.strand(i);
-    for(int j = -x; j < print_sites.width() + x; j++){
-      if(s) {
-				if(p + j >= 0 && p + j < seqset.len_seq(c))
-					fout << nt[ss_seq[c][p + j]];
-				else fout << ' ';
-      }
-      else {
-				if(p + print_sites.width() - 1 - j >= 0 && p + print_sites.width()-1-j < seqset.len_seq(c))
-					fout << nt[print_sites.depth() - 1 - ss_seq[c][p + print_sites.width() - 1 - j]];
-				else fout << ' ';
-      }
-    }
-    fout << '\t' << c << '\t' << p << '\t' << s << '\n';
-  }
-  for(int i = 0; i < x; i++) fout << ' ';
-  int j = 0;
-	for(int i = 0;;){
-    j = print_sites.next_column(i);
-    fout << '*';
-    if(i == print_sites.width() - 1) break;
-    for(int k = 0; k < (j - i - 1); k++) fout << ' ';
-    i = j;
-  }
-  fout << "\n";
-}
-
-void SEModel::full_output(ostream &fout){
-  for(int j = 0; j < max_motifs; j++){
-    double sc = archive.return_best(print_sites, j);
-    orient_print_motif();
-    if(sc > 0.0){
-      fout << "Motif " << j + 1 << '\n';
-      output(fout);
-      fout << "MAP Score: " << sc << endl;
-			fout << "Specificity Score: " << print_sites.get_spec() << endl;
-			fout << "Sequence cutoff: " << print_sites.get_seq_cutoff() << endl;
-			fout << "Expression cutoff: " << print_sites.get_expr_cutoff() << endl;
-			fout << "Iteration found: " << print_sites.get_iter() << endl << endl;
-		}
-    else break;
-  }
-}
-
-void SEModel::full_output(char *name){
-  ofstream fout(name);
-  full_output(fout);
-}
-
 void SEModel::output_params(ostream &fout){
   fout<<" expect =      \t"<<separams.expect<<'\n';
   fout<<" gcback =      \t"<<separams.gcback<<'\n';
@@ -960,18 +899,19 @@ void SEModel::expand_search_avg_pcorr() {
 	}
 }
 
-void SEModel::search_for_motif(const int iter) {
+void SEModel::search_for_motif(const int worker, const int iter) {
+	sites.clear_sites();
+	select_sites.clear_sites();
 	sites.set_iter(iter);
 	sites.set_expr_cutoff(0.65);
-	double sc, cmp, sc_best_i, sp;
+	sites.set_map(0);
+	double cmp, sc_best_i, sp;
   int i_worse = 0;
 	sc_best_i = map_cutoff;
 	i_worse = 0;
 	int phase = 0;
 	int oldphase = 0;
 	
-	sites.clear_sites();
-	select_sites.clear_sites();
 	Sites best_sites = sites;
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
@@ -983,7 +923,7 @@ void SEModel::search_for_motif(const int iter) {
 	
 	expand_search_around_mean(sites.get_expr_cutoff());
 	while(possible_size() < separams.minsize && sites.get_expr_cutoff() > 0.4) {
-		print_status(cerr, 0, oldphase, 0.0);
+		print_status(cerr, 0, oldphase);
 		sites.set_expr_cutoff(sites.get_expr_cutoff() - 0.05);
 		expand_search_around_mean(sites.get_expr_cutoff());
 	}
@@ -991,7 +931,7 @@ void SEModel::search_for_motif(const int iter) {
 		cerr << "\t\t\tBad search start -- no genes within " << separams.mincorr << endl;
 		return;
 	}
-	print_status(cerr, 0, oldphase, 0.0);
+	print_status(cerr, 0, oldphase);
 	compute_seq_scores(false);
 	
 	double ap = (double) separams.expect/(2.0 * sites.positions_available(possible));
@@ -999,7 +939,7 @@ void SEModel::search_for_motif(const int iter) {
 	
 	for(int i = 1; i <= separams.npass; i++){
 		if(oldphase < phase) {
-			print_status(cerr, i, oldphase, sc);
+			print_status(cerr, i, oldphase);
 			if(size() > 5) {
 				compute_seq_scores(false);
 				compute_expr_scores();
@@ -1015,18 +955,18 @@ void SEModel::search_for_motif(const int iter) {
 				break;
 			}
 			double sc1 = map_score();
-			sc = 0.0;
-			for(int z = 0; sc < sc1 && z < 5; z++){
+			sites.set_map(0.0);
+			for(int z = 0; sites.get_map() < sc1 && z < 5; z++){
 				optimize_columns();
 				single_pass(sites.get_seq_cutoff(), true);
-				sc = map_score();
-				print_status(cerr, i, phase, sc);
+				sites.set_map(map_score());
+				print_status(cerr, i, phase);
 			}
-			if(sc < sc1) {
+			if(sites.get_map() < sc1) {
 				sites = best_sites;
-				sc = sc1;
+				sites.set_map(sc1);
 			}
-			print_status(cerr, i, phase, sc);
+			print_status(cerr, i, phase);
 			if(size() < separams.minsize) {
 				cerr << "\t\t\tCompleted phase " << phase << " with less than " << separams.minsize << " sequences with sites. Restarting..." << endl;
 				break;
@@ -1034,7 +974,15 @@ void SEModel::search_for_motif(const int iter) {
 			sp = spec_score();
 			sites.set_spec(sp);
 			cerr << "\t\t\t\tSpecificity score was " << sp << endl;
-			archive.consider_motif(sites, sc);
+			if(archive.consider_motif(sites)) {
+				char tmpfilename[30], motfilename[30];
+				sprintf(tmpfilename, "%d.%d.mot.tmp", worker, iter);
+				sprintf(motfilename, "%d.%d.mot", worker, iter);
+				ofstream motout(tmpfilename);
+				sites.write(seqset, motout);
+				motout.close();
+				rename(tmpfilename, motfilename);
+			}
 			cerr << "\t\t\tCompleted phase " << phase << "! Restarting..." << endl;
 			break;
 		}
@@ -1063,29 +1011,28 @@ void SEModel::search_for_motif(const int iter) {
 				if(!(column_sample())) break;
 			}
 		}
-		sc = map_score();
-		if(sc - sc_best_i > 1e-3){
+		sites.set_map(map_score());
+		if(sites.get_map() - sc_best_i > 1e-3) {
 			i_worse=0;
 			if(size() > separams.minsize * 2) {
-				cmp = archive.check_motif(sites, sc);
-				if(cmp > sim_cutoff) {
-					print_status(cerr, i, phase, sc);
+				if(! archive.check_motif(sites)) {
+					print_status(cerr, i, phase);
 					cerr <<"\t\t\tToo similar! Restarting..." << endl;
 					break;
 				}
 			}
-			sc_best_i = sc;
+			sc_best_i = sites.get_map();
 			best_sites = sites;
 		}
 		else i_worse++;
 		if(i_worse > separams.minpass[phase]){
 			if(sc_best_i == map_cutoff) {
-				print_status(cerr, i, phase, sc);
+				print_status(cerr, i, phase);
 				cerr << "\t\t\ti_worse is greater than cutoff and best score at cutoff! Restarting..." << endl;
 				break;
 			}
 			if(best_sites.number() < 2) {
-				print_status(cerr, i, phase, sc);
+				print_status(cerr, i, phase);
 				cerr << "\t\t\ti_worse is greater than cutoff and only 1 site! Restarting..." << endl;
 				break;
 			}
@@ -1095,7 +1042,7 @@ void SEModel::search_for_motif(const int iter) {
 			i_worse = 0;
 		}
 		
-		if(i % 5 == 0 && size() > 5) {
+		if(i % 20 == 0 && size() > 5) {
 			compute_seq_scores();
 			compute_expr_scores();
 			set_seq_cutoffs(i);
@@ -1104,12 +1051,20 @@ void SEModel::search_for_motif(const int iter) {
 		}
 	
 		if(i % 50 == 0) {
-			print_status(cerr, i, phase, sc);
+			print_status(cerr, i, phase);
 		}
 	}
 }
 
-void SEModel::print_status(ostream& out, const int i, const int phase, const double sc) {
+void SEModel::consider_motif(const char* filename) {
+	ifstream motin(filename);
+	sites.clear_sites();
+	sites.read(motin);
+	archive.consider_motif(sites);
+	motin.close();
+}
+
+void SEModel::print_status(ostream& out, const int i, const int phase) {
 	if(size() > 0) {
 		out << "\t\t\t" << setw(5) << i;
 		out << setw(3) << phase;
@@ -1121,11 +1076,73 @@ void SEModel::print_status(ostream& out, const int i, const int phase, const dou
 		out << setw(5) << size();
 		out << setw(5) << possible_size();
 		out << setw(40) << consensus();
-		out << setw(10) << sc;
+		out << setw(10) << sites.get_map();
 		out << endl;
 	} else {
 		out << "\t\t\tNo sites!" << endl;
 	}
+}
+
+void SEModel::output(ostream &fout){
+  map<char,char> nt;
+  nt[0] = nt[5] = 'N';
+  nt[1] = 'A';
+	nt[2] = 'C';
+	nt[3] = 'G';
+	nt[4] = 'T';
+  char** ss_seq = seqset.seq_ptr();
+  int x = separams.flanking;
+  for(int i = 0; i < print_sites.number(); i++){
+    int c = print_sites.chrom(i);
+    int p = print_sites.posit(i);
+    bool s = print_sites.strand(i);
+    for(int j = -x; j < print_sites.width() + x; j++){
+      if(s) {
+				if(p + j >= 0 && p + j < seqset.len_seq(c))
+					fout << nt[ss_seq[c][p + j]];
+				else fout << ' ';
+      }
+      else {
+				if(p + print_sites.width() - 1 - j >= 0 && p + print_sites.width()-1-j < seqset.len_seq(c))
+					fout << nt[print_sites.depth() - 1 - ss_seq[c][p + print_sites.width() - 1 - j]];
+				else fout << ' ';
+      }
+    }
+    fout << '\t' << c << '\t' << p << '\t' << s << '\n';
+  }
+  for(int i = 0; i < x; i++) fout << ' ';
+  int j = 0;
+	for(int i = 0;;){
+    j = print_sites.next_column(i);
+    fout << '*';
+    if(i == print_sites.width() - 1) break;
+    for(int k = 0; k < (j - i - 1); k++) fout << ' ';
+    i = j;
+  }
+  fout << "\n";
+}
+
+void SEModel::full_output(ostream &fout){
+  for(int j = 0; j < archive.motifcount(); j++){
+    double sc = archive.return_best(print_sites, j);
+    orient_print_motif();
+    if(sc > 0.0){
+      fout << "Motif " << j + 1 << '\n';
+      output(fout);
+      fout << "MAP Score: " << sc << endl;
+			fout << "Specificity Score: " << print_sites.get_spec() << endl;
+			fout << "Sequence cutoff: " << print_sites.get_seq_cutoff() << endl;
+			fout << "Expression cutoff: " << print_sites.get_expr_cutoff() << endl;
+			fout << "Iteration found: " << print_sites.get_iter() << endl;
+			fout << "Deja vu: " << print_sites.get_dejavu() << endl << endl;
+		}
+    else break;
+  }
+}
+
+void SEModel::full_output(char *name){
+  ofstream fout(name);
+  full_output(fout);
 }
 
 void SEModel::set_seq_cutoffs(const int i) {
