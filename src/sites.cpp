@@ -261,12 +261,12 @@ void Sites::read(istream& motin){
 	// Read iteration found
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
-	set_iter(atof(strtok(NULL, "\0")));
+	set_iter(atoi(strtok(NULL, "\0")));
 	
 	// Read dejavu
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
-	set_dejavu(atof(strtok(NULL, "\0")));
+	set_dejavu(atoi(strtok(NULL, "\0")));
 }
 
 void Sites::destroy(){
