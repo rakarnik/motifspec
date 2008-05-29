@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 		for(int j = 1; j <= nruns; j++) {
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 			se.search_for_motif(worker, j);
-			if(j % 10 == 0 && access(archinstr.c_str(), F_OK) == 0) {
+			if(j % 100 == 0 && access(archinstr.c_str(), F_OK) == 0) {
 				se.get_archive()->clear();
 				struct flock fl;
 				int fd;
