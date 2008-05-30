@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
 				close(fd);
 				ofstream workout(workoutstr.c_str());
 				print_full_ace(workout, se);
+				workout.close();
 			}
 		}
 	}
