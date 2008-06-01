@@ -149,7 +149,7 @@ class SEModel {
 	void expand_search_min_pcorr(const double corr_cutoff);
 	void expand_search_avg_pcorr();
 	void search_for_motif(const int worker, const int iter);
-	void consider_motif(const char* filename);
+	bool consider_motif(const char* filename);
 	
 	/* Output */
 	void output(ostream &fout);                             // Output a single motif stored in print_sites

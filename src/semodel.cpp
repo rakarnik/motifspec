@@ -1056,12 +1056,13 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	}
 }
 
-void SEModel::consider_motif(const char* filename) {
+bool SEModel::consider_motif(const char* filename) {
 	ifstream motin(filename);
 	sites.clear_sites();
 	sites.read(motin);
-	archive.consider_motif(sites);
+	bool ret = archive.consider_motif(sites);
 	motin.close();
+	return ret;
 }
 
 void SEModel::print_status(ostream& out, const int i, const int phase) {
