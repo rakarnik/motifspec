@@ -18,7 +18,7 @@ SEModel se;                // the sequence-expression model
 
 string outfile;
 
-bool read_motifs();
+int read_motifs();
 void output();
 void final_output(int param);
 void print_clusters(ostream& out, const vector<string>& nameset);

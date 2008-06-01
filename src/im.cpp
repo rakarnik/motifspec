@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 			bool found = false;
 			found = read_motifs();
 			if(found) output();
-			sleep(300);
+			sleep(120);
 		}
 	} else {
 		cerr << "Running as worker " << worker << "..." << endl;
@@ -84,12 +84,17 @@ int main(int argc, char *argv[]) {
 								* se.get_params().oversample;
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
+		char workeridstr[3];
+		sprintf(workeridstr, "%d", worker);
 		string workoutstr(outfile);
+		workoutstr.append(".");
+		workoutstr.append(workeridstr);
 		workoutstr.append(".tmp.ace");
 		for(int j = 1; j <= nruns; j++) {
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 			se.search_for_motif(worker, j);
-			if(j % 100 == 0 && access(archinstr.c_str(), F_OK) == 0) {
+			if(j % 25 == 0) {
+				cerr << "\t\tRefreshing archive from " << archinstr << "... ";
 				se.get_archive()->clear();
 				struct flock fl;
 				int fd;
@@ -98,17 +103,27 @@ int main(int argc, char *argv[]) {
 				fl.l_start  = 0;
 				fl.l_len    = 0;
 				fl.l_pid    = getpid();
-				fd = open(archinstr.c_str(), O_RDONLY);
-				fcntl(fd, F_SETLKW, &fl);
+				fd = open("arch.lock", O_RDONLY);
+				if(fd == -1) {
+					cerr << "unable to read lock file, error was " << strerror(errno) << endl;
+					continue;
+				}
+				while(fcntl(fd, F_SETLK, &fl) == -1) {
+					cerr << "\t\tWaiting for lock release on archive file... " << endl;
+					sleep(30);
+				}
 				ifstream archin(archinstr.c_str());
 				se.get_archive()->read(archin);
 				archin.close();
 				fl.l_type = F_UNLCK;
-				fcntl(fd, F_SETLK, F_UNLCK);
+				fcntl(fd, F_SETLK, &fl);
 				close(fd);
+				cerr << "done." << endl;
+				cerr << "\t\tCreating output file of current status... ";
 				ofstream workout(workoutstr.c_str());
 				print_full_ace(workout, se);
 				workout.close();
+				cerr << "done." << endl;
 			}
 		}
 	}
@@ -116,12 +131,13 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-bool read_motifs() {
+int read_motifs() {
 	DIR* workdir;
 	struct dirent* dirp;
 	string filename;
 	string extension;
-	bool found = false;
+	int nfound = 0;
+	int nmot = 0; 
 	workdir = opendir(".");
 	while(dirp = readdir(workdir)) {
 		filename = string(dirp->d_name);
@@ -131,13 +147,14 @@ bool read_motifs() {
 			extension = "";
 		if(extension.compare(".mot") == 0) {
 			// check motif against archive, then delete
-			se.consider_motif(filename.c_str());
+			if(se.consider_motif(filename.c_str())) nmot++;
 			remove(filename.c_str());
-			found = true;
+			nfound++;
 		}
 	}
 	closedir(workdir);
-	return found;
+	cerr << "Read " << nfound << " motif(s), added " << nmot << " motif(s)" << endl;
+	return nfound;
 }
 
 void output() {
@@ -150,13 +167,16 @@ void output() {
 	fl.l_start  = 0;
 	fl.l_len    = 0;
 	fl.l_pid    = getpid();
-	fd = open(outstr.c_str(), O_WRONLY);
-	fcntl(fd, F_SETLKW, &fl);
+	fd = open("arch.lock", O_WRONLY | O_CREAT, 0644);
+	while(fcntl(fd, F_SETLK, &fl) == -1) {
+		cerr << "Waiting for lock release on archive file..." << endl;
+		sleep(30);
+	}
 	ofstream out(outstr.c_str(), ios::trunc);
 	print_ace(out, se);
 	out.close();
 	fl.l_type = F_UNLCK;
-	fcntl(fd, F_SETLK, F_UNLCK);
+	fcntl(fd, F_SETLK, &fl);
 	close(fd);
 }
 
