@@ -114,6 +114,7 @@ Sites& Sites::operator= (const Sites& s){
 		mapsc = s.mapsc;
 		spec = s.spec;
 		iter = s.iter;
+		dejavu = s.dejavu;
   }
   return *this;
 }
