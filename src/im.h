@@ -4,6 +4,7 @@
 #include <iostream>
 #include <dirent.h>
 #include <signal.h>
+#include <errno.h>
 #include "semodel.h"
 #include "standard.h"
 
