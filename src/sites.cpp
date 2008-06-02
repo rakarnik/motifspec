@@ -3,7 +3,12 @@
 
 #include "sites.h"
 
-Sites::Sites(const Seqset& s, int nc, int mx, int dp){
+Sites::Sites() {
+	sites_alloc=false;
+	destroy();
+}
+
+Sites::Sites(const Seqset& s, int nc, int mx, int dp) {
   sites_num = 0;
   sites_width = nc;
   sites_num_cols = nc;
@@ -25,7 +30,7 @@ Sites::Sites(const Seqset& s, int nc, int mx, int dp){
   clear_sites();
 }
 
-Sites::Sites(const Sites& s){
+Sites::Sites(const Sites& s) {
   if(!s.sites_alloc) return;
   sites_num_seqs=s.sites_num_seqs;
   sites_len_seq=new int[sites_num_seqs];
@@ -191,14 +196,15 @@ void Sites::write(const Seqset& seqset, ostream& motout) const {
     }
     motout << '\t' << c << '\t' << p << '\t' << s << '\n';
   }
-	int j = 0;
-	for(int i = 0;;){
-    j = next_column(i);
-    motout << '*';
-    if(i == width() - 1) break;
-    for(int k = 0; k < (j - i - 1); k++) motout << ' ';
-    i = j;
-  }
+	int col = 0, prev_col = 0;
+	cerr << "Number of columns:" << sites_num_cols << endl;
+	for(int i = 0; i < sites_num_cols; i++){
+    col = next_column(col);
+    cerr << " " << col;
+		motout << '*';
+    for(int k = 0; k < (col - prev_col - 1); k++) motout << ' ';
+    prev_col = col;
+	}
   motout << endl;
 	
 	motout << "MAP Score: " << mapsc << endl;
@@ -209,7 +215,7 @@ void Sites::write(const Seqset& seqset, ostream& motout) const {
 	motout << "Dejavu: " << dejavu << endl << endl;
 }
 
-void Sites::read(istream& motin){
+void Sites::read(istream& motin) {
 	char* match;
 	vector<int> chr;
 	vector<int> pos;
@@ -227,11 +233,12 @@ void Sites::read(istream& motin){
 	}
 	
 	int motwidth = strlen(line);
-	remove_all_cols();
-	// Read and set columns
+	sites_num_cols = 0;
+	sites_width = 0;
 	for(int i = 0; i < motwidth; i++) {
 		if(line[i] == '*' && i >= sites_width) add_col(i);
 	}
+	assert(sites_width == motwidth);
 	
 	// Add sites
 	for(int i = 0; i < chr.size(); i++) {
@@ -254,7 +261,7 @@ void Sites::read(istream& motin){
 	heading = strtok(line, ":");
 	set_seq_cutoff(atof(strtok(NULL, "\0")));
 	
-	// Read sequence cutoff
+	// Read expression cutoff
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
 	set_expr_cutoff(atof(strtok(NULL, "\0")));
@@ -359,25 +366,19 @@ void Sites::calc_freq_matrix(const Seqset& b, int *fm){
 
 bool Sites::column_freq(const int col, const Seqset& s, int *ret){
   char** ss_seq=s.seq_ptr();
-  int i,j;
-  for(i=0;i<sites_depth;i++) ret[i]=0;
-  for(i=0;i<sites_num;i++){//i = site number
-    int c=sites_chrom[i];
-    int p=sites_posit[i];
-    bool t=sites_strand[i];
-    if(t){
-      if( (p+col > s.len_seq(c)-1) || (p+col <0) ){
-	return false;
-      }
-      int seq=ss_seq[c][p+col];
+  for(int i = 0; i < sites_depth; i++) ret[i]=0;
+  for(int i = 0; i < sites_num; i++){//i = site number
+    int c = sites_chrom[i];
+    int p = sites_posit[i];
+    bool t = sites_strand[i];
+    if(t) {
+      if( (p+col > s.len_seq(c)-1) || (p+col <0) ) return false;
+      int seq=ss_seq[c][p + col];
       ret[seq]++;
-    }
-    else{
-      if((p+sites_width-1-col>s.len_seq(c)-1)||(p+sites_width-1-col<0)){
-	return false;
-      }
-      int seq=ss_seq[c][p+sites_width-1-col];
-      ret[sites_depth-seq-1]++;
+    } else {
+      if((p+sites_width-1-col>s.len_seq(c)-1)||(p+sites_width-1-col<0)) return false;
+      int seq = ss_seq[c][p + sites_width - 1 - col];
+      ret[sites_depth - seq - 1]++;
     }
   }
   return true;
@@ -435,11 +436,6 @@ int Sites::remove_col(const int c) {
   return ret;
 }
 
-void Sites::remove_all_cols() {
-	while(sites_num_cols > 0)
-		remove_col(0);
-}
-
 void Sites::add_col(const int c){
 	int col, nxt, i;
 	col = nxt = i = 0;
@@ -494,7 +490,6 @@ void Sites::shift_sites(const int l, const int r){
   // l: + for shorter/right
   // r: + for longer/right
   for(int i=0;i<sites_num;i++){
-    int c=sites_chrom[i];
     int p=sites_posit[i];
     bool s=sites_strand[i];
     int newp;

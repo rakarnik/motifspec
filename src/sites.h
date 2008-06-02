@@ -38,8 +38,8 @@ class Sites{
 	double expr_cutoff;
 
 public:
-  Sites(){sites_alloc=false;destroy();}
-  void sites_init(const Sites& s);
+  Sites();
+	void sites_init(const Sites& s);
   Sites(const Seqset& v, int nc=10, int memx=1, int dp=6);
   Sites(const Sites& s);
 	void init(const Seqset& v, int nc=10, int memx=1, int dp=6);
@@ -55,7 +55,7 @@ public:
   bool strand(int i) const {return sites_strand[i];}
   int max_width() const {return sites_max_width;}
 	int get_iter() const {return iter;}
-	void set_iter(const int curr_iter) {iter = curr_iter;}
+	void set_iter(const int it) {iter = it;}
 	int get_dejavu() {return dejavu;}
 	void set_dejavu(const int d) {dejavu = d;}
 	void inc_dejavu() {dejavu++;}
@@ -79,8 +79,7 @@ public:
   int next_column(const int i) const {return sites_active_fwd[i];}
   bool column_freq(const int col, const Seqset& s, int *ret);
   int remove_col(const int c);
-	void Sites::remove_all_cols();
-  void add_col(const int c);
+	void add_col(const int c);
   int positions_available() const;
 	int positions_available(const bool* possible) const;
   void shift_sites(const int l, const int r);
