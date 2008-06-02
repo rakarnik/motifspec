@@ -119,6 +119,7 @@ int main(int argc, char *argv[]) {
 				fcntl(fd, F_SETLK, &fl);
 				close(fd);
 				cerr << "done." << endl;
+				cerr << "\t\tArchive now has " << se.get_archive()->motifcount() << " motifs" << endl;
 				cerr << "\t\tCreating output file of current status... ";
 				ofstream workout(workoutstr.c_str());
 				print_full_ace(workout, se);
