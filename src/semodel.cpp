@@ -1125,7 +1125,7 @@ void SEModel::output(ostream &fout){
 }
 
 void SEModel::full_output(ostream &fout){
-  for(int j = 0; j < archive.motifcount(); j++){
+  for(int j = 0; j < max_motifs; j++){
     double sc = archive.return_best(print_sites, j);
     orient_print_motif();
     if(sc > 0.0){
