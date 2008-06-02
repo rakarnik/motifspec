@@ -8,8 +8,8 @@ ArchiveSites::ArchiveSites() {
 
 ArchiveSites::ArchiveSites(Sites& s, Seqset& seq, int max, double map_cut, double sim_cut) : arch_seqset(&seq) {
 	arch_base_site = &s;
+	arch_base_site->set_map(map_cut);
 	arch_max_num = max;
-  arch_num = 0;
   arch_map_cutoff = 0.0;
   arch_sim_cutoff = sim_cut;
   arch_min_visits = 3;
@@ -27,7 +27,6 @@ void ArchiveSites::init(Sites& s, Seqset& seq, int max, double map_cut, double s
 	arch_base_site = &s;
 	arch_seqset = &seq;
 	arch_max_num = max;
-  arch_num = 0;
   arch_map_cutoff = 0.0;
   arch_sim_cutoff = sim_cut;
   arch_min_visits = 3;
@@ -42,14 +41,13 @@ void ArchiveSites::clear() {
 	arch_sites = new CompareACESites[arch_max_num];
   for(int i = 0; i < arch_max_num; i++)
     arch_sites[i].init(*arch_base_site, *arch_seqset);
-	arch_num = 0;
 }
 
 bool ArchiveSites::check_motif(const Sites& s){
   int i;
   CompareACESites c;
   c.init(s, *arch_seqset);
-  for(i = 0; i < arch_num; i++){
+  for(i = 0; i < arch_max_num; i++){
     if(s.get_map() <= arch_sites[i].sites()->get_map()){
       if(c.compare(arch_sites[i]) > arch_sim_cutoff && arch_sites[i].sites()->get_dejavu() >= arch_min_visits) {
 				return false;
@@ -69,7 +67,7 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl){
   c.init(s, *arch_seqset);
 	int j;
   double cmp;
-  for(int i = 0; i < arch_num; i++){
+  for(int i = 0; i < arch_max_num; i++){
     if(s.get_map() <= arch_sites[i].sites()->get_map()){
       if(! fnl) continue;
       cmp = c.compare(arch_sites[i]);
@@ -99,14 +97,13 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl){
 				}
 			}
       //then insert the new motif and shift the list down
-      for(j = arch_num - 1; j >= i + 1; j--) {
+      for(j = arch_max_num - 1; j >= i + 1; j--) {
 				arch_sites[j] = arch_sites[j - 1];
       }
       arch_sites[i] = c;
       if(fnl) arch_sites[i].sites()->set_dejavu(1);
       else arch_sites[i].sites()->set_dejavu(0);
       ret = true;
-			arch_num++;
 			break;
     }
   }
@@ -120,7 +117,7 @@ double ArchiveSites::return_best(Sites& s, int i){
 }
 
 void ArchiveSites::read(istream& archin) {
-	arch_num = 0;
+	int arch_num = 0;
 	char line[200];
 	while(archin.getline(line, 200)) {
 		if(strstr(line, "Motif")) {
@@ -137,9 +134,11 @@ void ArchiveSites::read(istream& archin) {
 }
 
 void ArchiveSites::write(ostream& archout) {
-	for(int i = 0; i < arch_num; i++) {
-		archout << "Motif " << i + 1 << endl;
-		arch_sites[i].sites()->write(*arch_seqset, archout);
+	for(int i = 0; i < arch_max_num; i++) {
+		if(arch_sites[i].sites()->get_map() > arch_map_cutoff) {
+			archout << "Motif " << i + 1 << endl;
+			arch_sites[i].sites()->write(*arch_seqset, archout);
+		}
 	}
 }
 

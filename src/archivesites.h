@@ -7,7 +7,6 @@
 #include "compareace.h"
 
 class ArchiveSites{
-	int arch_num;
   int arch_max_num;
   double arch_map_cutoff;
   double arch_sim_cutoff;
@@ -25,7 +24,6 @@ class ArchiveSites{
   bool check_motif(const Sites& s);                     // Returns true if better motif not seen, false otherwise
   bool consider_motif(const Sites& s, bool fnl=true);   // Returns true if motif was added, false otherwise
   double return_best(Sites& s, int i=0);
-	int motifcount() const { return arch_num; };
 	void read(istream& archin);
 	void write(ostream& archout);
 };
