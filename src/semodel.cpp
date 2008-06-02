@@ -1112,13 +1112,12 @@ void SEModel::output(ostream &fout){
     fout << '\t' << c << '\t' << p << '\t' << s << '\n';
   }
   for(int i = 0; i < x; i++) fout << ' ';
-  int j = 0;
-	for(int i = 0;;){
-    j = print_sites.next_column(i);
+  int col = 0, prev_col = 0;
+	for(int i = 0; i < print_sites.ncols(); i++) {
+    col = print_sites.next_column(col);
     fout << '*';
-    if(i == print_sites.width() - 1) break;
-    for(int k = 0; k < (j - i - 1); k++) fout << ' ';
-    i = j;
+    for(int k = 0; k < (col - prev_col - 1); k++) fout << ' ';
+    prev_col = col;
   }
   fout << "\n";
 }
