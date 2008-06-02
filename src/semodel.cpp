@@ -982,8 +982,10 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 				sites.write(seqset, motout);
 				motout.close();
 				rename(tmpfilename, motfilename);
+				cerr << "\t\t\tCompleted phase " << phase << "! Restarting..." << endl;
+			} else {
+				cerr <<"\t\t\tToo similar! Restarting..." << endl;
 			}
-			cerr << "\t\t\tCompleted phase " << phase << "! Restarting..." << endl;
 			break;
 		}
 		if(i_worse == 0) {
