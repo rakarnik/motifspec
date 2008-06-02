@@ -49,7 +49,7 @@ bool ArchiveSites::check_motif(const Sites& s){
   int i;
   CompareACESites c;
   c.init(s, *arch_seqset);
-  for(i = 0; i < arch_max_num; i++){
+  for(i = 0; i < arch_num; i++){
     if(s.get_map() <= arch_sites[i].sites()->get_map()){
       if(c.compare(arch_sites[i]) > arch_sim_cutoff && arch_sites[i].sites()->get_dejavu() >= arch_min_visits) {
 				return false;
@@ -69,7 +69,7 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl){
   c.init(s, *arch_seqset);
 	int j;
   double cmp;
-  for(int i = 0; i < arch_max_num; i++){
+  for(int i = 0; i < arch_num; i++){
     if(s.get_map() <= arch_sites[i].sites()->get_map()){
       if(! fnl) continue;
       cmp = c.compare(arch_sites[i]);
@@ -134,7 +134,6 @@ void ArchiveSites::read(istream& archin) {
 			arch_num++;
 		}
 	}
-	
 }
 
 void ArchiveSites::write(ostream& archout) {
