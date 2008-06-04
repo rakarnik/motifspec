@@ -1115,8 +1115,9 @@ void SEModel::output(ostream &fout){
   }
   for(int i = 0; i < x; i++) fout << ' ';
   int col = 0, prev_col = 0;
-	for(int i = 0; i < print_sites.ncols(); i++) {
+	for(int i = 0; i < print_sites.ncols() - 1; i++) {
     col = print_sites.next_column(col);
+		assert(col < print_sites.width());
     fout << '*';
     for(int k = 0; k < (col - prev_col - 1); k++) fout << ' ';
     prev_col = col;

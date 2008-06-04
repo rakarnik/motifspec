@@ -198,9 +198,9 @@ void Sites::write(const Seqset& seqset, ostream& motout) const {
   }
 	int col = 0, prev_col = 0;
 	cerr << "Number of columns:" << sites_num_cols << endl;
-	for(int i = 0; i < sites_num_cols; i++){
+	for(int i = 0; i < sites_num_cols - 1; i++){
     col = next_column(col);
-    cerr << " " << col;
+		assert(col < sites_width);
 		motout << '*';
     for(int k = 0; k < (col - prev_col - 1); k++) motout << ' ';
     prev_col = col;
@@ -242,6 +242,7 @@ void Sites::read(istream& motin) {
 	
 	// Add sites
 	for(int i = 0; i < chr.size(); i++) {
+		assert(pos[i] >= 0);
 		add_site(chr[i], pos[i], strand[i]);
 	}
 	
