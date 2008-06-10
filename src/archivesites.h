@@ -15,7 +15,7 @@ class ArchiveSites{
 
  public:
   ArchiveSites(Sites& s, Seqset& seq, double map_cut, double sim_cut);
-	int motifcount() const { return arch_sites.size(); }
+	int nmots() const { return arch_sites.size(); }
   bool check_motif(const Sites& s);               // Returns true if better motif not seen, false otherwise
   bool consider_motif(const Sites& s, bool fnl=true);   // Returns true if motif was added, false otherwise
   Sites* return_best(const int i=0);
