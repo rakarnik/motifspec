@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints" << endl;
 	
 	cerr << "Setting up SEModel... ";
-	se.init(seqs, expr, npoints, nameset1, ncol);
+	SEModel se(seqs, expr, npoints, nameset1, ncol);
 	se.modify_params(argc, argv);
 	se.set_final_params();
 	se.ace_initialize();
@@ -66,11 +66,10 @@ int main(int argc, char *argv[]) {
 	
 	if(archive) {
 		cerr << "Running in archive mode..." << endl;
-		signal (SIGTERM, final_output);
 		while(true) {
 			bool found = false;
-			found = read_motifs();
-			if(found) output();
+			found = read_motifs(se);
+			if(found) output(se);
 			sleep(120);
 		}
 	} else {
@@ -110,16 +109,17 @@ int main(int argc, char *argv[]) {
 				}
 				while(fcntl(fd, F_SETLK, &fl) == -1) {
 					cerr << "\t\tWaiting for lock release on archive file... " << endl;
-					sleep(30);
+					sleep(10);
 				}
 				ifstream archin(archinstr.c_str());
+				se.get_archive()->clear();
 				se.get_archive()->read(archin);
 				archin.close();
 				fl.l_type = F_UNLCK;
 				fcntl(fd, F_SETLK, &fl);
 				close(fd);
 				cerr << "done." << endl;
-				cerr << "\t\tArchive now has " << se.get_archive()->motifcount() << " motifs" << endl;
+				cerr << "\t\tArchive now has " << se.get_archive()->nmots() << " motifs" << endl;
 				cerr << "\t\tCreating output file of current status... ";
 				ofstream workout(workoutstr.c_str());
 				print_full_ace(workout, se);
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-int read_motifs() {
+int read_motifs(SEModel& se) {
 	DIR* workdir;
 	struct dirent* dirp;
 	string filename;
@@ -158,7 +158,7 @@ int read_motifs() {
 	return nfound;
 }
 
-void output() {
+void output(SEModel& se) {
 	string outstr(outfile);
 	outstr.append(".adj.ace");
 	struct flock fl;
@@ -171,7 +171,7 @@ void output() {
 	fd = open("arch.lock", O_WRONLY | O_CREAT, 0644);
 	while(fcntl(fd, F_SETLK, &fl) == -1) {
 		cerr << "Waiting for lock release on archive file..." << endl;
-		sleep(30);
+		sleep(10);
 	}
 	ofstream out(outstr.c_str(), ios::trunc);
 	print_ace(out, se);
@@ -179,12 +179,6 @@ void output() {
 	fl.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &fl);
 	close(fd);
-}
-
-void final_output(int param) {
-	read_motifs();
-	output();
-	exit(0);
 }
 
 void print_full_ace(ostream& out, SEModel& se) {

@@ -15,13 +15,11 @@ int ngenes;                // number of genes
 int npoints;               // number of data points
 int ncol;                  // number of columns
 float** expr;              // the expression data
-SEModel se;                // the sequence-expression model
 
 string outfile;
 
-int read_motifs();
-void output();
-void final_output(int param);
+int read_motifs(SEModel& se);
+void output(SEModel& se);
 void print_clusters(ostream& out, const vector<string>& nameset);
 void print_full_ace(ostream& out, SEModel& se);
 void print_ace(ostream& out, SEModel& se);
