@@ -13,9 +13,8 @@ class Seqset{
 	float* gc;
 
  public:
-	Seqset();
+	Seqset(const vector<string>& v);
   ~Seqset();
-	void init(const vector<string>& v);
   int num_seqs() const {return ss_num_seqs;}
   int len_seq(const int i) const {return ss_len_seq[i];}
   char** seq_ptr() const {return ss_seq;}

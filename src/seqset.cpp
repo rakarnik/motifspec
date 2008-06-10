@@ -3,10 +3,7 @@
 
 #include "seqset.h"
 
-Seqset::Seqset() {
-}
-
-void Seqset::init(const vector<string>& v) {
+Seqset::Seqset(const vector<string>& v) {
 	int i,j;
   map<char,int> code;
   code['n'] = code['N'] = 0;
