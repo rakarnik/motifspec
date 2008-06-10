@@ -1,22 +1,11 @@
 #include "semodel.h"
 
-SEModel::~SEModel(){
-  delete [] possible;
-	delete [] freq_matrix;
-  delete [] score_matrix;
-	delete [] seqscores;
-	delete [] seqranks;
-	delete [] mean;
-	delete [] stdev;
-  for(int i=0;i<seqset.num_seqs();i++){
-		delete [] pcorr[i];
-  }
-	delete [] pcorr;
-	delete [] expscores;
-	delete [] expranks;
-}
-
-void SEModel::init(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc, const int bf, const double map_cut, const double sim_cut) {
+SEModel::SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc, const int bf, const double map_cut, const double sim_cut):
+seqset(seqs),
+sites(seqset, nc, 5 * nc),
+select_sites(seqset, nc),
+print_sites(seqset, nc, 5 * nc),
+archive(sites, seqset, map_cut, sim_cut) {
 	npossible = 0;
 	ngenes = names.size();
 	possible = new bool[ngenes];
@@ -24,11 +13,6 @@ void SEModel::init(const vector<string>& seqs, float** exprtab, const int numexp
 	nameset = names;
 	verbose = false;
 	
-	seqset.init(seqs);
-	sites.init(seqset, nc, 5 * nc);
-	select_sites.init(seqset, nc);
-	print_sites.init(seqset, nc, 5 * nc);
-	archive.init(sites, seqset, bf, map_cut, sim_cut);
 	set_default_params();
   max_motifs = bf;
   map_cutoff = map_cut;
@@ -51,6 +35,22 @@ void SEModel::init(const vector<string>& seqs, float** exprtab, const int numexp
 	}
 	expscores = new double[ngenes];
 	expranks = new struct hitscore[ngenes];
+}
+
+SEModel::~SEModel(){
+  delete [] possible;
+	delete [] freq_matrix;
+  delete [] score_matrix;
+	delete [] seqscores;
+	delete [] seqranks;
+	delete [] mean;
+	delete [] stdev;
+  for(int i=0;i<seqset.num_seqs();i++){
+		delete [] pcorr[i];
+  }
+	delete [] pcorr;
+	delete [] expscores;
+	delete [] expranks;
 }
 
 void SEModel::set_default_params(){
@@ -583,10 +583,6 @@ double SEModel::spec_score() {
 	double spec = prob_overlap(s1, s2, x, ngenes);
 	if(spec > 0.99) return 0;
 	else return -log10(spec);
-}
-
-double SEModel::get_best_motif(int i){
-  return archive.return_best(sites,i);
 }
 
 void SEModel::optimize_columns(){
@@ -1126,18 +1122,11 @@ void SEModel::output(ostream &fout){
 }
 
 void SEModel::full_output(ostream &fout){
-  for(int j = 0; j < max_motifs; j++){
-    double sc = archive.return_best(print_sites, j);
-    orient_print_motif();
-    if(sc > 0.0){
-      fout << "Motif " << j + 1 << '\n';
-      output(fout);
-      fout << "MAP Score: " << sc << endl;
-			fout << "Specificity Score: " << print_sites.get_spec() << endl;
-			fout << "Sequence cutoff: " << print_sites.get_seq_cutoff() << endl;
-			fout << "Expression cutoff: " << print_sites.get_expr_cutoff() << endl;
-			fout << "Iteration found: " << print_sites.get_iter() << endl;
-			fout << "Deja vu: " << print_sites.get_dejavu() << endl << endl;
+  Sites* s;
+	for(int j = 0; j < archive.nmots(); j++){
+    s = archive.return_best(j);
+    if(s->get_map() > 0.0){
+			s->write(seqset, fout);
 		}
     else break;
   }
