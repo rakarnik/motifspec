@@ -1,6 +1,3 @@
-/*
- *  im.cpp
- */
 #include <iostream>
 #include <dirent.h>
 #include <signal.h>
