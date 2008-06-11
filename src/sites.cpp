@@ -157,9 +157,6 @@ void Sites::clear_sites(){
 	}
 	mapsc = 0.0;
 	spec = 0.0;
-	iter = 0;
-	seq_cutoff = 0.0;
-	expr_cutoff = 0.0;
 }
 
 void Sites::remove_all_sites(){
@@ -197,8 +194,7 @@ void Sites::write(const Seqset& seqset, ostream& motout) const {
     motout << '\t' << c << '\t' << p << '\t' << s << '\n';
   }
 	int col = 0, prev_col = 0;
-	cerr << "Number of columns:" << sites_num_cols << endl;
-	for(int i = 0; i < sites_num_cols - 1; i++){
+	for(int i = 0; i < sites_num_cols; i++){
     col = next_column(col);
 		assert(col < sites_width);
 		motout << '*';
