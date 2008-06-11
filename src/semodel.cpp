@@ -901,7 +901,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	sites.set_iter(iter);
 	sites.set_expr_cutoff(0.65);
 	sites.set_map(0);
-	double cmp, sc_best_i, sp;
+	double sc_best_i, sp;
   int i_worse = 0;
 	sc_best_i = map_cutoff;
 	i_worse = 0;
@@ -970,7 +970,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			sp = spec_score();
 			sites.set_spec(sp);
 			cerr << "\t\t\t\tSpecificity score was " << sp << endl;
-			if(archive.consider_motif(sites)) {
+			if(archive.check_motif(sites)) {
 				char tmpfilename[30], motfilename[30];
 				sprintf(tmpfilename, "%d.%d.mot.tmp", worker, iter);
 				sprintf(motfilename, "%d.%d.mot", worker, iter);
