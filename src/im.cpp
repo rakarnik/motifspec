@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 			bool found = false;
 			found = read_motifs(se);
 			if(found) output(se);
-			sleep(120);
+			sleep(60);
 		}
 	} else {
 		cerr << "Running as worker " << worker << "..." << endl;
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 		for(int j = 1; j <= nruns; j++) {
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 			se.search_for_motif(worker, j);
-			if(j % 25 == 0) {
+			if(j % 25 == 0 && access(archinstr.c_str(), F_OK) == 0) {
 				cerr << "\t\tRefreshing archive from " << archinstr << "... ";
 				se.get_archive()->clear();
 				struct flock fl;
