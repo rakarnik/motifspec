@@ -1082,45 +1082,6 @@ void SEModel::print_status(ostream& out, const int i, const int phase) {
 	}
 }
 
-void SEModel::output(ostream &fout){
-  map<char,char> nt;
-  nt[0] = nt[5] = 'N';
-  nt[1] = 'A';
-	nt[2] = 'C';
-	nt[3] = 'G';
-	nt[4] = 'T';
-  char** ss_seq = seqset.seq_ptr();
-  int x = separams.flanking;
-  for(int i = 0; i < print_sites.number(); i++){
-    int c = print_sites.chrom(i);
-    int p = print_sites.posit(i);
-    bool s = print_sites.strand(i);
-    for(int j = -x; j < print_sites.width() + x; j++){
-      if(s) {
-				if(p + j >= 0 && p + j < seqset.len_seq(c))
-					fout << nt[ss_seq[c][p + j]];
-				else fout << ' ';
-      }
-      else {
-				if(p + print_sites.width() - 1 - j >= 0 && p + print_sites.width()-1-j < seqset.len_seq(c))
-					fout << nt[print_sites.depth() - 1 - ss_seq[c][p + print_sites.width() - 1 - j]];
-				else fout << ' ';
-      }
-    }
-    fout << '\t' << c << '\t' << p << '\t' << s << '\n';
-  }
-  for(int i = 0; i < x; i++) fout << ' ';
-  int col = 0, prev_col = 0;
-	for(int i = 0; i < print_sites.ncols() - 1; i++) {
-    col = print_sites.next_column(col);
-		assert(col < print_sites.width());
-    fout << '*';
-    for(int k = 0; k < (col - prev_col - 1); k++) fout << ' ';
-    prev_col = col;
-  }
-  fout << "\n";
-}
-
 void SEModel::full_output(ostream &fout){
   Sites* s;
 	for(int j = 0; j < archive.nmots(); j++){

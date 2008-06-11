@@ -87,9 +87,8 @@ class SEModel {
 	static const int TOO_FEW_SITES = 4;
 		
 	/* General */
-	SEModel() {};
+	SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc = 10, const int bf = 1000, const double map_cut = -20.0, const double sim_cut = 0.8);
   ~SEModel();
-	void init(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc = 10, const int bf = 1000, const double map_cut = -20.0, const double sim_cut = 0.8);
 	void modify_params(int argc, char *argv[]);
   double get_best_motif(int i=0);
   void output_params(ostream &fout);
@@ -152,7 +151,6 @@ class SEModel {
 	bool consider_motif(const char* filename);
 	
 	/* Output */
-	void output(ostream &fout);                             // Output a single motif stored in print_sites
 	void full_output(ostream &fout);                        // Output all motifs stored in archive_sites
   void full_output(char *name);
 	void print_status(ostream& out, const int i, const int phase);
