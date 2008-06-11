@@ -1087,6 +1087,7 @@ void SEModel::full_output(ostream &fout){
 	for(int j = 0; j < archive.nmots(); j++){
     s = archive.return_best(j);
     if(s->get_map() > 0.0){
+			fout << "Motif " << j + 1 << endl;
 			s->write(seqset, fout);
 		}
     else break;
