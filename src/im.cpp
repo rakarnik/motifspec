@@ -92,40 +92,39 @@ int main(int argc, char *argv[]) {
 		for(int j = 1; j <= nruns; j++) {
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 			se.search_for_motif(worker, j);
-			if(j % 25 == 0 && access(archinstr.c_str(), F_OK) == 0) {
+			struct flock fl;
+			int fd;
+			fl.l_type   = F_RDLCK;
+			fl.l_whence = SEEK_SET;
+			fl.l_start  = 0;
+			fl.l_len    = 0;
+			fl.l_pid    = getpid();
+			fd = open("arch.lock", O_RDONLY);
+			if(fd == -1) {
+				cerr << "unable to read lock file, error was " << strerror(errno) << endl;
+				continue;
+			}
+			while(fcntl(fd, F_SETLK, &fl) == -1) {
+				cerr << "\t\tWaiting for lock release on archive file... " << endl;
+				sleep(10);
+			}
+			ifstream archin(archinstr.c_str());
+			if(archin) {
 				cerr << "\t\tRefreshing archive from " << archinstr << "... ";
-				se.get_archive()->clear();
-				struct flock fl;
-				int fd;
-				fl.l_type   = F_RDLCK;
-				fl.l_whence = SEEK_SET;
-				fl.l_start  = 0;
-				fl.l_len    = 0;
-				fl.l_pid    = getpid();
-				fd = open("arch.lock", O_RDONLY);
-				if(fd == -1) {
-					cerr << "unable to read lock file, error was " << strerror(errno) << endl;
-					continue;
-				}
-				while(fcntl(fd, F_SETLK, &fl) == -1) {
-					cerr << "\t\tWaiting for lock release on archive file... " << endl;
-					sleep(10);
-				}
-				ifstream archin(archinstr.c_str());
 				se.get_archive()->clear();
 				se.get_archive()->read(archin);
 				archin.close();
-				fl.l_type = F_UNLCK;
-				fcntl(fd, F_SETLK, &fl);
-				close(fd);
-				cerr << "done." << endl;
-				cerr << "\t\tArchive now has " << se.get_archive()->nmots() << " motifs" << endl;
-				cerr << "\t\tCreating output file of current status... ";
-				ofstream workout(workoutstr.c_str());
-				print_full_ace(workout, se);
-				workout.close();
 				cerr << "done." << endl;
 			}
+			fl.l_type = F_UNLCK;
+			fcntl(fd, F_SETLK, &fl);
+			close(fd);
+			cerr << "\t\tArchive now has " << se.get_archive()->nmots() << " motifs" << endl;
+			cerr << "\t\tCreating output file of current status... ";
+			ofstream workout(workoutstr.c_str());
+			print_full_ace(workout, se);
+			workout.close();
+			cerr << "done." << endl;
 		}
 	}
 	
@@ -147,9 +146,11 @@ int read_motifs(SEModel& se) {
 		else
 			extension = "";
 		if(extension.compare(".mot") == 0) {
-			// check motif against archive, then delete
+			// check motif against archive, then move to "mots" directory
+			string newname("mots/");
+			newname.append(filename.c_str());
 			if(se.consider_motif(filename.c_str())) nmot++;
-			remove(filename.c_str());
+			rename(filename.c_str(), newname.c_str());
 			nfound++;
 		}
 	}
