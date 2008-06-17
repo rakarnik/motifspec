@@ -213,19 +213,21 @@ void Sites::write(const Seqset& seqset, ostream& motout) const {
 
 void Sites::read(istream& motin) {
 	char* match;
-	vector<int> chr;
-	vector<int> pos;
-	vector<bool> strand;
 	char line[200];
+	int* c = new int[sites_max_num_sites];
+	int* p = new int[sites_max_num_sites];
+	bool* s = new bool[sites_max_num_sites];
+	int cnt = 0;
 	
 	// Read sites
 	// (don't add yet, as they will get screwed up by the column changes)
 	while(motin.getline(line, 200)) {
 		if(line[0] == '*') break;
 		match = strtok(line, "\t");
-		chr.push_back(atoi(strtok(NULL, "\t")));
-		pos.push_back(atoi(strtok(NULL, "\t")));
-		strand.push_back(atoi(strtok(NULL, "\0")));
+		c[cnt] = atoi(strtok(NULL, "\t"));
+		p[cnt] = atoi(strtok(NULL, "\t"));
+		s[cnt] = atoi(strtok(NULL, "\0"));
+		cnt++;
 	}
 	
 	int motwidth = strlen(line);
@@ -237,9 +239,9 @@ void Sites::read(istream& motin) {
 	assert(sites_width == motwidth);
 	
 	// Add sites
-	for(int i = 0; i < chr.size(); i++) {
-		assert(pos[i] >= 0);
-		add_site(chr[i], pos[i], strand[i]);
+	for(int i = 0; i < cnt; i++) {
+		assert(p[i] >= 0);
+		add_site(c[i], p[i], s[i]);
 	}
 	
 	char* heading;
@@ -272,6 +274,10 @@ void Sites::read(istream& motin) {
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
 	set_dejavu(atoi(strtok(NULL, "\0")));
+
+	delete [] c;
+	delete [] p;
+	delete [] s;
 }
 
 void Sites::destroy(){
