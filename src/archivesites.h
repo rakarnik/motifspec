@@ -10,11 +10,12 @@ class ArchiveSites{
   double arch_map_cutoff;
   double arch_sim_cutoff;
   int arch_min_visits;
-	vector<CompareACESites> arch_sites;
+	vector<CompareACESites*> arch_sites;
   const Seqset& arch_seqset;
 
  public:
   ArchiveSites(Sites& s, Seqset& seq, double map_cut, double sim_cut);
+	~ArchiveSites();
 	int nmots() const { return arch_sites.size(); }
   bool check_motif(const Sites& s);               // Returns true if better motif not seen, false otherwise
   bool consider_motif(const Sites& s, bool fnl=true);   // Returns true if motif was added, false otherwise
