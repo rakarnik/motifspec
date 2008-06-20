@@ -220,7 +220,7 @@ void Sites::calc_freq_matrix(const Seqset& b, int *fm){
     int c = chrom(i);
     int p = posit(i);
     bool s = strand(i);
-    int col, pos, matpos;
+    int pos, matpos;
     if(s) {                              // forward strand
       matpos = 0;
 			pos = 0;
@@ -237,9 +237,9 @@ void Sites::calc_freq_matrix(const Seqset& b, int *fm){
       pos = 0;
 			vector<int>::iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
-				pos = p + width() - 1 - col;
+				pos = p + width() - 1 - *col_iter;
 				assert(p >= 0 && p < b.len_seq(c));
-				int seq = ss_seq[c][p + width() - 1 - col];
+				int seq = ss_seq[c][p + width() - 1 - *col_iter];
 				fm[matpos - seq]++;
 				matpos += sites_depth;
       }
