@@ -435,7 +435,7 @@ bool SEModel::column_sample(const int c, const bool sample){
 	int col = 0;
   for(int i = 0; i < cs_span; i++){
     wtx[i] = 0.0;
-    if((i - x) == sites.column(col) && (i - x) != col_worst) {
+    if(col < sites.ncols() && (i - x) == sites.column(col) && (i - x) != col_worst) {
 			col++;
 			continue;
 		}
