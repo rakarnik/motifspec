@@ -12,7 +12,7 @@
 
 CC = /usr/bin/g++
 CC_OPTIONS = -Os
-CC_DEBUG_OPTIONS = -O0 -g 
+CC_DEBUG_OPTIONS = -O0 -g -pg 
 LNK_OPTIONS =
 
 
