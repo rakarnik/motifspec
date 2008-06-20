@@ -73,7 +73,7 @@ public:
 	void remove_all_sites();
   void calc_freq_matrix(const Seqset& b, int *fm);
   void freq_matrix_extended(const Seqset& b, double *fm) const;
-  int column(const int i) const {return columns[i];}
+  int column(const int i) const {return columns.at(i);}
   bool column_freq(const int col, const Seqset& s, int *ret);
   int remove_col(const int c);
 	void add_col(const int c);
