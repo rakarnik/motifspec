@@ -1,7 +1,7 @@
 #include "im.h"
 
 int main(int argc, char *argv[]) {
-	set_new_handler(out_of_memory);
+	set_new_handler(alloc_error);
 
 	string seqfile;                       // file with sequences
 	string exprfile;                      // file with expression data

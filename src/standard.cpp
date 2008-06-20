@@ -638,8 +638,8 @@ double ace_mapscore(const char* file, int mot_num){
   return ret;
 }
 
-void out_of_memory() {
-	cerr << "new failed! Must be out of memory." << endl;
+void alloc_error() {
+	cerr << "Memory allocation failed!" << endl;
 	abort();
 }
 
