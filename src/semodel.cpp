@@ -213,7 +213,7 @@ void SEModel::single_pass(const double minprob, bool greedy) {
   char **ss_seq;
   ss_seq = seqset.seq_ptr();
   double Lw, Lc, Pw, Pc, F;
-	int matpos, col;
+	int matpos;
   int considered = 0;
   int gadd = -1,jadd = -1;
   for(int g = 0; g < seqset.num_seqs(); g++){
@@ -221,24 +221,20 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 		for(int j = 0; j <= seqset.len_seq(g) - sites.width(); j++){
 			Lw = 1.0;
 			matpos = 0;
-			col = 0;
       for(int k = 0; k < sites.ncols(); k++){
-				assert(j + col >= 0);
-				assert(j + col <= seqset.len_seq(g));
-				int seq = ss_seq[g][j + col];
+				assert(j + sites.column(k) >= 0);
+				assert(j + sites.column(k) <= seqset.len_seq(g));
+				int seq = ss_seq[g][j + sites.column(k)];
 				Lw *= score_matrix[matpos + seq];
-				col = sites.next_column(col);
 				matpos += sites.depth();
       }
       Lc = 1.0;
 			matpos = sites.depth() - 1;
-			col = 0;
       for(int k = 0; k < sites.ncols(); k++){
-				assert(j + sites.width() - 1 - col >= 0);
-				assert(j + sites.width() - 1 - col <= seqset.len_seq(g));
-				int seq = ss_seq[g][j + sites.width() - 1 - col];
+				assert(j + sites.width() - 1 - sites.column(k) >= 0);
+				assert(j + sites.width() - 1 - sites.column(k) <= seqset.len_seq(g));
+				int seq = ss_seq[g][j + sites.width() - 1 - sites.column(k)];
 				Lc *= score_matrix[matpos - seq];
-				col = sites.next_column(col);
 				matpos += sites.depth();
       }
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
@@ -300,7 +296,7 @@ void SEModel::single_pass_select(const double minprob){
   char **ss_seq;
   ss_seq=seqset.seq_ptr();
   double Lw, Lc, Pw, Pc, F;
-  int matpos,col;
+  int matpos;
   int iadd=-1,jadd=-1;
   for(n=0;n<select_sites.number();n++){
     i=select_sites.chrom(n);
@@ -309,18 +305,16 @@ void SEModel::single_pass_select(const double minprob){
     if(i==iadd&&j<jadd+sites.width()) continue;
     if(j<0||j>seqset.len_seq(i)-sites.width()) continue;
     //could be screwed up with column sampling
-    Lw=1.0;matpos=0;col=0;
+    Lw=1.0;matpos=0;
     for(k=0;k<sites.ncols();k++){
-      int seq=ss_seq[i][j+col];
+      int seq=ss_seq[i][j+sites.column(k)];
       Lw*=score_matrix[matpos+seq];
-      col=sites.next_column(col);
       matpos+=sites.depth();
     }
-    Lc=1.0;matpos=sites.depth()-1;col=0;
+    Lc=1.0;matpos=sites.depth()-1;
     for(k=0;k<sites.ncols();k++){
-      int seq=ss_seq[i][j+sites.width()-1-col];
+      int seq=ss_seq[i][j+sites.width()-1-sites.column(k)];
       Lc*=score_matrix[matpos-seq];
-      col=sites.next_column(col);
       matpos+=sites.depth();
     }
 		Pw = Lw * ap / (1.0 - ap + Lw * ap);
@@ -353,7 +347,7 @@ void SEModel::compute_seq_scores(const bool sample) {
   char **ss_seq;
   ss_seq = seqset.seq_ptr();
   double Lw, Lc, Pw, Pc, F, bestF;
-	int matpos, col;
+	int matpos;
 	vector<struct hitscore> hs(ngenes);
 	for(int g = 0; g < seqset.num_seqs(); g++) {
 		if(sample && ran_dbl.rnum() > 0.1) continue;
@@ -361,24 +355,21 @@ void SEModel::compute_seq_scores(const bool sample) {
 		for(int j = 0; j <= seqset.len_seq(g) - sites.width(); j++) {
 			Lw = 1.0;
 			matpos = 0;
-			col = 0;
-      for(int k = 0; k < sites.ncols(); k++) {
-				assert(j + col >= 0);
-				assert(j + col <= seqset.len_seq(g));
-				int seq = ss_seq[g][j + col];
+			for(int k = 0; k < sites.ncols(); k++) {
+				assert(j + sites.column(k) >= 0);
+				assert(j + sites.column(k) <= seqset.len_seq(g));
+				int seq = ss_seq[g][j + sites.column(k)];
 				Lw *= score_matrix[matpos + seq];
-				col = sites.next_column(col);
+				
 				matpos += sites.depth();
       }
       Lc = 1.0;
 			matpos = sites.depth() - 1;
-			col = 0;
       for(int k = 0; k < sites.ncols(); k++){
-				assert(j + sites.width() - 1 - col >= 0);
-				assert(j + sites.width() - 1 - col <= seqset.len_seq(g));
-				int seq = ss_seq[g][j + sites.width() - 1 - col];
+				assert(j + sites.width() - 1 - sites.column(k) >= 0);
+				assert(j + sites.width() - 1 - sites.column(k) <= seqset.len_seq(g));
+				int seq = ss_seq[g][j + sites.width() - 1 - sites.column(k)];
 				Lc *= score_matrix[matpos - seq];
-				col = sites.next_column(col);
 				matpos += sites.depth();
       }
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
@@ -412,7 +403,7 @@ void SEModel::compute_expr_scores() {
 bool SEModel::column_sample(const int c, const bool sample){
 	//sample default to true, if false then replace with best column
   //just consider throwing out the worst column, sample for replacement, no need to sample both ways, unless column is specified
-  int col = 0, col_worst;
+  int col_worst;
   int *freq = new int[sites.depth()];
   double wt, wt_worst = DBL_MAX;
 	
@@ -420,17 +411,16 @@ bool SEModel::column_sample(const int c, const bool sample){
 		col_worst = c;   // user chosen, hopefully a real column
   else {
     for(int i = 0; i < sites.ncols(); i++){
-      sites.column_freq(col, seqset, freq);
+      sites.column_freq(sites.column(i), seqset, freq);
       wt = 0.0;
       for(int j = 0; j < sites.depth(); j++) {
 				wt += gammaln(freq[j] + separams.pseudo[j]);
 				wt -= (double)freq[j] * log(separams.backfreq[j]);
       }
       if(wt < wt_worst) {
-				col_worst = col;
+				col_worst = sites.column(i);
 				wt_worst = wt;
       }
-      col = sites.next_column(col);
     }
   }
 	
@@ -441,16 +431,11 @@ bool SEModel::column_sample(const int c, const bool sample){
   double *wtx = new double[cs_span];
 	int x = max_left;
   //wtx[x + c] will refer to the weight of pos c in the usual numbering
-  col = 0;
   double best_wt = 0.0;
   for(int i = 0; i < cs_span; i++){
     wtx[i] = 0.0;
-    if((i - x) == col && (i - x) != col_worst) {
-      col = sites.next_column(col);
-			continue;
-		}
-		if((i - x) == col_worst)
-			col = sites.next_column(col);
+    if((i - x) == sites.column(i) && (i - x) != col_worst) continue;
+		if((i - x) == col_worst) i++;
 		if(sites.column_freq(i - x, seqset, freq)){
       wt = 0.0;
       for(int j = 0;j < sites.depth(); j++){
@@ -605,27 +590,23 @@ void SEModel::optimize_sites(){
   char **ss_seq;
   ss_seq = seqset.seq_ptr();
   double Lw, Lc, Pw, Pc;
-  int matpos, col;
+  int matpos;
   int h = 1;
   for(int i = 0; i < seqset.num_seqs(); i++) {
     if(! is_possible(i)) continue;
 		for(int j = 0; j < seqset.len_seq(i) - sites.width() + 1; j++) {
       Lw = 1.0;
 			matpos = 0;
-			col = 0;
-      for(int k = 0;k < sites.ncols(); k++){
-				int seq = ss_seq[i][j + col];
+      for(int k = 0; k < sites.ncols(); k++){
+				int seq = ss_seq[i][j + sites.column(k)];
 				Lw *= score_matrix[matpos + seq];
-				col = sites.next_column(col);
 				matpos += sites.depth();
       }
       Lc = 1.0;
 			matpos = sites.depth()-1;
-			col = 0;
       for(int k = 0; k < sites.ncols(); k++){
-				int seq = ss_seq[i][j + sites.width()-1-col];
+				int seq = ss_seq[i][j + sites.width() - 1 - sites.column(k)];
 				Lc *= score_matrix[matpos - seq];
-				col = sites.next_column(col);
 				matpos += sites.depth();
       }
       Pw = Lw * ap / (1.0 - ap + Lw * ap);
@@ -899,7 +880,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	sites.clear_sites();
 	select_sites.clear_sites();
 	sites.set_iter(iter);
-	sites.set_expr_cutoff(0.65);
+	sites.set_expr_cutoff(0.85);
 	sites.set_map(0);
 	double sc_best_i, sp;
   int i_worse = 0;

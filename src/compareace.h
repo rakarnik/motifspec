@@ -15,13 +15,12 @@ class CompareACESites{
   int comp_l1,comp_r1,comp_l2,comp_r2;
 
 public:
-	CompareACESites(){comp_ready=false;}
+	CompareACESites(const Sites &s, const Seqset &t);
+	CompareACESites(const CompareACESites& s);
   ~CompareACESites();
-  CompareACESites(const CompareACESites& s);
   CompareACESites& operator= (const CompareACESites& s);
-  void init(const Sites &s, const Seqset &t);
   double compare(const CompareACESites &c);
-  Sites* sites() {return &comp_sites;}
+  Sites* sites() { return &comp_sites; }
   void kill_sites();//useful for some copy operations when comp_sites not needed
   bool ready() const {return comp_ready;}
 };

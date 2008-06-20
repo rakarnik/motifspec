@@ -10,21 +10,13 @@ arch_seqset(seq) {
   arch_min_visits = 3;
 }
 
-ArchiveSites::~ArchiveSites() {
-	vector<CompareACESites*>::iterator iter;
-	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
-		delete (*iter);
-	}
-}
-
 bool ArchiveSites::check_motif(const Sites& s) {
   double cmp;
-	CompareACESites c;
-  c.init(s, arch_seqset);
+	CompareACESites c(s, arch_seqset);
   for(int i = 0; i < arch_sites.size(); i++){
-    if(s.get_map() <= arch_sites[i]->sites()->get_map()){
-      cmp = c.compare(*(arch_sites[i]));
-			if(cmp > arch_sim_cutoff && arch_sites[i]->sites()->get_dejavu() >= arch_min_visits) {
+    if(s.get_map() <= arch_sites[i].sites()->get_map()){
+      cmp = c.compare(arch_sites[i]);
+			if(cmp > arch_sim_cutoff && arch_sites[i].sites()->get_dejavu() >= arch_min_visits) {
 				return false;
       }
     }
@@ -33,21 +25,19 @@ bool ArchiveSites::check_motif(const Sites& s) {
 }
 
 bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
-  bool ret = false;
 	//increment dejavu only for final motif
   //fnl=false assumes that no better motif is similar, so always add
   if(s.get_map() <= arch_map_cutoff) return false;
-  CompareACESites* c = new CompareACESites;
-  c->init(s, arch_seqset);
+  CompareACESites c(s, arch_seqset);
   double cmp;
 
 	// Check if similar to better motif.
 	// If so, increment dejavu for better motif and return false
 	for(int i = 0; i < arch_sites.size(); i++) {
-		if(s.get_map() <= arch_sites[i]->sites()->get_map()) {
-			cmp = c->compare(*(arch_sites[i]));
+		if(s.get_map() <= arch_sites[i].sites()->get_map()) {
+			cmp = c.compare(arch_sites[i]);
 			if(cmp > arch_sim_cutoff) {
-				arch_sites[i]->sites()->inc_dejavu();
+				arch_sites[i].sites()->inc_dejavu();
 				return false;
 			}
 		}
@@ -55,13 +45,12 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	
 	// There are no better motifs similar to this one, so we add
 	// Step 1: Delete similar motifs with lower scores
-	vector<CompareACESites*>::iterator iter;
+	vector<CompareACESites>::iterator iter;
 	iter = arch_sites.begin();
 	while(iter != arch_sites.end()) {
-		if(s.get_map() > (*iter)->sites()->get_map()) {
-			cmp = c->compare(**iter);
+		if(s.get_map() > iter->sites()->get_map()) {
+			cmp = c.compare(*iter);
 			if(cmp > arch_sim_cutoff) {
-				delete (*iter);
 				iter = arch_sites.erase(iter);
 			} else {
 				++iter;
@@ -72,33 +61,27 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	}
 	// Step 2: Add the new motif at the correct position by score
 	for(iter = arch_sites.begin(); iter != arch_sites.end(); iter++) {
-		if((*iter)->sites()->get_map() < s.get_map()) break;
+		if(iter->sites()->get_map() < s.get_map()) break;
 	}
 	arch_sites.insert(iter, c);
 	return true;
 }
 
 Sites* ArchiveSites::return_best(const int i) {
-  return arch_sites[i]->sites();
+  return arch_sites[i].sites();
 }
 
 void ArchiveSites::clear() {
-	vector<CompareACESites*>::iterator iter;
-	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
-		delete (*iter);
-	}
 	arch_sites.clear();
 }
 
 void ArchiveSites::read(istream& archin) {
-	int arch_num = 0;
 	char line[200];
 	while(archin.getline(line, 200)) {
 		if(strstr(line, "Motif")) {
-			Sites* s = new Sites(arch_seqset);
-			s->read(archin);
-			CompareACESites* c = new CompareACESites;
-			c->init(*s, arch_seqset);
+			Sites s(arch_seqset, 12, 5 * 12);
+			s.read(archin);
+			CompareACESites c(s, arch_seqset);
 			arch_sites.push_back(c);
 		}
 	}
@@ -106,9 +89,9 @@ void ArchiveSites::read(istream& archin) {
 
 void ArchiveSites::write(ostream& archout) {
 	for(int i = 0; i < arch_sites.size(); i++) {
-		if(arch_sites[i]->sites()->get_map() > arch_map_cutoff) {
+		if(arch_sites[i].sites()->get_map() > arch_map_cutoff) {
 			archout << "Motif " << i + 1 << endl;
-			arch_sites[i]->sites()->write(arch_seqset, archout);
+			arch_sites[i].sites()->write(arch_seqset, archout);
 		}
 	}
 }
