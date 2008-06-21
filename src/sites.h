@@ -85,6 +85,7 @@ public:
 	void write(const Seqset& seqset, ostream& motout) const;
 	void read(istream& motin);
   void destroy();
+	void print_columns(ostream& out);
 };
 
 #endif
