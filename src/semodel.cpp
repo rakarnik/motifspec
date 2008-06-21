@@ -432,14 +432,9 @@ bool SEModel::column_sample(const int c, const bool sample){
 	int x = max_left;
   //wtx[x + c] will refer to the weight of pos c in the usual numbering
   double best_wt = 0.0;
-	int col = 0;
-  for(int i = 0; i < cs_span; i++){
+	for(int i = 0; i < cs_span; i++) {
     wtx[i] = 0.0;
-    if(col < sites.ncols() && (i - x) == sites.column(col) && (i - x) != col_worst) {
-			col++;
-			continue;
-		}
-		if((i - x) == col_worst) col++;
+		if(i - x != col_worst && sites.has_col(i-x)) continue;
 		if(sites.column_freq(i - x, seqset, freq)){
       wt = 0.0;
       for(int j = 0;j < sites.depth(); j++){
