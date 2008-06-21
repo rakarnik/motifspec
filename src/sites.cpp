@@ -329,8 +329,7 @@ void Sites::add_col(const int c) {
 }
 
 bool Sites::has_col(const int c) {
-	
-	return (find(columns.begin(), columns.end(), c) == columns.end());
+	return (find(columns.begin(), columns.end(), c) != columns.end());
 }
 
 void Sites::flip_sites(){
