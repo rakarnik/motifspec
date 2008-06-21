@@ -77,6 +77,7 @@ public:
   bool column_freq(const int col, const Seqset& s, int *ret);
   int remove_col(const int c);
 	void add_col(const int c);
+	bool has_col(const int c);
   int positions_available() const;
 	int positions_available(const bool* possible) const;
   void shift_sites(const int l, const int r);
