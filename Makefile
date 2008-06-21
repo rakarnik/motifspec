@@ -13,7 +13,8 @@
 CC = /usr/bin/g++
 CC_OPTIONS = -Os
 CC_DEBUG_OPTIONS = -O0 -g -pg 
-LNK_OPTIONS = -pg
+LNK_OPTIONS =
+LNK_DEBUG_OPTIONS = -pg
 
 
 #
@@ -59,7 +60,7 @@ im-debug : \
 		debug/seqset.o\
 		debug/sites.o\
 		debug/standard.o
-	$(CC) $(LNK_OPTIONS) \
+	$(CC) $(LNK_DEBUG_OPTIONS) \
 		debug/archivesites.o\
 		debug/compareace.o\
 		debug/im.o\
