@@ -5,9 +5,14 @@ seqset(seqs),
 sites(seqset, nc, 5 * nc),
 select_sites(seqset, nc),
 print_sites(seqset, nc, 5 * nc),
-archive(sites, seqset, map_cut, sim_cut) {
+archive(sites, seqset, map_cut, sim_cut),
+ngenes(names.size()),
+seqscores(ngenes),
+seqranks(ngenes),
+expscores(ngenes),
+expranks(ngenes)
+{
 	npossible = 0;
-	ngenes = names.size();
 	possible = new bool[ngenes];
 	clear_all_possible();
 	nameset = names;
@@ -19,8 +24,6 @@ archive(sites, seqset, map_cut, sim_cut) {
   sim_cutoff = sim_cut;
   freq_matrix = new int[sites.depth() * sites.ncols()];
   score_matrix = new double[sites.depth() * sites.ncols()];
-	seqscores = new double[ngenes];
-	seqranks = new struct hitscore[ngenes];
 	
 	expr = exprtab;
 	npoints = numexpr;
@@ -33,24 +36,18 @@ archive(sites, seqset, map_cut, sim_cut) {
 			pcorr[i][j] = -2;
 		}
 	}
-	expscores = new double[ngenes];
-	expranks = new struct hitscore[ngenes];
 }
 
 SEModel::~SEModel(){
   delete [] possible;
 	delete [] freq_matrix;
   delete [] score_matrix;
-	delete [] seqscores;
-	delete [] seqranks;
 	delete [] mean;
 	delete [] stdev;
   for(int i=0;i<seqset.num_seqs();i++){
 		delete [] pcorr[i];
   }
 	delete [] pcorr;
-	delete [] expscores;
-	delete [] expranks;
 }
 
 void SEModel::set_default_params(){
@@ -338,7 +335,7 @@ void SEModel::single_pass_select(const double minprob){
   }
 }
 
-void SEModel::compute_seq_scores(const bool sample) {
+void SEModel::compute_seq_scores() {
 	double ap = (separams.weight * separams.expect * 10
 							+ (1 - separams.weight) * sites.number())
 							/(2.0 * sites.positions_available(possible));
@@ -348,9 +345,8 @@ void SEModel::compute_seq_scores(const bool sample) {
   ss_seq = seqset.seq_ptr();
   double Lw, Lc, Pw, Pc, F, bestF;
 	int matpos;
-	vector<struct hitscore> hs(ngenes);
+	seqranks.clear();
 	for(int g = 0; g < seqset.num_seqs(); g++) {
-		if(sample && ran_dbl.rnum() > 0.1) continue;
 		bestF = 0.0;
 		for(int j = 0; j <= seqset.len_seq(g) - sites.width(); j++) {
 			Lw = 1.0;
@@ -360,7 +356,6 @@ void SEModel::compute_seq_scores(const bool sample) {
 				assert(j + sites.column(k) <= seqset.len_seq(g));
 				int seq = ss_seq[g][j + sites.column(k)];
 				Lw *= score_matrix[matpos + seq];
-				
 				matpos += sites.depth();
       }
       Lc = 1.0;
@@ -378,143 +373,89 @@ void SEModel::compute_seq_scores(const bool sample) {
 			if(F > bestF) bestF = F;
 		}
 		seqscores[g] = bestF;
-		hs[g].seq = g;
-		hs[g].score = bestF;
+		struct idscore ids;
+		ids.id = g;
+		ids.score = bestF;
+		seqranks.push_back(ids);
   }
 	
-	sort(hs.begin(), hs.end(), hsc);
-	for(int i = 0; i < ngenes; i++)
-		seqranks[i] = hs[i];
+	sort(seqranks.begin(), seqranks.end(), isc);
 }
 
 void SEModel::compute_expr_scores() {
 	calc_mean();
-	vector<struct hitscore> hs(ngenes);
+	expranks.clear();
 	for(int g = 0; g < ngenes; g++) {
 		expscores[g] = get_corr_with_mean(expr[g]);
-		hs[g].seq = g;
-		hs[g].score = expscores[g];
+		struct idscore ids;
+		ids.id = g;
+		ids.score = expscores[g];
+		expranks.push_back(ids);
 	}
-	sort(hs.begin(), hs.end(), hsc);
-	for(int i = 0; i < ngenes; i++)
-		expranks[i] = hs[i];
+	sort(expranks.begin(), expranks.end(), isc);
 }  
 
-bool SEModel::column_sample(const int c, const bool sample){
-	//sample default to true, if false then replace with best column
-  //just consider throwing out the worst column, sample for replacement, no need to sample both ways, unless column is specified
-  int col_worst;
+bool SEModel::column_sample(){
   int *freq = new int[sites.depth()];
-  double wt, wt_worst = DBL_MAX;
 	
-  if(c!=1000)
-		col_worst = c;   // user chosen, hopefully a real column
-  else {
-    for(int i = 0; i < sites.ncols(); i++){
-      sites.column_freq(sites.column(i), seqset, freq);
-      wt = 0.0;
-      for(int j = 0; j < sites.depth(); j++) {
-				wt += gammaln(freq[j] + separams.pseudo[j]);
-				wt -= (double)freq[j] * log(separams.backfreq[j]);
-      }
-      if(wt < wt_worst) {
-				col_worst = sites.column(i);
-				wt_worst = wt;
-      }
-    }
-  }
-	
+	// Compute scores for current and surrounding columns
   int max_left, max_right;
   max_left = max_right = (sites.max_width() - sites.width())/2;
   sites.columns_open(max_left, max_right);
 	int cs_span = max_left + max_right + sites.width();
-  double *wtx = new double[cs_span];
+  vector<struct idscore> wtx(cs_span);
 	int x = max_left;
   //wtx[x + c] will refer to the weight of pos c in the usual numbering
-  double best_wt = 0.0;
+	double wt, best_wt;
 	for(int i = 0; i < cs_span; i++) {
-    wtx[i] = 0.0;
-		if(i - x != col_worst && sites.has_col(i-x)) continue;
 		if(sites.column_freq(i - x, seqset, freq)){
       wt = 0.0;
       for(int j = 0;j < sites.depth(); j++){
 				wt += gammaln(freq[j] + separams.pseudo[j]);
 				wt -= (double)freq[j] * log(separams.backfreq[j]);
       }
-      wtx[i] = wt;
-      if(wt > best_wt) best_wt = wt;
+			wtx[i].id = i;
+			wtx[i].score = wt;
+			if(wt > best_wt) best_wt = wt;
     }
   }
 	
+	// Penalize outermost columns for length
   double scale = 0.0;
   if(best_wt > 100.0) scale = best_wt - 100.0; //keep exp from overflowing
-	double tot2 = 0.0;
 	for(int i = 0; i < cs_span; i++){
-		if(wtx[i] == 0.0) continue;
-		wtx[i] -= scale;
-		wtx[i] = exp(wtx[i]);
+		wtx[i].score -= scale;
+		wtx[i].score = exp(wtx[i].score);
 		int newwidth = sites.width();
 		if(i < x)
 			newwidth += (x - i);
 		else if(i > (x + sites.width() - 1))
 			newwidth += (i - x - sites.width() + 1);
-		wtx[i] /= bico(newwidth - 2, sites.ncols() - 2);
-		tot2 += wtx[i];
+		wtx[i].score /= bico(newwidth - 2, sites.ncols() - 2);
 	}
 	
-	double pick;
-	int col_pick;
-	double cutoff = .01;
-	if(sample) {
-		if(1 - (wtx[x + col_worst]/tot2) < cutoff){
-			delete [] wtx;
-			delete [] freq;
-			return false;
-		}
-		pick = ran_dbl.rnum() * tot2;
-		col_pick = 373;
-		for(int i = 0; i < cs_span; i++){
-			if(wtx[i] == 0.0) continue;
-			pick -= wtx[i];
-			if(pick <= 0.0) {
-				col_pick = i - x;
-				break;
+	// Sort columns by their score in wtx
+	sort(wtx.begin(), wtx.end(), isc);
+	
+	// Keep the top <ncol> columns
+	int ncols = sites.ncols();
+	int nseen = 0;
+	int shift;
+	for(int i = 0; i < cs_span; ++i) {
+		if(nseen < ncols) {
+			if(sites.has_col(wtx[i].id - x)) {        // column is ranked in top, and is already in motif
+				nseen++;
+			} else {
+				sites.add_col(wtx[i].id - x);           // column is ranked in top, and is not in motif
+				if(wtx[i].id - x < 0)                   // if column was to the left of the current columns, adjust the remaining columns
+					for(int j = i + 1; j < cs_span; ++j)
+						wtx[j].id -= wtx[j].id - x;	
+				nseen++;
 			}
+		} else {
+			if(sites.has_col(wtx[i].id - x)) sites.remove_col(wtx[i].id - x); // column is not ranked in top, and is in motif
 		}
 	}
-	else{//select best
-		pick=-DBL_MAX;
-		for(int i = 0; i < cs_span; i++){
-			if(wtx[i] > pick){
-				col_pick = i - x;
-				pick = wtx[i];
-			}
-		}
-	}
-	if(col_pick == 373){
-		cout << tot2 << '\t'<< "373 reached.\n";
-		abort();
-	}
-	
-	if(col_pick == col_worst) {
-		delete [] wtx;
-		delete [] freq;
-		return false;
-	}
-	
-	sites.add_col(col_pick);
-	select_sites.add_col(col_pick);
-	if(col_pick > 0) {
-		sites.remove_col(col_worst);
-		select_sites.remove_col(col_worst);
-	} else {
-		sites.remove_col(col_worst - col_pick);
-		select_sites.remove_col(col_worst - col_pick);
-	}
-	
-	delete [] wtx;
-	delete [] freq;
-	return true;
 }
 
 double SEModel::map_score() {
@@ -556,7 +497,7 @@ double SEModel::map_score() {
 double SEModel::spec_score() {
 	int x, s1, s2;
 	x = s1 = s2 = 0;
-	compute_seq_scores(false);
+	compute_seq_scores();
 	compute_expr_scores();
 	for(int g = 0; g < ngenes; g++) {
 		if(seqscores[g] > sites.get_seq_cutoff()) s1++;
@@ -567,11 +508,6 @@ double SEModel::spec_score() {
 	double spec = prob_overlap(s1, s2, x, ngenes);
 	if(spec > 0.99) return 0;
 	else return -log10(spec);
-}
-
-void SEModel::optimize_columns(){
-  while(column_sample(false)){}
-  //replaces worst column with best column until these are the same
 }
 
 void SEModel::optimize_sites(){
@@ -908,7 +844,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 		return;
 	}
 	print_status(cerr, 0, oldphase);
-	compute_seq_scores(false);
+	compute_seq_scores();
 	
 	double ap = (double) separams.expect/(2.0 * sites.positions_available(possible));
 	sites.set_seq_cutoff(ap * 5.0);
@@ -917,7 +853,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 		if(oldphase < phase) {
 			print_status(cerr, i, oldphase);
 			if(size() > 5) {
-				compute_seq_scores(false);
+				compute_seq_scores();
 				compute_expr_scores();
 				set_seq_cutoffs(i);
 				set_expr_cutoffs(i);
@@ -933,7 +869,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			double sc1 = map_score();
 			sites.set_map(0.0);
 			for(int z = 0; sites.get_map() < sc1 && z < 5; z++){
-				optimize_columns();
+				column_sample();
 				single_pass(sites.get_seq_cutoff(), true);
 				sites.set_map(map_score());
 				print_status(cerr, i, phase);
@@ -982,13 +918,8 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			continue;
 		}
 		if(i<=3) continue;
-		if(phase < 3 && size() > separams.minsize) {
-			if(column_sample(0)) {}
-			if(column_sample(sites.width()-1)) {}
-			for(int m = 0; m < 3; m++) {
-				if(!(column_sample())) break;
-			}
-		}
+		if(phase < 3 && size() > separams.minsize)
+			column_sample();
 		sites.set_map(map_score());
 		if(sites.get_map() - sc_best_i > 1e-3) {
 			i_worse=0;
@@ -1020,7 +951,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			i_worse = 0;
 		}
 		
-		if(i % 20 == 0 && size() > 5) {
+		if(i % 50 == 0 && size() > 5) {
 			compute_seq_scores();
 			compute_expr_scores();
 			set_seq_cutoffs(i);
@@ -1091,7 +1022,7 @@ void SEModel::set_seq_cutoffs(const int i) {
 		for(int i = 0; i < ngenes; i++) {
 			if(seqranks[i].score >= c) {
 				seqn++;
-				if(expscores[seqranks[i].seq] >= sites.get_expr_cutoff())
+				if(expscores[seqranks[i].id] >= sites.get_expr_cutoff())
 					isect++;
 			} else {
 				next = i;
@@ -1121,7 +1052,7 @@ void SEModel::set_expr_cutoffs(const int i) {
 		for(int i = 0; i < ngenes; i++) {
 			if(expranks[i].score >= c) {
 				expn++;
-				if(seqscores[expranks[i].seq] >= sites.get_seq_cutoff())
+				if(seqscores[expranks[i].id] >= sites.get_seq_cutoff())
 					isect++;
 			} else {
 				break;

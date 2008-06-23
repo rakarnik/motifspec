@@ -62,19 +62,19 @@ class SEModel {
 	float* stdev;
 	float** pcorr;
 	
-	struct hitscore {
-		int seq;
+	struct idscore {
+		int id;
 		double score;
 	};
 	
-	struct hscomp {
-		bool operator() (struct hitscore hp1, struct hitscore hp2) { return (hp1.score > hp2.score); }
-	} hsc;
+	struct iscomp {
+		bool operator() (struct idscore is1, struct idscore is2) { return (is1.score > is2.score); }
+	} isc;
 	
-	double *seqscores;
-	struct hitscore *seqranks;
-	double *expscores;
-	struct hitscore *expranks;
+	vector<double> seqscores;
+	vector<struct idscore> seqranks;
+	vector<double> expscores;
+	vector<struct idscore> expranks;
 	void set_seq_cutoffs(const int i);
 	void set_expr_cutoffs(const int i);
 	void print_possible(ostream& out);
@@ -134,15 +134,10 @@ class SEModel {
   void seed_biased_site();
   void single_pass(const double minprob = 0.0, bool greedy = false);
 	void single_pass_select(const double minprob = 0.0);
-	void compute_seq_scores(const bool sample);
-	void compute_seq_scores() { compute_seq_scores(true); };
+	void compute_seq_scores();
 	void compute_expr_scores();
 	void compute_scores() { compute_seq_scores(); compute_expr_scores(); };
-	bool column_sample(const int c, const bool sample);
-  bool column_sample(const int c) { return column_sample(c, true); }
-  bool column_sample(const bool sample) { return column_sample(1000, sample); }
-  bool column_sample() { return column_sample(1000,true); }
-  void optimize_columns();
+	bool column_sample();
   void optimize_sites();
 	void expand_search_around_mean(const double corr_cutoff);
 	void expand_search_min_pcorr(const double corr_cutoff);
