@@ -51,19 +51,19 @@ SEModel::~SEModel(){
 }
 
 void SEModel::set_default_params(){
-  separams.expect=10;
-  separams.gcback=0.38;
-  separams.minpass[0]=200;
-  separams.seed=-1;
-  separams.psfact=0.1;
-  separams.weight=0.8; 
-  separams.npass=1000000;
-  separams.fragment=true;
-  separams.flanking=0;
-  separams.undersample=1;
-  separams.oversample=1;
-	separams.minsize=10;
-	separams.mincorr=0.4;
+  separams.expect = 10;
+  separams.gcback = 0.38;
+  separams.minpass[0] = 200;
+  separams.seed = -1;
+  separams.psfact = 0.1;
+  separams.weight = 0.8; 
+  separams.npass = 1000000;
+  separams.fragment = true;
+  separams.flanking = 0;
+  separams.undersample = 1;
+  separams.oversample = 1;
+	separams.minsize = 5;
+	separams.mincorr = 0.4;
 }
 
 void SEModel::set_final_params(){
