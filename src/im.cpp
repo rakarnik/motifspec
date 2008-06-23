@@ -83,12 +83,6 @@ int main(int argc, char *argv[]) {
 								* se.get_params().oversample;
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
-		char workeridstr[3];
-		sprintf(workeridstr, "%d", worker);
-		string workoutstr(outfile);
-		workoutstr.append(".");
-		workoutstr.append(workeridstr);
-		workoutstr.append(".tmp.ace");
 		for(int j = 1; j <= nruns; j++) {
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 			se.search_for_motif(worker, j);
@@ -120,11 +114,6 @@ int main(int argc, char *argv[]) {
 			fcntl(fd, F_SETLK, &fl);
 			close(fd);
 			cerr << "\t\tArchive now has " << se.get_archive()->nmots() << " motifs" << endl;
-			cerr << "\t\tCreating output file of current status... ";
-			ofstream workout(workoutstr.c_str());
-			print_full_ace(workout, se);
-			workout.close();
-			cerr << "done." << endl;
 		}
 	}
 	
