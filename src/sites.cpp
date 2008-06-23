@@ -329,7 +329,7 @@ void Sites::add_col(const int c) {
 }
 
 bool Sites::has_col(const int c) {
-	return (find(columns.begin(), columns.end(), c) != columns.end());
+	return binary_search(columns.begin(), columns.end(), c);
 }
 
 void Sites::flip_sites(){
