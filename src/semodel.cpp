@@ -408,6 +408,8 @@ bool SEModel::column_sample(){
   //wtx[x + c] will refer to the weight of pos c in the usual numbering
 	double wt, best_wt;
 	for(int i = 0; i < cs_span; i++) {
+		wtx[i].id = 1000;
+		wtx[i].score = -DBL_MAX;
 		if(sites.column_freq(i - x, seqset, freq)){
       wt = 0.0;
       for(int j = 0;j < sites.depth(); j++){
@@ -440,8 +442,10 @@ bool SEModel::column_sample(){
 	// Keep the top <ncol> columns
 	int ncols = sites.ncols();
 	int nseen = 0;
-	int shift;
+	int shift = 0;
 	for(int i = 0; i < cs_span; ++i) {
+		if(wtx[i].id - x > cs_span - 1)
+			continue;
 		if(nseen < ncols) {
 			if(sites.has_col(wtx[i].id - x)) {        // column is ranked in top, and is already in motif
 				nseen++;
@@ -449,13 +453,19 @@ bool SEModel::column_sample(){
 				sites.add_col(wtx[i].id - x);           // column is ranked in top, and is not in motif
 				if(wtx[i].id - x < 0)                   // if column was to the left of the current columns, adjust the remaining columns
 					for(int j = i + 1; j < cs_span; ++j)
-						wtx[j].id -= wtx[j].id - x;	
+						wtx[j].id -= wtx[i].id - x;
 				nseen++;
 			}
 		} else {
-			if(sites.has_col(wtx[i].id - x)) sites.remove_col(wtx[i].id - x); // column is not ranked in top, and is in motif
+			if(sites.has_col(wtx[i].id - x)) {        // column is not ranked in top, and is in motif
+				if(wtx[i].id - x == 0)                  // we will remove the first column, adjust remaining columns
+					for(int j = i + 1; j < cs_span; ++j)
+						wtx[j].id -= sites.column(1);
+				sites.remove_col(wtx[i].id - x);
+			}
 		}
 	}
+	assert(sites.ncols() == ncols);               // number of columns should not change
 }
 
 double SEModel::map_score() {
