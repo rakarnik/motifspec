@@ -78,21 +78,13 @@ clean :
     im\
 		im-debug
 
-install : im
-		cp im im
-
-#
-# Build the parts of im
-#
-
-
-bin/archivesites.o : src/archivesites.cpp
+bin/archivesites.o : src/archivesites.h src/archivesites.cpp
 	$(CC) $(CC_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o bin/archivesites.o
 
-bin/compareace.o : src/compareace.cpp
+bin/compareace.o : src/compareace.h src/compareace.cpp
 	$(CC) $(CC_OPTIONS) src/compareace.cpp -c $(INCLUDE) -o bin/compareace.o
 
-bin/im.o : src/im.cpp
+bin/im.o : src/im.h src/im.cpp
 	$(CC) $(CC_OPTIONS) src/im.cpp -c $(INCLUDE) -o bin/im.o
 
 bin/myheap.o : src/myheap.cpp
@@ -101,22 +93,22 @@ bin/myheap.o : src/myheap.cpp
 bin/seqset.o : src/seqset.cpp
 	$(CC) $(CC_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o bin/seqset.o
 
-bin/semodel.o : src/semodel.cpp
+bin/semodel.o : src/semodel.h src/semodel.cpp
 	$(CC) $(CC_OPTIONS) src/semodel.cpp -c $(INCLUDE) -o bin/semodel.o
 
-bin/sites.o : src/sites.cpp
+bin/sites.o : src/sites.h src/sites.cpp
 	$(CC) $(CC_OPTIONS) src/sites.cpp -c $(INCLUDE) -o bin/sites.o
 
-bin/standard.o : src/standard.cpp
+bin/standard.o : src/standard.h src/standard.cpp
 	$(CC) $(CC_OPTIONS) src/standard.cpp -c $(INCLUDE) -o bin/standard.o
 
-debug/archivesites.o : src/archivesites.cpp
+debug/archivesites.o : src/archivesites.h src/archivesites.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o debug/archivesites.o
 
-debug/compareace.o : src/compareace.cpp
+debug/compareace.o : src/compareace.h src/compareace.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/compareace.cpp -c $(INCLUDE) -o debug/compareace.o
 
-debug/im.o : src/im.cpp
+debug/im.o : src/im.h src/im.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/im.cpp -c $(INCLUDE) -o debug/im.o
 
 debug/myheap.o : src/myheap.cpp
@@ -125,14 +117,11 @@ debug/myheap.o : src/myheap.cpp
 debug/seqset.o : src/seqset.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o debug/seqset.o
 
-debug/semodel.o : src/semodel.cpp
+debug/semodel.o : src/semodel.h src/semodel.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/semodel.cpp -c $(INCLUDE) -o debug/semodel.o
 
-debug/sites.o : src/sites.cpp
+debug/sites.o : src/sites.h src/sites.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/sites.cpp -c $(INCLUDE) -o debug/sites.o
 
-debug/standard.o : src/standard.cpp
+debug/standard.o : src/standard.h src/standard.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/standard.cpp -c $(INCLUDE) -o debug/standard.o
-
-
-##### END RUN ####
