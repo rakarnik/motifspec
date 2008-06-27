@@ -66,10 +66,17 @@ int main(int argc, char *argv[]) {
 	
 	if(archive) {
 		cerr << "Running in archive mode..." << endl;
+		string archinstr(outfile);
+		archinstr.append(".adj.ace");
+		ifstream archin(archinstr.c_str());
+		if(archin) {
+			cerr << "Refreshing from existing archive file " << archinstr << "... ";
+			se.get_archive()->read(archin);
+			cerr << "done." << endl;
+		}
 		while(true) {
-			bool found = false;
-			found = read_motifs(se);
-			if(found) output(se);
+			int found = read_motifs(se);
+			if(found > 0) output(se);
 			sleep(60);
 		}
 	} else {
@@ -126,19 +133,30 @@ int read_motifs(SEModel& se) {
 	string filename;
 	string extension;
 	int nfound = 0;
-	int nmot = 0; 
+	int nmot = 0;
+	int len = 0;
+	int pos = 0;
 	workdir = opendir(".");
 	while(dirp = readdir(workdir)) {
 		filename = string(dirp->d_name);
-		if(filename.length() > 4 && filename.find_last_of('.') != string::npos)
-			extension = filename.substr(filename.find_last_of('.'), 4);
+		len = filename.length();
+		pos = filename.find_last_of('.');
+		if(len > 4 && pos!= string::npos)
+			extension = filename.substr(pos, len - pos);
 		else
 			extension = "";
 		if(extension.compare(".mot") == 0) {
+			cerr << "Reading from file " << filename << endl;
 			// check motif against archive, then move to "mots" directory
 			string newname("mots/");
 			newname.append(filename.c_str());
-			if(se.consider_motif(filename.c_str())) nmot++;
+			if(se.consider_motif(filename.c_str())) {
+				cerr << "Motif was added" << endl;
+				nmot++;
+			} else {
+				cerr << "Motif was not added" << endl;
+			}
+			cerr << "Moving motif to " << newname << endl << endl;
 			rename(filename.c_str(), newname.c_str());
 			nfound++;
 		}
