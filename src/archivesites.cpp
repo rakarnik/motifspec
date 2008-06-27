@@ -27,40 +27,45 @@ bool ArchiveSites::check_motif(const Sites& s) {
 bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	//increment dejavu only for final motif
   //fnl=false assumes that no better motif is similar, so always add
-  if(s.get_map() <= arch_map_cutoff) return false;
-  CompareACESites c(s, arch_seqset);
+  if(s.get_map() <= arch_map_cutoff) {
+		cerr << "\tScore less than cutoff" << endl;
+		return false;
+	}
+  
+	CompareACESites c(s, arch_seqset);
   double cmp;
 
 	// Check if similar to better motif.
 	// If so, increment dejavu for better motif and return false
-	for(int i = 0; i < arch_sites.size(); i++) {
-		if(s.get_map() <= arch_sites[i].sites()->get_map()) {
-			cmp = c.compare(arch_sites[i]);
-			if(cmp > arch_sim_cutoff) {
-				arch_sites[i].sites()->inc_dejavu();
-				return false;
-			}
-		}
-	}
-	
-	// There are no better motifs similar to this one, so we add
-	// Step 1: Delete similar motifs with lower scores
 	vector<CompareACESites>::iterator iter;
-	iter = arch_sites.begin();
-	while(iter != arch_sites.end()) {
-		if(s.get_map() > iter->sites()->get_map()) {
+	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
+		if(s.get_map() <= iter->sites()->get_map()) {
 			cmp = c.compare(*iter);
+			cerr << "\tComparing with motif " << distance(iter, arch_sites.begin()) << ", score was " << cmp << endl;
 			if(cmp > arch_sim_cutoff) {
-				iter = arch_sites.erase(iter);
-			} else {
-				++iter;
+				iter->sites()->inc_dejavu();
+				return false;
 			}
 		} else {
 			break;
 		}
 	}
+	
+	// There are no better motifs similar to this one, so we add
+	// Step 1: Delete similar motifs with lower scores
+	while(iter != arch_sites.end()) {
+		assert(s.get_map() > iter->sites()->get_map());
+		cmp = c.compare(*iter);
+		cerr << "\tComparing with motif " << distance(iter, arch_sites.begin()) << ", score was " << cmp << endl;
+		if(cmp > arch_sim_cutoff) {
+			cerr << "Erasing motif" << endl;
+			iter = arch_sites.erase(iter);
+		} else {
+			++iter;
+		}
+	}
 	// Step 2: Add the new motif at the correct position by score
-	for(iter = arch_sites.begin(); iter != arch_sites.end(); iter++) {
+	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
 		if(iter->sites()->get_map() < s.get_map()) break;
 	}
 	arch_sites.insert(iter, c);
