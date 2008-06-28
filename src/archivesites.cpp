@@ -24,13 +24,8 @@ bool ArchiveSites::check_motif(const Sites& s) {
   return true;
 }
 
-bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
-	//increment dejavu only for final motif
-  //fnl=false assumes that no better motif is similar, so always add
-  if(s.get_spec() < 1) {
-		cerr << "\tScore less than cutoff" << endl;
-		return false;
-	}
+bool ArchiveSites::consider_motif(const Sites& s) {
+  if(s.get_spec() < 1) return false; 
   
 	CompareACESites c(s, arch_seqset);
   double cmp;
@@ -41,7 +36,6 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
 		if(s.get_spec() <= iter->sites()->get_spec()) {
 			cmp = c.compare(*iter);
-			cerr << "\tComparing with motif " << distance(arch_sites.begin(), iter) << ", score was " << cmp << endl;
 			if(cmp > arch_sim_cutoff) {
 				iter->sites()->inc_dejavu();
 				return false;
@@ -56,18 +50,15 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	while(iter != arch_sites.end()) {
 		assert(s.get_spec() > iter->sites()->get_spec());
 		cmp = c.compare(*iter);
-		cerr << "\tComparing with motif " << distance(arch_sites.begin(), iter) << ", score was " << cmp << endl;
-		if(cmp > arch_sim_cutoff) {
-			cerr << "\tErasing motif" << endl;
+		if(cmp > arch_sim_cutoff)
 			iter = arch_sites.erase(iter);
-		} else {
+		else
 			++iter;
-		}
 	}
+	
 	// Step 2: Add the new motif at the correct position by score
-	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
+	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter)
 		if(iter->sites()->get_spec() < s.get_spec()) break;
-	}
 	arch_sites.insert(iter, c);
 	return true;
 }
