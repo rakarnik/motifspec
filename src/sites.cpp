@@ -446,9 +446,7 @@ void Sites::freq_matrix_extended(const Seqset& b, double *fm) const {
 }
 
 void Sites::print_columns(ostream& out) {
-	out << "\t\t\t\t\t";
 	vector<int>::iterator col_iter;
 	for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter)
 		out << " " << *col_iter;
-	out << endl;
 }
