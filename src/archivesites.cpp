@@ -41,7 +41,7 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
 		if(s.get_map() <= iter->sites()->get_map()) {
 			cmp = c.compare(*iter);
-			cerr << "\tComparing with motif " << distance(iter, arch_sites.begin()) << ", score was " << cmp << endl;
+			cerr << "\tComparing with motif " << distance(arch_sites.begin(), iter) << ", score was " << cmp << endl;
 			if(cmp > arch_sim_cutoff) {
 				iter->sites()->inc_dejavu();
 				return false;
@@ -56,9 +56,9 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	while(iter != arch_sites.end()) {
 		assert(s.get_map() > iter->sites()->get_map());
 		cmp = c.compare(*iter);
-		cerr << "\tComparing with motif " << distance(iter, arch_sites.begin()) << ", score was " << cmp << endl;
+		cerr << "\tComparing with motif " << distance(arch_sites.begin(), iter) << ", score was " << cmp << endl;
 		if(cmp > arch_sim_cutoff) {
-			cerr << "Erasing motif" << endl;
+			cerr << "\tErasing motif" << endl;
 			iter = arch_sites.erase(iter);
 		} else {
 			++iter;
