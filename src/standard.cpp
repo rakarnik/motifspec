@@ -287,11 +287,16 @@ float jack_corr(const float* expr1, const float* expr2, const int num) {
 double	lnfact(long n)
 /* static variables are guaranteed to be initialized to zero */
 {
-	static double lnft[101];
+	static double lnft[51];
 
 	if (n <= 1) return 0.0;
-	if (n <= 100) return lnft[n] ? lnft[n] : (lnft[n]=gammaln(n+1.0));
-	else return gammaln(n+1.0);
+	if (n <= 50) return lnft[n] ? lnft[n] : (lnft[n] = gammaln(n + 1.0));
+	else {
+		double ret = 0.91894;          // 0.5 * log(2 * Pi)
+		ret += (n + 0.5) * log(n);
+		ret -= n;
+		return ret;
+	}
 }
 
 double gammaln(double xx) {
