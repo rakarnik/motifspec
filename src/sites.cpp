@@ -342,7 +342,7 @@ void Sites::flip_sites(){
 	int w = width();
 	vector<int>::iterator col_iter;
 	for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
-		*col_iter = w - *col_iter;
+		*col_iter = w - *col_iter - 1;
 	}
 	vector<int> temp;
 	vector<int>::reverse_iterator rev_iter;
@@ -449,27 +449,18 @@ void Sites::freq_matrix_extended(double *fm) const {
 
 void Sites::orient() {
 	int* freq_matrix = new int[depth() * ncols()];
-  double *info = new double[6];
   double *freq = new double[6];
-  for(int i = 0; i < 6; i++) info[i] = 0.0;
 	
-  double tot = number();
   calc_freq_matrix(freq_matrix);
   for(int i = 0; i < depth() * ncols(); i += depth()){
     double ii = 0.0;
     for(int j = 1; j <= 4; j++) {
-      int x = freq_matrix[i] + freq_matrix[i+5];
-      freq[j] = freq_matrix[i + j] / tot;
-      ii += freq[j] * log(freq[j]);
+      freq[j] += freq_matrix[i + j] / number();
     }
-    ii = 2 + ii;
-    for(int j = 1; j <= 4; j++) info[j] += freq[j] * ii;
   }
-	
-  double flip = 1.5 * info[3] + 1.0 * info[1] - 1.0 * info[4] - 1.5 * info[2];
+  double flip = 1.5 * freq[3] + 1.0 * freq[1] - 1.0 * freq[4] - 1.5 * freq[2];
   if(flip < 0.0) flip_sites();
 	delete [] freq_matrix;
-  delete [] info;
   delete [] freq;
 }
 
