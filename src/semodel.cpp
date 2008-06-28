@@ -53,7 +53,7 @@ SEModel::~SEModel(){
 void SEModel::set_default_params(){
   separams.expect = 10;
   separams.gcback = 0.38;
-  separams.minpass[0] = 200;
+  separams.minpass = 5;
   separams.seed = -1;
   separams.psfact = 0.1;
   separams.weight = 0.8; 
@@ -75,9 +75,7 @@ void SEModel::set_final_params(){
     separams.pseudo[i] = separams.npseudo * separams.backfreq[i];
   }
   separams.maxlen = 3 * sites.width();
-  separams.minpass[1] = 2 * separams.minpass[0];
-  separams.minpass[2] = 3 * separams.minpass[0];
-	separams.nruns = sites.positions_available() / separams.expect / sites.ncols() / separams.undersample * separams.oversample;
+  separams.nruns = sites.positions_available() / separams.expect / sites.ncols() / separams.undersample * separams.oversample;
 	separams.select = 5.0;
 }
 
@@ -395,8 +393,11 @@ void SEModel::compute_expr_scores() {
 	sort(expranks.begin(), expranks.end(), isc);
 }  
 
-bool SEModel::column_sample(){
-  int *freq = new int[sites.depth()];
+void SEModel::column_sample(){
+  cerr << "\t\t\t\t\tbefore: ";
+	sites.print_columns(cerr);
+	
+	int *freq = new int[sites.depth()];
 	
 	// Compute scores for current and surrounding columns
   int max_left, max_right;
@@ -442,7 +443,6 @@ bool SEModel::column_sample(){
 	// Keep the top <ncol> columns
 	int ncols = sites.ncols();
 	int nseen = 0;
-	int shift = 0;
 	for(int i = 0; i < cs_span; ++i) {
 		if(wtx[i].id - x > cs_span - 1)
 			continue;
@@ -465,7 +465,14 @@ bool SEModel::column_sample(){
 			}
 		}
 	}
-	assert(sites.ncols() == ncols);               // number of columns should not change
+	
+	cerr << "\tafter: ";
+	sites.print_columns(cerr);
+	cerr << endl; 
+	
+	if(sites.ncols() != ncols) {                 // number of columns should not change
+		cerr << "ERROR: column samping started with " << ncols << ", ended with " << sites.ncols() << endl;
+	}	
 }
 
 double SEModel::map_score() {
@@ -518,81 +525,6 @@ double SEModel::spec_score() {
 	double spec = prob_overlap(s1, s2, x, ngenes);
 	if(spec > 0.99) return 0;
 	else return -log10(spec);
-}
-
-void SEModel::optimize_sites(){
-  int poss_sites = sites.positions_available(possible)+1;
-  int *pos = new int[poss_sites];
-  int *chr = new int[poss_sites];
-  bool *str = new bool[poss_sites];
-  Heap hp(poss_sites,3);
-  double ap = (separams.weight * separams.expect
-	            + (1 - separams.weight) * sites.number())
-							/ (2.0 * sites.positions_available(possible));
-	
-  calc_matrix();
-	calc_mean();
-  char **ss_seq;
-  ss_seq = seqset.seq_ptr();
-  double Lw, Lc, Pw, Pc;
-  int matpos;
-  int h = 1;
-  for(int i = 0; i < seqset.num_seqs(); i++) {
-    if(! is_possible(i)) continue;
-		for(int j = 0; j < seqset.len_seq(i) - sites.width() + 1; j++) {
-      Lw = 1.0;
-			matpos = 0;
-      for(int k = 0; k < sites.ncols(); k++){
-				int seq = ss_seq[i][j + sites.column(k)];
-				Lw *= score_matrix[matpos + seq];
-				matpos += sites.depth();
-      }
-      Lc = 1.0;
-			matpos = sites.depth()-1;
-      for(int k = 0; k < sites.ncols(); k++){
-				int seq = ss_seq[i][j + sites.width() - 1 - sites.column(k)];
-				Lc *= score_matrix[matpos - seq];
-				matpos += sites.depth();
-      }
-      Pw = Lw * ap / (1.0 - ap + Lw * ap);
-      Pc = Lc * ap / (1.0 - ap + Lc * ap);
-      //F=(Pw+Pc-Pw*Pc);//probability of either
-      if(Pw > sites.get_seq_cutoff() * 0.025 || Pc > sites.get_seq_cutoff() * 0.025) { 
-				chr[h] = i;
-				pos[h] = j;
-				if(Pw >= Pc) {
-					str[h] = true;
-					hp.insert(h, -Pw);//lower is better
-				} else {
-					str[h] = false;
-					hp.insert(h, -Pc);
-				}
-				h++;
-      }
-    }
-  }
-  
-  sites.remove_all_sites();
-  Sites best = sites;
-  double ms, ms_best = -DBL_MAX;
-	for(;;){
-    h = hp.del_min();
-		if(h == -1) break;
-    if(sites.is_open_site(chr[h], pos[h])) {
-      sites.add_site(chr[h], pos[h], str[h]);
-      if(sites.number() <= 3) continue;
-      if(hp.value(h) < -0.7) continue;
-      ms = map_score();
-      if(ms > ms_best){
-				ms_best = ms;
-				best = sites;
-      }
-    }
-  }
-	sites = best;
-  delete [] pos;
-  delete [] chr;
-  delete [] str;
 }
 
 void SEModel::orient_motif(){
@@ -707,7 +639,7 @@ string SEModel::consensus() const {
 void SEModel::output_params(ostream &fout){
   fout<<" expect =      \t"<<separams.expect<<'\n';
   fout<<" gcback =      \t"<<separams.gcback<<'\n';
-  fout<<" minpass =     \t"<<separams.minpass[0]<<'\n';
+  fout<<" minpass =     \t"<<separams.minpass<<'\n';
   fout<<" seed =        \t"<<separams.seed<<'\n';
   fout<<" numcols =     \t"<<sites.ncols()<<'\n';
   fout<<" undersample = \t"<<separams.undersample<<'\n';
@@ -717,7 +649,7 @@ void SEModel::output_params(ostream &fout){
 void SEModel::modify_params(int argc, char *argv[]){
   GetArg2(argc,argv,"-expect",separams.expect);
   GetArg2(argc,argv,"-gcback",separams.gcback);
-  GetArg2(argc,argv,"-minpass",separams.minpass[0]);
+  GetArg2(argc,argv,"-minpass",separams.minpass);
   GetArg2(argc,argv,"-seed",separams.seed);
   GetArg2(argc,argv,"-undersample",separams.undersample);
   GetArg2(argc,argv,"-oversample",separams.oversample);
@@ -827,14 +759,13 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	sites.set_iter(iter);
 	sites.set_expr_cutoff(0.85);
 	sites.set_map(0);
-	double sc_best_i, sp;
-  int i_worse = 0;
-	sc_best_i = map_cutoff;
+	int i_worse = 0;
 	i_worse = 0;
 	int phase = 0;
 	int oldphase = 0;
 	
 	Sites best_sites = sites;
+	best_sites.set_spec(0.0);
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
@@ -862,13 +793,6 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	for(int i = 1; i <= separams.npass; i++){
 		if(oldphase < phase) {
 			print_status(cerr, i, oldphase);
-			if(size() > 5) {
-				compute_seq_scores();
-				compute_expr_scores();
-				set_seq_cutoffs(i);
-				set_expr_cutoffs(i);
-				expand_search_around_mean(sites.get_expr_cutoff());
-			}
 			oldphase = phase;
 		}
 		if(phase == 3) {
@@ -876,26 +800,21 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 				cerr << "\t\t\tReached phase " << phase << " with less than " << separams.minsize/2 << " sequences with sites. Restarting..." << endl;
 				break;
 			}
-			double sc1 = map_score();
-			sites.set_map(0.0);
+			double sc1 = sites.get_spec();
 			for(int z = 0; sites.get_map() < sc1 && z < 5; z++){
 				column_sample();
 				single_pass(sites.get_seq_cutoff(), true);
-				sites.set_map(map_score());
+				sites.set_spec(spec_score());
 				print_status(cerr, i, phase);
 			}
-			if(sites.get_map() < sc1) {
+			if(sites.get_spec() < sc1) {
 				sites = best_sites;
-				sites.set_map(sc1);
 			}
 			print_status(cerr, i, phase);
 			if(size() < separams.minsize) {
 				cerr << "\t\t\tCompleted phase " << phase << " with less than " << separams.minsize << " sequences with sites. Restarting..." << endl;
 				break;
 			}
-			sp = spec_score();
-			sites.set_spec(sp);
-			cerr << "\t\t\t\tSpecificity score was " << sp << endl;
 			if(archive.check_motif(sites)) {
 				char tmpfilename[30], motfilename[30];
 				sprintf(tmpfilename, "%d.%d.mot.tmp", worker, iter);
@@ -916,7 +835,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			single_pass_select(sites.get_seq_cutoff());
 		}
 		if(sites_size() == 0) {
-			if(sc_best_i == map_cutoff) {
+			if(best_sites.get_spec() == 0) {
 				cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
 				break;
 			}
@@ -927,12 +846,16 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			i_worse = 0;
 			continue;
 		}
-		if(i<=3) continue;
+		if(i <= 3) continue;
 		if(phase < 3 && size() > separams.minsize)
 			column_sample();
-		sites.set_map(map_score());
-		if(sites.get_map() - sc_best_i > 1e-3) {
-			i_worse=0;
+		compute_seq_scores();
+		compute_expr_scores();
+		set_seq_cutoffs(i);
+		set_expr_cutoffs(i);
+		expand_search_around_mean(sites.get_expr_cutoff());
+		if(sites.get_spec() - best_sites.get_spec() > 1e-3) {
+			i_worse = 0;
 			if(size() > separams.minsize * 2) {
 				if(! archive.check_motif(sites)) {
 					print_status(cerr, i, phase);
@@ -940,12 +863,11 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 					break;
 				}
 			}
-			sc_best_i = sites.get_map();
 			best_sites = sites;
 		}
 		else i_worse++;
-		if(i_worse > separams.minpass[phase]){
-			if(sc_best_i == map_cutoff) {
+		if(i_worse > separams.minpass){
+			if(best_sites.get_spec() == 0) {
 				print_status(cerr, i, phase);
 				cerr << "\t\t\ti_worse is greater than cutoff and best score at cutoff! Restarting..." << endl;
 				break;
@@ -955,13 +877,14 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 				cerr << "\t\t\ti_worse is greater than cutoff and only 1 site! Restarting..." << endl;
 				break;
 			}
+			cerr << "\t\t\t\ti_worse threshold reached. Reloading best sites so far..." << endl;
 			sites = best_sites;
 			select_sites = best_sites;
 			phase++;
 			i_worse = 0;
 		}
 		
-		if(i % 50 == 0 && size() > 5) {
+		if(size() > 5) {
 			compute_seq_scores();
 			compute_expr_scores();
 			set_seq_cutoffs(i);
@@ -969,7 +892,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			expand_search_around_mean(sites.get_expr_cutoff());
 		}
 	
-		if(i % 50 == 0) {
+		if(i % 1 == 0) {
 			print_status(cerr, i, phase);
 		}
 	}
@@ -996,7 +919,7 @@ void SEModel::print_status(ostream& out, const int i, const int phase) {
 		out << setw(5) << size();
 		out << setw(5) << possible_size();
 		out << setw(40) << consensus();
-		out << setw(10) << sites.get_map();
+		out << setw(10) << sites.get_spec();
 		out << endl;
 	} else {
 		out << "\t\t\tNo sites!" << endl;
@@ -1007,7 +930,7 @@ void SEModel::full_output(ostream &fout){
   Sites* s;
 	for(int j = 0; j < archive.nmots(); j++){
     s = archive.return_best(j);
-    if(s->get_map() > 0.0){
+    if(s->get_spec() > 1){
 			fout << "Motif " << j + 1 << endl;
 			s->write(seqset, fout);
 		}
@@ -1048,6 +971,10 @@ void SEModel::set_seq_cutoffs(const int i) {
 	}
 	// cerr << "\t\t\t\t\tSetting sequence cutoff to " << best_sitecut << endl;
 	sites.set_seq_cutoff(best_sitecut);
+	if(best_po > 0.99)
+		sites.set_spec(0);
+	else
+		sites.set_spec(-log10(best_po));
 }
 
 void SEModel::set_expr_cutoffs(const int i) {
@@ -1077,6 +1004,10 @@ void SEModel::set_expr_cutoffs(const int i) {
 	}
 	// cerr << "\t\t\t\t\tSetting expression cutoff to " << best_exprcut << endl;
 	sites.set_expr_cutoff(best_exprcut);
+	if(best_po > 0.99)
+		sites.set_spec(0);
+	else
+		sites.set_spec(-log10(best_po));
 }
 
 void SEModel::print_possible(ostream& out) {

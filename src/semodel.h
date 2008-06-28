@@ -18,7 +18,7 @@ struct SEParams{
   double pseudo[6];
   int maxlen;						//maximum length of sites
   int npass;
-  int minpass[3];
+  int minpass;
   int nruns;
   bool fragment;
   int seed;
@@ -137,9 +137,8 @@ class SEModel {
 	void compute_seq_scores();
 	void compute_expr_scores();
 	void compute_scores() { compute_seq_scores(); compute_expr_scores(); };
-	bool column_sample();
-  void optimize_sites();
-	void expand_search_around_mean(const double corr_cutoff);
+	void column_sample();
+  void expand_search_around_mean(const double corr_cutoff);
 	void expand_search_min_pcorr(const double corr_cutoff);
 	void expand_search_avg_pcorr();
 	void search_for_motif(const int worker, const int iter);

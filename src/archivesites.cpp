@@ -14,7 +14,7 @@ bool ArchiveSites::check_motif(const Sites& s) {
   double cmp;
 	CompareACESites c(s, arch_seqset);
   for(int i = 0; i < arch_sites.size(); i++){
-    if(s.get_map() <= arch_sites[i].sites()->get_map()){
+    if(s.get_spec() <= arch_sites[i].sites()->get_spec()){
       cmp = c.compare(arch_sites[i]);
 			if(cmp > arch_sim_cutoff && arch_sites[i].sites()->get_dejavu() >= arch_min_visits) {
 				return false;
@@ -27,7 +27,7 @@ bool ArchiveSites::check_motif(const Sites& s) {
 bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	//increment dejavu only for final motif
   //fnl=false assumes that no better motif is similar, so always add
-  if(s.get_map() <= arch_map_cutoff) {
+  if(s.get_spec() < 1) {
 		cerr << "\tScore less than cutoff" << endl;
 		return false;
 	}
@@ -39,7 +39,7 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	// If so, increment dejavu for better motif and return false
 	vector<CompareACESites>::iterator iter;
 	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
-		if(s.get_map() <= iter->sites()->get_map()) {
+		if(s.get_spec() <= iter->sites()->get_spec()) {
 			cmp = c.compare(*iter);
 			cerr << "\tComparing with motif " << distance(arch_sites.begin(), iter) << ", score was " << cmp << endl;
 			if(cmp > arch_sim_cutoff) {
@@ -54,7 +54,7 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	// There are no better motifs similar to this one, so we add
 	// Step 1: Delete similar motifs with lower scores
 	while(iter != arch_sites.end()) {
-		assert(s.get_map() > iter->sites()->get_map());
+		assert(s.get_spec() > iter->sites()->get_spec());
 		cmp = c.compare(*iter);
 		cerr << "\tComparing with motif " << distance(arch_sites.begin(), iter) << ", score was " << cmp << endl;
 		if(cmp > arch_sim_cutoff) {
@@ -66,7 +66,7 @@ bool ArchiveSites::consider_motif(const Sites& s, bool fnl) {
 	}
 	// Step 2: Add the new motif at the correct position by score
 	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
-		if(iter->sites()->get_map() < s.get_map()) break;
+		if(iter->sites()->get_spec() < s.get_spec()) break;
 	}
 	arch_sites.insert(iter, c);
 	return true;
@@ -94,7 +94,7 @@ void ArchiveSites::read(istream& archin) {
 
 void ArchiveSites::write(ostream& archout) {
 	for(int i = 0; i < arch_sites.size(); i++) {
-		if(arch_sites[i].sites()->get_map() > arch_map_cutoff) {
+		if(arch_sites[i].sites()->get_spec() > 1) {
 			archout << "Motif " << i + 1 << endl;
 			arch_sites[i].sites()->write(arch_seqset, archout);
 		}
