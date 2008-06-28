@@ -49,7 +49,6 @@ class SEModel {
   Seqset seqset;
   Sites sites;
   Sites select_sites;
-	Sites print_sites;
   ArchiveSites archive;
 	int members;
   int* freq_matrix;
@@ -118,8 +117,6 @@ class SEModel {
 	string consensus() const;                               // Return the consensus sequence for the current set of sites
 	double map_score();                                     // Calculate the MAP score
 	double spec_score();                                    // Calculate the specificity score
-	void orient_motif();                                    // Orient sites according to (A = 1.0, C = -1.5, G = 1.5, T = 1.0) scoring
-	void orient_print_motif();                              // Orient print sites according to (A = 1.0, C = -1.5, G = 1.5, T = 1.0) scoring
 	
 	/* Expression model */
 	void calc_mean();                                       // Calculate the mean for this model

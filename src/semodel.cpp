@@ -4,7 +4,6 @@ SEModel::SEModel(const vector<string>& seqs, float** exprtab, const int numexpr,
 seqset(seqs),
 sites(seqset, nc, 5 * nc),
 select_sites(seqset, nc),
-print_sites(seqset, nc, 5 * nc),
 archive(sites, seqset, map_cut, sim_cut),
 ngenes(names.size()),
 seqscores(ngenes),
@@ -527,60 +526,6 @@ double SEModel::spec_score() {
 	else return -log10(spec);
 }
 
-void SEModel::orient_motif(){
-  double *info = new double[6];
-  double *freq = new double[6];
-  for(int i = 0; i < 6; i++) info[i] = 0.0;
-  int d = sites.depth();
-	
-  double tot = (double)sites.number() + separams.npseudo;
-  sites.calc_freq_matrix(seqset, freq_matrix);
-  for(int i = 0; i < d * sites.ncols(); i += d){
-    double ii = 0.0;
-    for(int j = 1; j <= 4; j++) {
-      int x = freq_matrix[i] + freq_matrix[i+5];
-      freq[j] = (freq_matrix[i + j] + x * separams.backfreq[j] + separams.pseudo[j]) / tot;
-      ii += freq[j]*log(freq[j]);
-    }
-    ii = 2 + ii;
-    for(int j = 1; j <= 4; j++) info[j] += freq[j] * ii;
-  }
-	
-  double flip = 1.5 * info[3] + 1.0 * info[1] - 1.0 * info[4] - 1.5 * info[2];
-  //for(i=1;i<5;i++) cerr<<info[i]<<'\t';
-  //cerr<<flip<<'\n';
-  if(flip < 0.0) sites.flip_sites();
-  delete [] info;
-  delete [] freq;
-}
-
-void SEModel::orient_print_motif(){
-  double *info = new double[6];
-  double *freq = new double[6];
-  for(int i = 0; i < 6; i++) info[i] = 0.0;
-  int d = print_sites.depth();
-	
-  double tot = (double) print_sites.number() + separams.npseudo;
-  print_sites.calc_freq_matrix(seqset, freq_matrix);
-  for(int i = 0; i < d * print_sites.ncols(); i += d){
-    double ii = 0.0;
-    for(int j = 1; j <= 4; j++) {
-      int x = freq_matrix[i] + freq_matrix[i+5];
-      freq[j] = (freq_matrix[i + j] + x * separams.backfreq[j] + separams.pseudo[j]) / tot;
-      ii += freq[j]*log(freq[j]);
-    }
-    ii = 2 + ii;
-    for(int j = 1; j <= 4; j++) info[j] += freq[j] * ii;
-  }
-	
-  double flip = 1.5 * info[3] + 1.0 * info[1] - 1.0 * info[4] - 1.5 * info[2];
-  //for(i=1;i<5;i++) cerr<<info[i]<<'\t';
-  //cerr<<flip<<'\n';
-  if(flip < 0.0) print_sites.flip_sites();
-  delete [] info;
-  delete [] freq;
-}
-
 string SEModel::consensus() const {
 	map<char,char> nt;
   nt[0]=nt[5]='N';
@@ -815,6 +760,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 				cerr << "\t\t\tCompleted phase " << phase << " with less than " << separams.minsize << " sequences with sites. Restarting..." << endl;
 				break;
 			}
+			sites.orient(seqset);
 			if(archive.check_motif(sites)) {
 				char tmpfilename[30], motfilename[30];
 				sprintf(tmpfilename, "%d.%d.mot.tmp", worker, iter);

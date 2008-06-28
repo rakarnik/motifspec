@@ -82,6 +82,7 @@ public:
 	int positions_available(const bool* possible) const;
   void shift_sites(const int l, const int r);
   void flip_sites();
+	void orient(const Seqset& seqset);
   void columns_open(int &l, int &r);
 	void write(const Seqset& seqset, ostream& motout) const;
 	void read(istream& motin);
