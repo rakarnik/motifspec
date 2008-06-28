@@ -25,6 +25,7 @@ public:
 class Sites{
   int sites_depth;//ie 4 for acgt, 6 for nacgtn
 
+	const Seqset& seqset;                          // set of sequences that this motif refers to
   int sites_num_seqs;                            // total number of sequences in this set
   vector<int> sites_len_seq;                     // length of the sequences in this motif
   int sites_max_width;                           // maximum width of this motif
@@ -71,10 +72,10 @@ public:
   void add_site(const int c, const int p, const bool s);
   void clear_sites();
 	void remove_all_sites();
-  void calc_freq_matrix(const Seqset& b, int *fm);
-  void freq_matrix_extended(const Seqset& b, double *fm) const;
+  void calc_freq_matrix(int *fm);
+  void freq_matrix_extended(double *fm) const;
   int column(const int i) const {return columns.at(i);}
-  bool column_freq(const int col, const Seqset& s, int *ret);
+  bool column_freq(const int col, int *ret);
   int remove_col(const int c);
 	void add_col(const int c);
 	bool has_col(const int c);
@@ -82,9 +83,9 @@ public:
 	int positions_available(const bool* possible) const;
   void shift_sites(const int l, const int r);
   void flip_sites();
-	void orient(const Seqset& seqset);
+	void orient();
   void columns_open(int &l, int &r);
-	void write(const Seqset& seqset, ostream& motout) const;
+	void write(ostream& motout) const;
 	void read(istream& motin);
   void destroy();
 	void print_columns(ostream& out);

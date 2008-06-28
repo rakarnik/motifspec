@@ -5,6 +5,7 @@
 
 Sites::Sites(const Seqset& s, int nc, int mx, int dp) :
 sites_depth(dp),
+seqset(s),
 sites_num_seqs(s.num_seqs()),
 sites_len_seq(sites_num_seqs),
 sites_max_width(2 * nc),
@@ -27,6 +28,7 @@ sites_has_sites(sites_num_seqs)
 
 Sites::Sites(const Sites& s) :
 sites_depth(s.sites_depth),
+seqset(s.seqset),
 sites_num_seqs(s.sites_num_seqs),
 sites_len_seq(s.sites_len_seq),
 sites_max_width(s.sites_max_width),
@@ -82,7 +84,7 @@ void Sites::remove_all_sites() {
 	}
 }
 
-void Sites::write(const Seqset& seqset, ostream& motout) const {
+void Sites::write(ostream& motout) const {
 	map<char,char> nt;
   nt[0] = nt[5] = 'N';
   nt[1] = 'A';
@@ -210,9 +212,9 @@ void Sites::add_site(const int c, const int p, const bool s){
 	sites_has_sites[c]++;
 }
 
-void Sites::calc_freq_matrix(const Seqset& b, int *fm){
+void Sites::calc_freq_matrix(int *fm){
 	// fm will have allocation for depth() * ncols()
-  char** ss_seq = b.seq_ptr();
+  char** ss_seq = seqset.seq_ptr();
   for(int i = 0; i < sites_depth * columns.size(); i++){
 		fm[i] = 0;
   }
@@ -227,7 +229,7 @@ void Sites::calc_freq_matrix(const Seqset& b, int *fm){
 			vector<int>::iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
 				pos = p + *col_iter;
-				assert(p >= 0 && p < b.len_seq(c));
+				assert(p >= 0 && p < seqset.len_seq(c));
 				int seq = ss_seq[c][pos];
 				fm[matpos + seq]++;
 				matpos += sites_depth;
@@ -238,7 +240,7 @@ void Sites::calc_freq_matrix(const Seqset& b, int *fm){
 			vector<int>::iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
 				pos = p + width() - 1 - *col_iter;
-				assert(p >= 0 && p < b.len_seq(c));
+				assert(p >= 0 && p < seqset.len_seq(c));
 				int seq = ss_seq[c][p + width() - 1 - *col_iter];
 				fm[matpos - seq]++;
 				matpos += sites_depth;
@@ -247,19 +249,19 @@ void Sites::calc_freq_matrix(const Seqset& b, int *fm){
   }
 }
 
-bool Sites::column_freq(const int col, const Seqset& s, int *ret){
-  char** ss_seq = s.seq_ptr();
+bool Sites::column_freq(const int col, int *ret){
+  char** ss_seq = seqset.seq_ptr();
   for(int i = 0; i < sites_depth; i++) ret[i] = 0;
   for(int i = 0; i < number(); i++){//i = site number
     int c = chrom(i);
     int p = posit(i);
     bool t = strand(i);
     if(t) {
-      if( (p + col > s.len_seq(c) - 1) || (p + col < 0) ) return false;
+      if( (p + col > seqset.len_seq(c) - 1) || (p + col < 0) ) return false;
       int seq = ss_seq[c][p + col];
       ret[seq]++;
     } else {
-      if((p + width() - 1 - col > s.len_seq(c) - 1) || (p + width() - 1 - col < 0)) return false;
+      if((p + width() - 1 - col > seqset.len_seq(c) - 1) || (p + width() - 1 - col < 0)) return false;
       int seq = ss_seq[c][p + width() - 1 - col];
       ret[sites_depth - seq - 1]++;
     }
@@ -419,10 +421,10 @@ void Sites::columns_open(int &l, int &r){
   }
 }
 
-void Sites::freq_matrix_extended(const Seqset& b, double *fm) const {
+void Sites::freq_matrix_extended(double *fm) const {
   //assumes fm of dimension (sites_width+2*sites_num_cols)*depth, fills in edges with Ns
-  char** ss_seq=b.seq_ptr();
-  int i,col,j,seq;
+  char** ss_seq = seqset.seq_ptr();
+  int i, col, j, seq;
   int fm_size = (width() + 2 * ncols()) * sites_depth;
   for(i = 0; i < fm_size; i++) fm[i] = 0.0;
   if(number() == 0) return;
@@ -432,11 +434,11 @@ void Sites::freq_matrix_extended(const Seqset& b, double *fm) const {
     bool t = strand(i);
     for(j = 0, col = -ncols(); col < width() + ncols(); col++, j += sites_depth) {
       if(t) {
-				if((p + col > b.len_seq(c) - 1) || (p + col < 0)) seq = 0;
+				if((p + col > seqset.len_seq(c) - 1) || (p + col < 0)) seq = 0;
 				else seq = ss_seq[c][p + col];
 				fm[j + seq] += 1.0;
       } else {
-				if((p + width() - 1 - col > b.len_seq(c) - 1) || (p + width() - 1 - col < 0)) seq = 0;
+				if((p + width() - 1 - col > seqset.len_seq(c) - 1) || (p + width() - 1 - col < 0)) seq = 0;
 				else seq = ss_seq[c][p + width() - 1 - col];
 				fm[j + sites_depth - 1 - seq] += 1.0;
       }
@@ -445,14 +447,14 @@ void Sites::freq_matrix_extended(const Seqset& b, double *fm) const {
   for(i = 0; i < fm_size; i++) fm[i] /= (double) number();
 }
 
-void Sites::orient(const Seqset& seqset){
+void Sites::orient() {
 	int* freq_matrix = new int[depth() * ncols()];
   double *info = new double[6];
   double *freq = new double[6];
   for(int i = 0; i < 6; i++) info[i] = 0.0;
 	
   double tot = number();
-  calc_freq_matrix(seqset, freq_matrix);
+  calc_freq_matrix(freq_matrix);
   for(int i = 0; i < depth() * ncols(); i += depth()){
     double ii = 0.0;
     for(int j = 1; j <= 4; j++) {

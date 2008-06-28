@@ -87,7 +87,7 @@ void ArchiveSites::write(ostream& archout) {
 	for(int i = 0; i < arch_sites.size(); i++) {
 		if(arch_sites[i].sites()->get_spec() > 1) {
 			archout << "Motif " << i + 1 << endl;
-			arch_sites[i].sites()->write(arch_seqset, archout);
+			arch_sites[i].sites()->write(archout);
 		}
 	}
 }

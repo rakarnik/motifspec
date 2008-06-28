@@ -21,7 +21,7 @@ comp_sites(s)
   comp_fmsize=(s.width()+2*s.ncols())*s.depth();
   comp_fm1=new double[comp_fmsize];
   comp_fm2=new double[comp_fmsize];//2=reverse complement of 1
-  s.freq_matrix_extended(t,comp_fm1);
+  s.freq_matrix_extended(comp_fm1);
   //assuming nacgtn here
   for(i=0;i<comp_fmsize;i+=6){
     comp_fm1[i+1]+=(comp_fm1[i]+comp_fm1[i+5])/4.0;

@@ -184,7 +184,7 @@ void SEModel::seed_random_site() {
 void SEModel::calc_matrix() {
   int d = sites.depth();
   double tot = (double) sites.number() + separams.npseudo;
-  sites.calc_freq_matrix(seqset, freq_matrix);
+  sites.calc_freq_matrix(freq_matrix);
   for(int i = 0; i < d * sites.ncols();i += d){
     score_matrix[i] = score_matrix[i + 5] = 1.0;
     for(int j = 1;j <= 4; j++){
@@ -410,7 +410,7 @@ void SEModel::column_sample(){
 	for(int i = 0; i < cs_span; i++) {
 		wtx[i].id = 1000;
 		wtx[i].score = -DBL_MAX;
-		if(sites.column_freq(i - x, seqset, freq)){
+		if(sites.column_freq(i - x, freq)){
       wt = 0.0;
       for(int j = 0;j < sites.depth(); j++){
 				wt += gammaln(freq[j] + separams.pseudo[j]);
@@ -485,7 +485,7 @@ double SEModel::map_score() {
   ms += ( gammaln(map_success+map_alpha)+gammaln(map_N-map_success+map_beta) );
   ms -= ( gammaln(map_alpha)+gammaln(map_N + map_beta) );
 	
-  sites.calc_freq_matrix(seqset,freq_matrix);
+  sites.calc_freq_matrix(freq_matrix);
   double sc[6]={0.0,0.0,0.0,0.0,0.0,0.0};
   int d=sites.depth();
   for(k=0;k!=d*sites.ncols();k+=d) {
@@ -760,13 +760,13 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 				cerr << "\t\t\tCompleted phase " << phase << " with less than " << separams.minsize << " sequences with sites. Restarting..." << endl;
 				break;
 			}
-			sites.orient(seqset);
+			sites.orient();
 			if(archive.check_motif(sites)) {
 				char tmpfilename[30], motfilename[30];
 				sprintf(tmpfilename, "%d.%d.mot.tmp", worker, iter);
 				sprintf(motfilename, "%d.%d.mot", worker, iter);
 				ofstream motout(tmpfilename);
-				sites.write(seqset, motout);
+				sites.write(motout);
 				motout.close();
 				rename(tmpfilename, motfilename);
 				cerr << "\t\t\tCompleted phase " << phase << "! Restarting..." << endl;
@@ -878,7 +878,7 @@ void SEModel::full_output(ostream &fout){
     s = archive.return_best(j);
     if(s->get_spec() > 1){
 			fout << "Motif " << j + 1 << endl;
-			s->write(seqset, fout);
+			s->write(fout);
 		}
     else break;
   }
