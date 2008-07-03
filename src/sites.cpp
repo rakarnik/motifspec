@@ -450,14 +450,18 @@ void Sites::freq_matrix_extended(double *fm) const {
 void Sites::orient() {
 	int* freq_matrix = new int[depth() * ncols()];
   double *freq = new double[6];
+	for(int i = 0; i < 6; i++)
+		freq[i] = 0.0;
 	
   calc_freq_matrix(freq_matrix);
   for(int i = 0; i < depth() * ncols(); i += depth()){
     double ii = 0.0;
-    for(int j = 1; j <= 4; j++) {
-      freq[j] += freq_matrix[i + j] / number();
-    }
+    for(int j = 1; j <= 4; j++)
+      freq[j] += freq_matrix[i + j];
   }
+	for(int i = 0; i < 6; i++)
+		freq[i] /= number();
+	
   double flip = 1.5 * freq[3] + 1.0 * freq[1] - 1.0 * freq[4] - 1.5 * freq[2];
   if(flip < 0.0) flip_sites();
 	delete [] freq_matrix;
