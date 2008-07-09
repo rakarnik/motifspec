@@ -52,7 +52,7 @@ SEModel::~SEModel(){
 void SEModel::set_default_params(){
   separams.expect = 10;
   separams.gcback = 0.38;
-  separams.minpass = 5;
+  separams.minpass = 50;
   separams.seed = -1;
   separams.psfact = 0.1;
   separams.weight = 0.8; 
@@ -688,7 +688,6 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	motif.set_expr_cutoff(0.85);
 	motif.set_map(0);
 	int i_worse = 0;
-	i_worse = 0;
 	int phase = 0;
 	int oldphase = 0;
 	
@@ -723,7 +722,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			print_status(cerr, i, oldphase);
 			oldphase = phase;
 		}
-		if(phase == 3) {
+		if(phase == 2) {
 			if(size() < separams.minsize/2) {
 				cerr << "\t\t\tReached phase " << phase << " with less than " << separams.minsize/2 << " sequences with motif. Restarting..." << endl;
 				break;
@@ -795,7 +794,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			best_motif = motif;
 		}
 		else i_worse++;
-		if(i_worse > separams.minpass){
+		if(i_worse > separams.minpass * (phase + 1)){
 			if(best_motif.get_spec() == 0) {
 				print_status(cerr, i, phase);
 				cerr << "\t\t\ti_worse is greater than cutoff and best score at cutoff! Restarting..." << endl;
@@ -806,6 +805,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 				cerr << "\t\t\ti_worse is greater than cutoff and only 1 site! Restarting..." << endl;
 				break;
 			}
+			print_status(cerr, i, phase);
 			cerr << "\t\t\t\ti_worse threshold reached. Reloading best sites so far..." << endl;
 			motif = best_motif;
 			select_motif = best_motif;
@@ -821,7 +821,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			expand_search_around_mean(motif.get_expr_cutoff());
 		}
 	
-		if(i % 1 == 0) {
+		if(i % 50 == 0) {
 			print_status(cerr, i, phase);
 		}
 	}
