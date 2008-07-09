@@ -4,7 +4,6 @@
 #include "standard.h"
 #include "Random.h"
 #include "seqset.h"
-#include "sites.h"
 #include "archivesites.h"
 #include "myheap.h"
 
@@ -47,8 +46,8 @@ class SEModel {
   Random<int> ran_int;
   Random<double> ran_dbl;
   Seqset seqset;
-  Sites sites;
-  Sites select_sites;
+  Motif motif;
+  Motif select_motif;
   ArchiveSites archive;
 	int members;
   int* freq_matrix;
@@ -74,8 +73,8 @@ class SEModel {
 	vector<struct idscore> seqranks;
 	vector<double> expscores;
 	vector<struct idscore> expranks;
-	void set_seq_cutoffs(const int i);
-	void set_expr_cutoffs(const int i);
+	void set_seq_cutoffs();
+	void set_expr_cutoffs();
 	void print_possible(ostream& out);
 	
  public:
@@ -108,7 +107,7 @@ class SEModel {
 	void clear_sites();																			// Remove all sites currently in model
 	bool is_member(const int gene) const;										// Return whether the gene is a member
 	int size() const;                                       // Return number of genes
-	int sites_size() const;																	// Return number of sites
+	int motif_size() const;																	// Return number of sites
 	void genes(int* genes) const;                           // Return the genes that are assigned to this model
 	
 	/* Sequence model*/
@@ -148,4 +147,3 @@ class SEModel {
 };
 
 #endif
-

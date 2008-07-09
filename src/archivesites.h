@@ -14,11 +14,11 @@ class ArchiveSites{
   const Seqset& arch_seqset;
 
  public:
-  ArchiveSites(Sites& s, Seqset& seq, double map_cut, double sim_cut);
+  ArchiveSites(Seqset& seq, double map_cut, double sim_cut);
 	int nmots() const { return arch_sites.size(); }
-  bool check_motif(const Sites& s);               // Returns true if no better motif, false otherwise
-  bool consider_motif(const Sites& s);            // Returns true if motif was added, false otherwise
-  Sites* return_best(const int i=0);
+  bool check_motif(const Motif& m);               // Returns true if no better motif, false otherwise
+  bool consider_motif(const Motif& m);            // Returns true if motif was added, false otherwise
+  Motif* return_best(const int i=0);
 	void clear();
 	void read(istream& archin);
 	void write(ostream& archout);

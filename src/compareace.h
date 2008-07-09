@@ -4,10 +4,10 @@
 #ifndef _compareace
 #define _compareace
 #include "standard.h"
-#include "sites.h"
+#include "motif.h"
 
 class CompareACESites{
- 	Sites comp_sites;
+ 	Motif comp_motif;
   bool comp_ready;
   double *comp_fm1;
   double *comp_fm2;
@@ -15,14 +15,14 @@ class CompareACESites{
   int comp_l1,comp_r1,comp_l2,comp_r2;
 
 public:
-	CompareACESites(const Sites &s, const Seqset &t);
+	CompareACESites(const Motif &m);
 	CompareACESites(const CompareACESites& s);
   ~CompareACESites();
-  CompareACESites& operator= (const CompareACESites& s);
+  CompareACESites& operator=(const CompareACESites& s);
   double compare(const CompareACESites &c);
-  Sites* sites() { return &comp_sites; }
-  void kill_sites();//useful for some copy operations when comp_sites not needed
-  bool ready() const {return comp_ready;}
+  Motif* motif() { return &comp_motif; };
+  void kill_motif();//useful for some copy operations when comp_sites not needed
+  bool ready() const {return comp_ready;};
 };
 
 CompareACESites read_motif(const string fname, const int mot);

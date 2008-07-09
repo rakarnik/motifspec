@@ -1,23 +1,21 @@
-//Copyright 1999 President and Fellows of Harvard University
-//sites.cpp
+#include "motif.h"
 
-#include "sites.h"
-
-Sites::Sites(const Seqset& s, int nc, int mx, int dp) :
-sites_depth(dp),
+Motif::Motif(const Seqset& s, int nc, int dp, int np) :
 seqset(s),
-sites_num_seqs(s.num_seqs()),
-sites_len_seq(sites_num_seqs),
-sites_max_width(2 * nc),
+depth(dp),
+npseudo(np),
+num_seqs(s.num_seqs()),
+len_seq(num_seqs),
+max_width(2 * nc),
 columns(nc),
-sites_num_seqs_with_sites(0),
-sites_has_sites(sites_num_seqs)
+num_seqs_with_sites(0),
+has_sites(num_seqs)
 {
 	for(int i = 0; i < columns.size(); i++) {
 		columns[i] = i;
 	}
-  for(int i = 0; i < sites_num_seqs; i++){
-    sites_len_seq[i] = s.len_seq(i);
+  for(int i = 0; i < num_seqs; i++){
+    len_seq[i] = s.len_seq(i);
   }
 	seq_cutoff = 0.00001;
 	expr_cutoff = 0.70;
@@ -26,65 +24,67 @@ sites_has_sites(sites_num_seqs)
 	spec = 0.0;
 }
 
-Sites::Sites(const Sites& s) :
-sites_depth(s.sites_depth),
-seqset(s.seqset),
-sites_num_seqs(s.sites_num_seqs),
-sites_len_seq(s.sites_len_seq),
-sites_max_width(s.sites_max_width),
-columns(s.columns),
-sites_num_seqs_with_sites(s.sites_num_seqs_with_sites),
-sites_has_sites(s.sites_has_sites)
+Motif::Motif(const Motif& m) :
+seqset(m.seqset),
+depth(m.depth),
+npseudo(m.npseudo),
+num_seqs(m.num_seqs),
+len_seq(m.len_seq),
+max_width(m.max_width),
+columns(m.columns),
+num_seqs_with_sites(m.num_seqs_with_sites),
+has_sites(m.has_sites)
 {
-  mapsc = s.mapsc;
-	spec = s.spec;
-  iter = s.iter;
-	dejavu = s.dejavu;
-	seq_cutoff = s.seq_cutoff;
-	expr_cutoff = s.expr_cutoff;
-  *this=s;
+  mapsc = m.mapsc;
+	spec = m.spec;
+  iter = m.iter;
+	dejavu = m.dejavu;
+	seq_cutoff = m.seq_cutoff;
+	expr_cutoff = m.expr_cutoff;
+  *this = m;
 }
 
-Sites& Sites::operator= (const Sites& s) {
-  if(this != &s){
+Motif& Motif::operator= (const Motif& m) {
+  if(this != &m){
     //assume that the same Seqset is referred to, so ignore some things
-    sites_depth = s.sites_depth;
-		sitelist.assign(s.sitelist.begin(), s.sitelist.end());
-		sites_num_seqs_with_sites = s.sites_num_seqs_with_sites;
-		sites_has_sites.assign(s.sites_has_sites.begin(), s.sites_has_sites.end());
-    columns.assign(s.columns.begin(), s.columns.end());
-		seq_cutoff = s.seq_cutoff;
-		expr_cutoff = s.expr_cutoff;
-		mapsc = s.mapsc;
-		spec = s.spec;
-		iter = s.iter;
-		dejavu = s.dejavu;
+    depth = m.depth;
+		npseudo = m.npseudo;
+		sitelist.assign(m.sitelist.begin(), m.sitelist.end());
+		num_seqs_with_sites = m.num_seqs_with_sites;
+		has_sites.assign(m.has_sites.begin(), m.has_sites.end());
+    columns.assign(m.columns.begin(), m.columns.end());
+		seq_cutoff = m.seq_cutoff;
+		expr_cutoff = m.expr_cutoff;
+		mapsc = m.mapsc;
+		spec = m.spec;
+		iter = m.iter;
+		dejavu = m.dejavu;
   }
   return *this;
 }
 
-void Sites::clear_sites(){
+void Motif::clear_sites(){
   sitelist.clear();
 	for(int i = 0; i < columns.size(); i++) {
 		columns[i] = i;
 	}
-  sites_num_seqs_with_sites = 0;
-	for(int i = 0; i < sites_num_seqs; i++) {
-		sites_has_sites[i] = false;
+  num_seqs_with_sites = 0;
+	for(int i = 0; i < num_seqs; i++) {
+		has_sites[i] = false;
 	}
 	mapsc = 0.0;
 	spec = 0.0;
 }
 
-void Sites::remove_all_sites() {
+void Motif::remove_all_sites() {
 	sitelist.clear();
-	sites_num_seqs_with_sites = 0;
-	for(int i = 0; i < sites_num_seqs; i++) {
-		sites_has_sites[i] = false;
+	num_seqs_with_sites = 0;
+	for(int i = 0; i < num_seqs; i++) {
+		has_sites[i] = false;
 	}
 }
 
-void Sites::write(ostream& motout) const {
+void Motif::write(ostream& motout) const {
 	map<char,char> nt;
   nt[0] = nt[5] = 'N';
   nt[1] = 'A';
@@ -104,7 +104,7 @@ void Sites::write(ostream& motout) const {
       }
       else {
 				if(p + width() - 1 - j >= 0 && p + width()-1-j < seqset.len_seq(c))
-					motout << nt[depth() - 1 - ss_seq[c][p + width() - 1 - j]];
+					motout << nt[depth - 1 - ss_seq[c][p + width() - 1 - j]];
 				else motout << ' ';
       }
     }
@@ -128,7 +128,7 @@ void Sites::write(ostream& motout) const {
 	motout << "Dejavu: " << dejavu << endl << endl;
 }
 
-void Sites::read(istream& motin) {
+void Motif::read(istream& motin) {
 	char* match;
 	char line[200];
 	vector<int> c;
@@ -190,12 +190,12 @@ void Sites::read(istream& motin) {
 	set_dejavu(atoi(strtok(NULL, "\0")));
 }
 
-void Sites::destroy(){
+void Motif::destroy(){
   //for when the = operator can fail
-  sites_max_width=0;
+  max_width=0;
 }
 
-bool Sites::is_open_site(const int c, const int p){
+bool Motif::is_open_site(const int c, const int p){
 	for(int i = 0; i < sitelist.size(); i++){
     if(chrom(i) == c) {
       int pp = posit(i);
@@ -205,23 +205,24 @@ bool Sites::is_open_site(const int c, const int p){
   return true;
 }
 
-void Sites::add_site(const int c, const int p, const bool s){
+void Motif::add_site(const int c, const int p, const bool s){
 	Site st(c, p, s);
 	sitelist.push_back(st);
-	if(sites_has_sites[c] == 0) sites_num_seqs_with_sites++;
-	sites_has_sites[c]++;
+	if(has_sites[c] == 0) num_seqs_with_sites++;
+	has_sites[c]++;
 }
 
-void Sites::calc_freq_matrix(int *fm){
+void Motif::calc_freq_matrix(int *fm){
 	// fm will have allocation for depth() * ncols()
   char** ss_seq = seqset.seq_ptr();
-  for(int i = 0; i < sites_depth * columns.size(); i++){
+  for(int i = 0; i < depth * ncols(); i++){
 		fm[i] = 0;
   }
-  for(int i = 0; i < number(); i++){ //i = site number
-    int c = chrom(i);
-    int p = posit(i);
-    bool s = strand(i);
+  vector<Site>::iterator iter;
+  for(iter = sitelist.begin(); iter != sitelist.end(); ++iter) {
+    int c = iter->chrom();
+    int p = iter->posit();
+    bool s = iter->strand();
     int pos, matpos;
     if(s) {                              // forward strand
       matpos = 0;
@@ -232,10 +233,10 @@ void Sites::calc_freq_matrix(int *fm){
 				assert(p >= 0 && p < seqset.len_seq(c));
 				int seq = ss_seq[c][pos];
 				fm[matpos + seq]++;
-				matpos += sites_depth;
+				matpos += depth;
       }
     } else {                             // reverse strand
-      matpos = sites_depth - 1;
+      matpos = depth - 1;
       pos = 0;
 			vector<int>::iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
@@ -243,19 +244,20 @@ void Sites::calc_freq_matrix(int *fm){
 				assert(p >= 0 && p < seqset.len_seq(c));
 				int seq = ss_seq[c][p + width() - 1 - *col_iter];
 				fm[matpos - seq]++;
-				matpos += sites_depth;
+				matpos += depth;
       }
     }      
   }
 }
 
-bool Sites::column_freq(const int col, int *ret){
+bool Motif::column_freq(const int col, int *ret){
   char** ss_seq = seqset.seq_ptr();
-  for(int i = 0; i < sites_depth; i++) ret[i] = 0;
-  for(int i = 0; i < number(); i++){//i = site number
-    int c = chrom(i);
-    int p = posit(i);
-    bool t = strand(i);
+  for(int i = 0; i < depth; i++) ret[i] = 0;
+	vector<Site>::iterator iter;
+  for(iter = sitelist.begin(); iter != sitelist.end(); ++iter) {
+    int c = iter->chrom();
+    int p = iter->posit();
+    bool t = iter->strand();
     if(t) {
       if( (p + col > seqset.len_seq(c) - 1) || (p + col < 0) ) return false;
       int seq = ss_seq[c][p + col];
@@ -263,13 +265,13 @@ bool Sites::column_freq(const int col, int *ret){
     } else {
       if((p + width() - 1 - col > seqset.len_seq(c) - 1) || (p + width() - 1 - col < 0)) return false;
       int seq = ss_seq[c][p + width() - 1 - col];
-      ret[sites_depth - seq - 1]++;
+      ret[depth - seq - 1]++;
     }
   }
   return true;
 }
 
-int Sites::remove_col(const int c) {
+int Motif::remove_col(const int c) {
   int ret = 0, ns = 0;         // return number of removed column in new numbering
 	bool found = false;
 	if(columns.size() == 0) {
@@ -304,7 +306,7 @@ int Sites::remove_col(const int c) {
   return ret;
 }
 
-void Sites::add_col(const int c) {
+void Motif::add_col(const int c) {
 	int col, nxt, i;
 	col = nxt = i = 0;
   if(c < 0){                   // column to the left of existing, shift existing to the right
@@ -330,11 +332,11 @@ void Sites::add_col(const int c) {
   }
 }
 
-bool Sites::has_col(const int c) {
+bool Motif::has_col(const int c) {
 	return binary_search(columns.begin(), columns.end(), c);
 }
 
-void Sites::flip_sites(){
+void Motif::flip_sites(){
   int i;
   for(i = 0; i < number(); i++) {
     sitelist[i].flip();
@@ -352,7 +354,7 @@ void Sites::flip_sites(){
 	columns.assign(temp.begin(), temp.end());
 }
 
-void Sites::shift_sites(const int l, const int r){
+void Motif::shift_sites(const int l, const int r){
   // numbers for right movement of beg/end point of forward site
   // l: + for shorter/right
   // r: + for longer/right
@@ -364,33 +366,33 @@ void Sites::shift_sites(const int l, const int r){
   }
 }
 
-int Sites::positions_available() const {
+int Motif::positions_available() const {
   int ret = 0;
-  for(int i = 0; i < sites_num_seqs; i++){
-    ret += sites_len_seq[i] - width() + 1;
+  for(int i = 0; i < num_seqs; i++){
+    ret += len_seq[i] - width() + 1;
   }
   return ret;
 }
 
-int Sites::positions_available(const bool* possible) const {
+int Motif::positions_available(const bool* possible) const {
 	int ret = 0;
-	for(int i = 0; i < sites_num_seqs; i++) {
+	for(int i = 0; i < num_seqs; i++) {
 		if(possible[i])
-			ret += sites_len_seq[i] - width() + 1;
+			ret += len_seq[i] - width() + 1;
 	}
 	return ret;
 }
 
-void Sites::columns_open(int &l, int &r){
+void Motif::columns_open(int &l, int &r){
   //input r/l are max values to be reduced
   //only works if site list is sorted
-  int i;
-  int c_prev=-1, p_prev;
+  int c_prev = -1, p_prev;
   bool s_prev;
-  for(i = 0; i < number(); i++) {
-    int c = chrom(i);
-    int p = posit(i);
-    bool s = strand(i);
+	vector<Site>::iterator iter;
+  for(iter = sitelist.begin(); iter != sitelist.end(); ++iter) {
+    int c = iter->chrom();
+    int p = iter->posit();
+    bool s = iter->strand();
     if(c == c_prev){
       int d = p - p_prev - width();
       if(s == s_prev){
@@ -403,7 +405,7 @@ void Sites::columns_open(int &l, int &r){
     } else {
       int f;
       if(c_prev != -1){
-				f = sites_len_seq[c_prev] - width() - p_prev;
+				f = len_seq[c_prev] - width() - p_prev;
 				if(s_prev){
 					if(r > f) r = f;
 				} else {
@@ -421,18 +423,18 @@ void Sites::columns_open(int &l, int &r){
   }
 }
 
-void Sites::freq_matrix_extended(double *fm) const {
+void Motif::freq_matrix_extended(double *fm) const {
   //assumes fm of dimension (sites_width+2*sites_num_cols)*depth, fills in edges with Ns
   char** ss_seq = seqset.seq_ptr();
   int i, col, j, seq;
-  int fm_size = (width() + 2 * ncols()) * sites_depth;
+  int fm_size = (width() + 2 * ncols()) * depth;
   for(i = 0; i < fm_size; i++) fm[i] = 0.0;
   if(number() == 0) return;
   for(i = 0; i < number(); i++) {//i = site number
     int c = chrom(i);
     int p = posit(i);
     bool t = strand(i);
-    for(j = 0, col = -ncols(); col < width() + ncols(); col++, j += sites_depth) {
+    for(j = 0, col = -ncols(); col < width() + ncols(); col++, j += depth) {
       if(t) {
 				if((p + col > seqset.len_seq(c) - 1) || (p + col < 0)) seq = 0;
 				else seq = ss_seq[c][p + col];
@@ -440,22 +442,35 @@ void Sites::freq_matrix_extended(double *fm) const {
       } else {
 				if((p + width() - 1 - col > seqset.len_seq(c) - 1) || (p + width() - 1 - col < 0)) seq = 0;
 				else seq = ss_seq[c][p + width() - 1 - col];
-				fm[j + sites_depth - 1 - seq] += 1.0;
+				fm[j + depth - 1 - seq] += 1.0;
       }
     }
   }
   for(i = 0; i < fm_size; i++) fm[i] /= (double) number();
 }
 
-void Sites::orient() {
-	int* freq_matrix = new int[depth() * ncols()];
+void Motif::calc_score_matrix(double *sm, double* backfreq) {
+	int* fm = new int[depth * ncols()];
+  double tot = (double) number() + npseudo;
+  calc_freq_matrix(fm);
+  for(int i = 0; i < depth * ncols();i += depth){
+    sm[i] = sm[i + 5] = 1.0;
+    for(int j = 1; j <= 4; j++){
+      int x = fm[i] + fm[i + 5];
+      sm[i + j] = (fm[i + j] + (x + npseudo) * backfreq[j])/(tot * backfreq[j]);
+    }
+  }
+	delete [] fm;
+}
+
+void Motif::orient() {
+	int* freq_matrix = new int[depth * ncols()];
   double *freq = new double[6];
 	for(int i = 0; i < 6; i++)
 		freq[i] = 0.0;
 	
   calc_freq_matrix(freq_matrix);
-  for(int i = 0; i < depth() * ncols(); i += depth()){
-    double ii = 0.0;
+  for(int i = 0; i < depth * ncols(); i += depth) {
     for(int j = 1; j <= 4; j++)
       freq[j] += freq_matrix[i + j];
   }
@@ -468,7 +483,7 @@ void Sites::orient() {
   delete [] freq;
 }
 
-void Sites::print_columns(ostream& out) {
+void Motif::print_columns(ostream& out) {
 	vector<int>::iterator col_iter;
 	for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter)
 		out << " " << *col_iter;
