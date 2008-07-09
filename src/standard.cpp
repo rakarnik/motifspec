@@ -23,7 +23,6 @@ code.*/
 	char *y=new char[max_name+1];//name
 	char *z=new char[max_seq+1];//sequence
 	int i=0;
-	bool isname=true;
 	while(test.get(c)){
 		if(c=='>'){
 			if(i!=0){//push seq
@@ -287,16 +286,11 @@ float jack_corr(const float* expr1, const float* expr2, const int num) {
 double	lnfact(long n)
 /* static variables are guaranteed to be initialized to zero */
 {
-	static double lnft[51];
+	static double lnft[7000];
 
 	if (n <= 1) return 0.0;
 	if (n <= 50) return lnft[n] ? lnft[n] : (lnft[n] = gammaln(n + 1.0));
-	else {
-		double ret = 0.91894;          // 0.5 * log(2 * Pi)
-		ret += (n + 0.5) * log(n);
-		ret -= n;
-		return ret;
-	}
+	else return lnft[n]? lnft[n] : (lnft[n] = stirlingln(n));
 }
 
 double gammaln(double xx) {
@@ -312,6 +306,13 @@ double gammaln(double xx) {
 	for (j=0;j<=5;j++) ser+=cof[j]/++y;
 
 	return -tmp+log(2.5066282746310005*ser/x);
+}
+
+double stirlingln(int n) {
+	double ret = 0.91894;          // 0.5 * log(2 * Pi)
+	ret += (n + 0.5) * log(n);
+	ret -= n;
+	return ret;
 }
 
 vector<string> split(string s, char c, bool skipall){
@@ -596,7 +597,7 @@ string ace_consensus(const char* file, int mot_num){
   string ret;
   int wide1=s1[0].size();
   int num1=s1.size();
-  int i,j,k;
+  int i,j;
   int num1a,num1c,num1g,num1t;
   for(i=0;i<wide1;i++){
     num1a=num1c=num1g=num1t=0;

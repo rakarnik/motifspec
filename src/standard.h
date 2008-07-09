@@ -44,6 +44,7 @@ string clip_white(const string &s);
 double str_to_dbl(const string &s);
 string random_dna(int len);
 double gammaln(double x);
+double stirlingln(int n);
 double  lnfact(long n);
 double  bico(long N,long k);
 double  lnbico(register long N, register long k);
