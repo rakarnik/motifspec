@@ -167,13 +167,14 @@ void SEModel::seed_random_site() {
 	chosen_seq = g;
 	
 	/* Now choose a site */
+	int width = motif.width();
   for(int j = 0; j < 50; j++) {
-		ran_int.set_range(0, seqset.len_seq(chosen_seq) - motif.width() - 1);
+		ran_int.set_range(0, seqset.len_seq(chosen_seq) - width - 1);
 		double db = ran_dbl.rnum();//random (0,1)
 		watson = (db > 0.5);
 		chosen_posit = ran_int.rnum();
-		if(watson && (chosen_posit > seqset.len_seq(chosen_seq) - motif.width() - 1)) continue;
-		if((! watson) && (chosen_posit < motif.width())) continue;
+		if(watson && (chosen_posit > seqset.len_seq(chosen_seq) - width - 1)) continue;
+		if((! watson) && (chosen_posit < width)) continue;
 		if(motif.is_open_site(chosen_seq, chosen_posit)) {
       motif.add_site(chosen_seq, chosen_posit, watson);
       break;
@@ -200,26 +201,32 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 	int matpos;
   int considered = 0;
   int gadd = -1,jadd = -1;
+	int d = motif.get_depth();
+	int nc = motif.ncols();
+	int width = motif.width();
+	int col, seq;
   for(int g = 0; g < seqset.num_seqs(); g++){
 		if (! is_possible(g)) continue;
-		for(int j = 0; j <= seqset.len_seq(g) - motif.width(); j++){
+		for(int j = 0; j <= seqset.len_seq(g) - width; j++){
 			Lw = 1.0;
 			matpos = 0;
-      for(int k = 0; k < motif.ncols(); k++){
-				assert(j + motif.column(k) >= 0);
-				assert(j + motif.column(k) <= seqset.len_seq(g));
-				int seq = ss_seq[g][j + motif.column(k)];
+      for(int k = 0; k < nc; k++){
+				col = motif.column(k);
+				assert(j + col >= 0);
+				assert(j + col <= seqset.len_seq(g));
+				seq = ss_seq[g][j + col];
 				Lw *= score_matrix[matpos + seq];
-				matpos += motif.get_depth();
+				matpos += d;
       }
       Lc = 1.0;
-			matpos = motif.get_depth() - 1;
-      for(int k = 0; k < motif.ncols(); k++){
-				assert(j + motif.width() - 1 - motif.column(k) >= 0);
-				assert(j + motif.width() - 1 - motif.column(k) <= seqset.len_seq(g));
-				int seq = ss_seq[g][j + motif.width() - 1 - motif.column(k)];
+			matpos = d - 1;
+      for(int k = 0; k < nc; k++){
+				col = motif.column(k);
+				assert(j + width - 1 - col >= 0);
+				assert(j + width - 1 - col <= seqset.len_seq(g));
+				seq = ss_seq[g][j + width - 1 - col];
 				Lc *= score_matrix[matpos - seq];
-				matpos += motif.get_depth();
+				matpos += d;
       }
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
       Pc = Lc * ap/(1.0 - ap + Lc * ap);
@@ -228,7 +235,7 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 				select_motif.add_site(g, j, true);
 			}
 			//strand irrelevant for select_sites
-			if(g == gadd && j < jadd + motif.width()) continue;
+			if(g == gadd && j < jadd + width) continue;
 			if(F < minprob) continue;
 			considered++;
 			Pw = F * Pw / (Pw + Pc);
@@ -236,13 +243,13 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 			if(greedy) {
 				if(Pw > Pc) {
 					assert(j >= 0);
-					assert(j <= seqset.len_seq(g) - motif.width());
+					assert(j <= seqset.len_seq(g) - width);
 					motif.add_site(g, j, true);
 					gadd = g;
 					jadd = j;
 				} else {
 					assert(j >= 0);
-					assert(j <= seqset.len_seq(g) - motif.width());
+					assert(j <= seqset.len_seq(g) - width);
 					motif.add_site(g, j, false);
 					gadd = g;
 					jadd = j;
@@ -252,13 +259,13 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 				if (r > F) continue;
 				else if (r < Pw) {
 					assert(j >= 0);
-					assert(j <= seqset.len_seq(g) - motif.width());
+					assert(j <= seqset.len_seq(g) - width);
 					motif.add_site(g, j, true);
 					gadd = g;
 					jadd = j;
 				} else {
 					assert(j >= 0);
-					assert(j <= seqset.len_seq(g) - motif.width());
+					assert(j <= seqset.len_seq(g) - width);
 					motif.add_site(g, j, false);
 					gadd = g;
 					jadd = j;
@@ -277,29 +284,37 @@ void SEModel::single_pass_select(const double minprob){
 	motif.remove_all_sites();
   //will only update once per pass
 	
-  char **ss_seq;
-  ss_seq=seqset.seq_ptr();
+  char **ss_seq = seqset.seq_ptr();
   double Lw, Lc, Pw, Pc, F;
   int matpos;
-  int iadd=-1,jadd=-1;
-  for(n=0;n<select_motif.number();n++){
-    i=select_motif.chrom(n);
+  int iadd = -1, jadd = -1;
+	int selnum = select_motif.number();
+	int width = select_motif.width();
+	int d = select_motif.get_depth();
+	int nc = select_motif.ncols();
+  int col, seq;
+	for(n = 0; n < selnum; n++){
+    i = select_motif.chrom(n);
 		if(! is_possible(i)) continue;
-		j=select_motif.posit(n);
-    if(i==iadd&&j<jadd+motif.width()) continue;
-    if(j<0||j>seqset.len_seq(i)-motif.width()) continue;
+		j = select_motif.posit(n);
+    if(i == iadd && j < jadd + width) continue;
+    if(j < 0 || j > seqset.len_seq(i) - width) continue;
     //could be screwed up with column sampling
-    Lw=1.0;matpos=0;
-    for(k=0;k<motif.ncols();k++){
-      int seq=ss_seq[i][j+motif.column(k)];
-      Lw*=score_matrix[matpos+seq];
-      matpos+=motif.get_depth();
+    Lw = 1.0;
+		matpos = 0;
+    for(k = 0; k < nc; k++){
+			col = motif.column(k); 
+      seq = ss_seq[i][j + col];
+      Lw *= score_matrix[matpos + seq];
+      matpos += d;
     }
-    Lc=1.0;matpos=motif.get_depth()-1;
-    for(k=0;k<motif.ncols();k++){
-      int seq=ss_seq[i][j+motif.width()-1-motif.column(k)];
-      Lc*=score_matrix[matpos-seq];
-      matpos+=motif.get_depth();
+    Lc = 1.0;
+		matpos = d - 1;
+    for(k = 0; k < nc; k++){
+      col = motif.column(k); 
+      seq = ss_seq[i][j + width - 1 - col];
+      Lc *= score_matrix[matpos - seq];
+      matpos += d;
     }
 		Pw = Lw * ap / (1.0 - ap + Lw * ap);
     Pc = Lc * ap / (1.0 - ap + Lc * ap);
@@ -307,17 +322,19 @@ void SEModel::single_pass_select(const double minprob){
 		if(F < minprob) continue;
 		Pw = F * Pw/(Pw + Pc);
 		Pc = F - Pw;
-		double r=ran_dbl.rnum();
-		if (r>F)
+		double r = ran_dbl.rnum();
+		if (r > F)
 			continue;
-    else if (r<Pw) {
-      motif.add_site(i,j,true);
+    else if (r < Pw) {
+      motif.add_site(i, j, true);
       add_possible(i);
-			iadd=i;jadd=j;
+			iadd = i;
+			jadd = j;
     } else {
-      motif.add_site(i,j,false);
+      motif.add_site(i, j, false);
 			add_possible(i);
-      iadd=i;jadd=j;
+      iadd = i;
+			jadd = j;
     }
   }
 }
@@ -333,26 +350,32 @@ void SEModel::compute_seq_scores() {
   double Lw, Lc, Pw, Pc, F, bestF;
 	int matpos;
 	seqranks.clear();
+	int width = motif.width();
+	int d = motif.get_depth();
+	int nc = motif.ncols();
+	int col, seq;
 	for(int g = 0; g < seqset.num_seqs(); g++) {
 		bestF = 0.0;
-		for(int j = 0; j <= seqset.len_seq(g) - motif.width(); j++) {
+		for(int j = 0; j <= seqset.len_seq(g) - width; j++) {
 			Lw = 1.0;
 			matpos = 0;
-			for(int k = 0; k < motif.ncols(); k++) {
-				assert(j + motif.column(k) >= 0);
-				assert(j + motif.column(k) <= seqset.len_seq(g));
-				int seq = ss_seq[g][j + motif.column(k)];
+			for(int k = 0; k < nc; k++) {
+				col = motif.column(k);
+				assert(j + col >= 0);
+				assert(j + col <= seqset.len_seq(g));
+				seq = ss_seq[g][j + col];
 				Lw *= score_matrix[matpos + seq];
-				matpos += motif.get_depth();
+				matpos += d;
       }
       Lc = 1.0;
-			matpos = motif.get_depth() - 1;
-      for(int k = 0; k < motif.ncols(); k++){
-				assert(j + motif.width() - 1 - motif.column(k) >= 0);
-				assert(j + motif.width() - 1 - motif.column(k) <= seqset.len_seq(g));
-				int seq = ss_seq[g][j + motif.width() - 1 - motif.column(k)];
+			matpos = d - 1;
+      for(int k = 0; k < nc; k++){
+				col = motif.column(k);
+				assert(j + width - 1 - col >= 0);
+				assert(j + width - 1 - col <= seqset.len_seq(g));
+				int seq = ss_seq[g][j + width - 1 - col];
 				Lc *= score_matrix[matpos - seq];
-				matpos += motif.get_depth();
+				matpos += d;
       }
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
       Pc = Lc * ap/(1.0 - ap + Lc * ap);
@@ -384,12 +407,12 @@ void SEModel::compute_expr_scores() {
 
 void SEModel::column_sample(){
 	int *freq = new int[motif.get_depth()];
-	
+	int width = motif.width();
 	// Compute scores for current and surrounding columns
   int max_left, max_right;
-  max_left = max_right = (motif.get_max_width() - motif.width())/2;
+  max_left = max_right = (motif.get_max_width() - width)/2;
   motif.columns_open(max_left, max_right);
-	int cs_span = max_left + max_right + motif.width();
+	int cs_span = max_left + max_right + width;
   vector<struct idscore> wtx(cs_span);
 	int x = max_left;
   //wtx[x + c] will refer to the weight of pos c in the usual numbering
@@ -415,11 +438,11 @@ void SEModel::column_sample(){
 	for(int i = 0; i < cs_span; i++){
 		wtx[i].score -= scale;
 		wtx[i].score = exp(wtx[i].score);
-		int newwidth = motif.width();
+		int newwidth = width;
 		if(i < x)
 			newwidth += (x - i);
-		else if(i > (x + motif.width() - 1))
-			newwidth += (i - x - motif.width() + 1);
+		else if(i > (x + width - 1))
+			newwidth += (i - x - width + 1);
 		wtx[i].score /= bico(newwidth - 2, motif.ncols() - 2);
 	}
 	
@@ -518,20 +541,20 @@ string SEModel::consensus() const {
 	int numsites = motif.number();
 	if(numsites < 1) return "";
 	
-	// cerr << "Computing consensus with " << numsites << " sites" << endl;
+	int width = motif.width();
 	vector<string> hits(numsites);
 	for(int i = 0; i < numsites; i++){
 		int c = motif.chrom(i);
     int p = motif.posit(i);
     bool s = motif.strand(i);
-    for(int j = 0; j < motif.width(); j++){
+    for(int j = 0; j < width; j++){
       if(s) {
 				if(p + j >= 0 && p+j < seqset.len_seq(c))
 					 hits[i] += nt[ss_seq[c][p+j]];
 				else hits[i] += ' ';
       } else {
-				if(p + motif.width() - 1 - j >= 0 && p+motif.width() - 1 - j < seqset.len_seq(c))
-					hits[i] += nt[motif.get_depth()-1-ss_seq[c][p+motif.width()-1-j]];
+				if(p + width - 1 - j >= 0 && p + width - 1 - j < seqset.len_seq(c))
+					hits[i] += nt[motif.get_depth() - 1 - ss_seq[c][p + width - 1 - j]];
 				else hits[i] += ' ';
       }
     }
