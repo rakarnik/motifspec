@@ -34,19 +34,21 @@ im : \
 		bin/archivesites.o\
 		bin/compareace.o\
 		bin/im.o\
+		bin/motif.o\
 		bin/myheap.o\
 		bin/semodel.o\
 		bin/seqset.o\
-		bin/sites.o\
+		bin/site.o\
 		bin/standard.o
 	$(CC) $(LNK_OPTIONS) \
 		bin/archivesites.o\
 		bin/compareace.o\
 		bin/im.o\
+		bin/motif.o\
 		bin/myheap.o\
 		bin/semodel.o\
 		bin/seqset.o\
-		bin/sites.o\
+		bin/site.o\
 		bin/standard.o\
 		-o im
 
@@ -54,28 +56,30 @@ im-debug : \
 		debug/archivesites.o\
 		debug/compareace.o\
 		debug/im.o\
+		debug/motif.o\
 		debug/myheap.o\
 		debug/semodel.o\
 		debug/seqset.o\
-		debug/sites.o\
+		debug/site.o\
 		debug/standard.o
 	$(CC) $(LNK_DEBUG_OPTIONS) \
 		debug/archivesites.o\
 		debug/compareace.o\
 		debug/im.o\
+		debug/motif.o\
 		debug/myheap.o\
 		debug/semodel.o\
 		debug/seqset.o\
-		debug/sites.o\
+		debug/site.o\
 		debug/standard.o\
 		-o im-debug
 
 clean : 
-		rm -f\
-    bin/*.o\
-    debug/*.o\
-    im\
-		im-debug
+	rm -f\
+	bin/*.o\
+	debug/*.o\
+	im\
+	im-debug
 
 bin/archivesites.o : src/archivesites.h src/archivesites.cpp
 	$(CC) $(CC_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o bin/archivesites.o
@@ -86,17 +90,20 @@ bin/compareace.o : src/compareace.h src/compareace.cpp
 bin/im.o : src/im.h src/im.cpp
 	$(CC) $(CC_OPTIONS) src/im.cpp -c $(INCLUDE) -o bin/im.o
 
+bin/motif.o : src/motif.h src/motif.cpp
+	$(CC) $(CC_OPTIONS) src/motif.cpp -c $(INCLUDE) -o bin/motif.o
+
 bin/myheap.o : src/myheap.cpp
 	$(CC) $(CC_OPTIONS) src/myheap.cpp -c $(INCLUDE) -o bin/myheap.o
 
-bin/seqset.o : src/seqset.cpp
+bin/seqset.o : src/seqset.h src/seqset.cpp
 	$(CC) $(CC_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o bin/seqset.o
 
 bin/semodel.o : src/semodel.h src/semodel.cpp
 	$(CC) $(CC_OPTIONS) src/semodel.cpp -c $(INCLUDE) -o bin/semodel.o
 
-bin/sites.o : src/sites.h src/sites.cpp
-	$(CC) $(CC_OPTIONS) src/sites.cpp -c $(INCLUDE) -o bin/sites.o
+bin/site.o : src/site.h src/site.cpp
+	$(CC) $(CC_OPTIONS) src/site.cpp -c $(INCLUDE) -o bin/site.o
 
 bin/standard.o : src/standard.h src/standard.cpp
 	$(CC) $(CC_OPTIONS) src/standard.cpp -c $(INCLUDE) -o bin/standard.o
@@ -110,17 +117,20 @@ debug/compareace.o : src/compareace.h src/compareace.cpp
 debug/im.o : src/im.h src/im.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/im.cpp -c $(INCLUDE) -o debug/im.o
 
+debug/motif.o : src/motif.h src/motif.cpp
+	$(CC) $(CC_OPTIONS) src/motif.cpp -c $(INCLUDE) -o debug/motif.o
+
 debug/myheap.o : src/myheap.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/myheap.cpp -c $(INCLUDE) -o debug/myheap.o
 
-debug/seqset.o : src/seqset.cpp
+debug/seqset.o : src/seqset.h src/seqset.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o debug/seqset.o
 
 debug/semodel.o : src/semodel.h src/semodel.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/semodel.cpp -c $(INCLUDE) -o debug/semodel.o
 
-debug/sites.o : src/sites.h src/sites.cpp
-	$(CC) $(CC_DEBUG_OPTIONS) src/sites.cpp -c $(INCLUDE) -o debug/sites.o
+debug/site.o : src/site.h src/site.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/site.cpp -c $(INCLUDE) -o debug/site.o
 
 debug/standard.o : src/standard.h src/standard.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/standard.cpp -c $(INCLUDE) -o debug/standard.o
