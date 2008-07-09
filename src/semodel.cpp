@@ -460,6 +460,7 @@ void SEModel::column_sample(){
 				nseen++;
 			} else {
 				motif.add_col(wtx[i].id - x);           // column is ranked in top, and is not in motif
+				select_motif.add_col(wtx[i].id - x);
 				if(wtx[i].id - x < 0)                   // if column was to the left of the current columns, adjust the remaining columns
 					for(int j = i + 1; j < cs_span; ++j)
 						wtx[j].id -= wtx[i].id - x;
@@ -471,12 +472,14 @@ void SEModel::column_sample(){
 					for(int j = i + 1; j < cs_span; ++j)
 						wtx[j].id -= motif.column(1);
 				motif.remove_col(wtx[i].id - x);
+				select_motif.remove_col(wtx[i].id - x);
 			}
 		}
 	}
 	
 	if(motif.ncols() != ncols) {                 // number of columns should not change
-		cerr << "ERROR: column samping started with " << ncols << ", ended with " << motif.ncols() << endl;
+		cerr << "\t\t\t\t\tERROR: column sampling started with " << ncols << ", ended with " << motif.ncols() << endl;
+		abort();
 	}	
 }
 
