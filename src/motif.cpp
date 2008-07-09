@@ -92,10 +92,11 @@ void Motif::write(ostream& motout) const {
 	nt[3] = 'G';
 	nt[4] = 'T';
   char** ss_seq = seqset.seq_ptr();
-  for(int i = 0; i < number(); i++){
-    int c = chrom(i);
-    int p = posit(i);
-    bool s = strand(i);
+	vector<Site>::const_iterator site_iter;
+  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
+    int c = site_iter->chrom();
+    int p = site_iter->posit();
+    bool s = site_iter->strand();
     for(int j = 0; j < width(); j++){
       if(s) {
 				if(p + j >= 0 && p + j < seqset.len_seq(c))
@@ -218,11 +219,11 @@ void Motif::calc_freq_matrix(int *fm){
   for(int i = 0; i < depth * ncols(); i++){
 		fm[i] = 0;
   }
-  vector<Site>::iterator iter;
-  for(iter = sitelist.begin(); iter != sitelist.end(); ++iter) {
-    int c = iter->chrom();
-    int p = iter->posit();
-    bool s = iter->strand();
+  vector<Site>::iterator site_iter;
+  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
+    int c = site_iter->chrom();
+    int p = site_iter->posit();
+    bool s = site_iter->strand();
     int pos, matpos;
     if(s) {                              // forward strand
       matpos = 0;
@@ -253,11 +254,11 @@ void Motif::calc_freq_matrix(int *fm){
 bool Motif::column_freq(const int col, int *ret){
   char** ss_seq = seqset.seq_ptr();
   for(int i = 0; i < depth; i++) ret[i] = 0;
-	vector<Site>::iterator iter;
-  for(iter = sitelist.begin(); iter != sitelist.end(); ++iter) {
-    int c = iter->chrom();
-    int p = iter->posit();
-    bool t = iter->strand();
+	vector<Site>::iterator site_iter;
+  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
+    int c = site_iter->chrom();
+    int p = site_iter->posit();
+    bool t = site_iter->strand();
     if(t) {
       if( (p + col > seqset.len_seq(c) - 1) || (p + col < 0) ) return false;
       int seq = ss_seq[c][p + col];
@@ -388,11 +389,11 @@ void Motif::columns_open(int &l, int &r){
   //only works if site list is sorted
   int c_prev = -1, p_prev;
   bool s_prev;
-	vector<Site>::iterator iter;
-  for(iter = sitelist.begin(); iter != sitelist.end(); ++iter) {
-    int c = iter->chrom();
-    int p = iter->posit();
-    bool s = iter->strand();
+	vector<Site>::iterator site_iter;
+  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
+    int c = site_iter->chrom();
+    int p = site_iter->posit();
+    bool s = site_iter->strand();
     if(c == c_prev){
       int d = p - p_prev - width();
       if(s == s_prev){
