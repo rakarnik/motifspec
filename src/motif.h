@@ -72,6 +72,7 @@ public:
 	void read(istream& motin);
   void destroy();
 	void print_columns(ostream& out);
+	bool check_sites();
 };
 
 #endif

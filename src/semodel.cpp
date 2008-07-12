@@ -410,7 +410,6 @@ void SEModel::column_sample(){
 	int width = motif.width();
 	// Compute scores for current and surrounding columns
   int max_left, max_right;
-  max_left = max_right = (motif.get_max_width() - width)/2;
   motif.columns_open(max_left, max_right);
 	int cs_span = max_left + max_right + width;
   vector<struct idscore> wtx(cs_span);
@@ -480,7 +479,7 @@ void SEModel::column_sample(){
 	if(motif.ncols() != ncols) {                 // number of columns should not change
 		cerr << "\t\t\t\t\tERROR: column sampling started with " << ncols << ", ended with " << motif.ncols() << endl;
 		abort();
-	}	
+	}
 }
 
 double SEModel::map_score() {
