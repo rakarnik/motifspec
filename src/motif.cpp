@@ -397,8 +397,6 @@ void Motif::columns_open(int &l, int &r){
     p = site_iter->posit();
     s = site_iter->strand();
 		len = seqset.len_seq(c);
-		if(c == 1603)
-			cerr << "\t\t\t\t\tbefore: (" << l << ", " << r << ")";
 		if(s) {
 			l = min(p, l);
 			r = min(len - p - w, r);
@@ -406,8 +404,6 @@ void Motif::columns_open(int &l, int &r){
 			l = min(len - p - w, l);
 			r = min(p, r);
 		}
-		if(c == 1603)
-			cerr << "   after: (" << l << ", " << r << ")" << endl;
   }
 }
 
