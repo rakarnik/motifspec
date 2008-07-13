@@ -64,7 +64,7 @@ public:
 	bool has_col(const int c);
   int positions_available() const;
 	int positions_available(const bool* possible) const;
-  void shift_sites(const int l, const int r);
+  void shift_sites(const int shift);
   void flip_sites();
 	void orient();
   void columns_open(int &l, int &r);
