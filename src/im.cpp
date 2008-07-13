@@ -91,8 +91,6 @@ int main(int argc, char *argv[]) {
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
 		for(int j = 1; j <= nruns; j++) {
-			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
-			se.search_for_motif(worker, j);
 			struct flock fl;
 			int fd;
 			fl.l_type   = F_RDLCK;
@@ -121,6 +119,8 @@ int main(int argc, char *argv[]) {
 			fcntl(fd, F_SETLK, &fl);
 			close(fd);
 			cerr << "\t\tArchive now has " << se.get_archive()->nmots() << " motifs" << endl;
+			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
+			se.search_for_motif(worker, j);
 		}
 	}
 	
