@@ -4,7 +4,8 @@
 #include "archivesites.h"
 
 ArchiveSites::ArchiveSites(Seqset& seq, double map_cut, double sim_cut) : 
-arch_seqset(seq) {
+arch_seqset(seq),
+arch_sites(0, Motif(seq)) {
   arch_map_cutoff = map_cut;
   arch_sim_cutoff = sim_cut;
   arch_min_visits = 3;
