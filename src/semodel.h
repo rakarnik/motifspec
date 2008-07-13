@@ -47,7 +47,6 @@ class SEModel {
   Random<double> ran_dbl;
   Seqset seqset;
   Motif motif;
-  Motif select_motif;
   ArchiveSites archive;
 	int members;
   int* freq_matrix;
