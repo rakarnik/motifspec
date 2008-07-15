@@ -709,11 +709,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			}
 			break;
 		}
-		if(i_worse == 0) {
-			single_pass(motif.get_seq_cutoff());
-		} else {
-			single_pass(motif.get_seq_cutoff());
-		}
+		single_pass(motif.get_seq_cutoff(), true);
 		if(motif_size() == 0) {
 			if(best_motif.get_spec() == 0) {
 				cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
