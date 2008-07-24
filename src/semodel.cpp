@@ -3,6 +3,7 @@
 SEModel::SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc, const int bf, const double map_cut, const double sim_cut):
 seqset(seqs),
 motif(seqset, nc),
+select_motif(seqset, nc),
 archive(seqset, map_cut, sim_cut),
 ngenes(names.size()),
 seqscores(ngenes),
@@ -120,6 +121,7 @@ int SEModel::possible_positions() const {
 
 void SEModel::clear_sites() {
 	motif.clear_sites();
+	select_motif.clear_sites();
 }
 
 int SEModel::size() const {
@@ -190,6 +192,7 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 							/(2.0 * motif.positions_available(possible));
   calc_matrix();
 	motif.remove_all_sites();
+  select_motif.remove_all_sites();
   //will only update once per pass
 	
   char **ss_seq;
@@ -227,7 +230,11 @@ void SEModel::single_pass(const double minprob, bool greedy) {
       }
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
       Pc = Lc * ap/(1.0 - ap + Lc * ap);
-      F = Pw + Pc - Pw * Pc;
+      F = Pw + Pc - Pw * Pc;//probability of either
+			if(F > (minprob * 0.025/separams.select)) {
+				select_motif.add_site(g, j, true);
+			}
+			//strand irrelevant for select_sites
 			if(g == gadd && j < jadd + width) continue;
 			if(F < minprob) continue;
 			considered++;
@@ -264,6 +271,70 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 					jadd = j;
 				}
 			}
+    }
+  }
+  if(verbose)cerr<<"sampling "<<considered<<"/"<<select_motif.number()<<"\n";
+}
+
+void SEModel::single_pass_select(const double minprob){
+	int i,j,k,n;
+  double ap= (separams.weight * separams.expect + (1-separams.weight) * motif.number())
+							/ (2.0 * motif.positions_available(possible));
+  calc_matrix();
+	motif.remove_all_sites();
+  //will only update once per pass
+	
+  char **ss_seq = seqset.seq_ptr();
+  double Lw, Lc, Pw, Pc, F;
+  int matpos;
+  int iadd = -1, jadd = -1;
+	int selnum = select_motif.number();
+	int width = select_motif.width();
+	int d = select_motif.get_depth();
+	int nc = select_motif.ncols();
+  int col, seq;
+	for(n = 0; n < selnum; n++){
+    i = select_motif.chrom(n);
+		if(! is_possible(i)) continue;
+		j = select_motif.posit(n);
+    if(i == iadd && j < jadd + width) continue;
+    if(j < 0 || j > seqset.len_seq(i) - width) continue;
+    //could be screwed up with column sampling
+    Lw = 1.0;
+		matpos = 0;
+    for(k = 0; k < nc; k++){
+			col = motif.column(k); 
+      seq = ss_seq[i][j + col];
+      Lw *= score_matrix[matpos + seq];
+      matpos += d;
+    }
+    Lc = 1.0;
+		matpos = d - 1;
+    for(k = 0; k < nc; k++){
+      col = motif.column(k); 
+      seq = ss_seq[i][j + width - 1 - col];
+      Lc *= score_matrix[matpos - seq];
+      matpos += d;
+    }
+		Pw = Lw * ap / (1.0 - ap + Lw * ap);
+    Pc = Lc * ap / (1.0 - ap + Lc * ap);
+    F = (Pw + Pc - Pw * Pc);//probability of either
+		if(F < minprob) continue;
+		Pw = F * Pw/(Pw + Pc);
+		Pc = F - Pw;
+		double r = ran_dbl.rnum();
+		if (r > F)
+			continue;
+    else if (r < Pw) {
+      motif.add_site(i, j, true);
+      add_possible(i);
+			iadd = i;
+			jadd = j;
+    } else {
+      motif.add_site(i, j, false);
+			add_possible(i);
+      iadd = i;
+			jadd = j;
     }
   }
 }
@@ -337,10 +408,11 @@ void SEModel::compute_expr_scores() {
 void SEModel::column_sample(){
 	int *freq = new int[motif.get_depth()];
 	int width = motif.width();
-
 	// Compute scores for current and surrounding columns
   int max_left, max_right;
+	max_left = max_right = (motif.get_max_width() - width)/2;
   motif.columns_open(max_left, max_right);
+	select_motif.columns_open(max_left, max_right);
 	int cs_span = max_left + max_right + width;
   vector<struct idscore> wtx(cs_span);
 	int x = max_left;
@@ -389,6 +461,7 @@ void SEModel::column_sample(){
 				nseen++;
 			} else {
 				motif.add_col(wtx[i].id - x);           // column is ranked in top, and is not in motif
+				select_motif.add_col(wtx[i].id - x);
 				if(wtx[i].id - x < 0)                   // if column was to the left of the current columns, adjust the remaining columns
 					for(int j = i + 1; j < cs_span; ++j)
 						wtx[j].id -= wtx[i].id - x;
@@ -400,12 +473,13 @@ void SEModel::column_sample(){
 					for(int j = i + 1; j < cs_span; ++j)
 						wtx[j].id -= motif.column(1);
 				motif.remove_col(wtx[i].id - x);
+				select_motif.remove_col(wtx[i].id - x);
 			}
 		}
 	}
-
+	
 	if(motif.ncols() != ncols) {                 // number of columns should not change
-		cerr << "\t\t\t\tERROR: column sampling started with " << ncols << ", ended with " << motif.ncols() << endl;
+		cerr << "\t\t\t\t\tERROR: column sampling started with " << ncols << ", ended with " << motif.ncols() << endl;
 		abort();
 	}
 }
@@ -636,6 +710,7 @@ void SEModel::expand_search_avg_pcorr() {
 
 void SEModel::search_for_motif(const int worker, const int iter) {
 	motif.clear_sites();
+	select_motif.clear_sites();
 	motif.set_iter(iter);
 	motif.set_expr_cutoff(0.85);
 	motif.set_map(0);
@@ -709,7 +784,10 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			}
 			break;
 		}
-		single_pass(motif.get_seq_cutoff(), true);
+		if(i_worse == 0)
+			single_pass(motif.get_seq_cutoff());
+		else
+			single_pass_select(motif.get_seq_cutoff());
 		if(motif_size() == 0) {
 			if(best_motif.get_spec() == 0) {
 				cerr << "\t\t\tNo sites and best score matched cutoff! Restarting..." << endl;
@@ -717,6 +795,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			}
 			//if(best_motif.number()<4) break;
 			motif = best_motif;
+			select_motif = best_motif;
 			phase++;
 			i_worse = 0;
 			continue;
@@ -755,6 +834,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			print_status(cerr, i, phase);
 			cerr << "\t\t\t\ti_worse threshold reached. Reloading best sites so far..." << endl;
 			motif = best_motif;
+			select_motif = best_motif;
 			phase++;
 			i_worse = 0;
 		}
