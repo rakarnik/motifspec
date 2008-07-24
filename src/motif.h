@@ -58,6 +58,8 @@ public:
   void freq_matrix_extended(double *fm) const;
 	void calc_score_matrix(double *sm, double* backfreq);
   int column(const int i) const { return columns[i]; };
+	vector<int>::iterator first_column() { return columns.begin(); };
+	vector<int>::iterator last_column() { return columns.end(); };
   bool column_freq(const int col, int *ret);
   int remove_col(const int c);
 	void add_col(const int c);
