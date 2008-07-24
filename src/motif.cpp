@@ -5,18 +5,15 @@ seqset(s),
 depth(dp),
 npseudo(np),
 num_seqs(s.num_seqs()),
-len_seq(num_seqs),
 max_width(2 * nc),
 columns(nc),
 num_seqs_with_sites(0),
 has_sites(num_seqs)
 {
-	for(int i = 0; i < columns.size(); i++) {
-		columns[i] = i;
+	vector<int>::iterator col_iter = columns.begin();
+	for(; col_iter != columns.end(); ++iter) {
+		*col_iter = distance(columns.begin(), col_iter);
 	}
-  for(int i = 0; i < num_seqs; i++){
-    len_seq[i] = s.len_seq(i);
-  }
 	seq_cutoff = 0.00001;
 	expr_cutoff = 0.70;
 	iter = 0;
@@ -65,13 +62,12 @@ Motif& Motif::operator= (const Motif& m) {
 
 void Motif::clear_sites(){
   sitelist.clear();
-	for(int i = 0; i < columns.size(); i++) {
-		columns[i] = i;
+	vector<int>::iterator col_iter = columns.begin();
+	for(; col_iter != columns.end(); ++iter) {
+		*col_iter = distance(columns.begin(), col_iter);
 	}
   num_seqs_with_sites = 0;
-	for(int i = 0; i < num_seqs; i++) {
-		has_sites[i] = false;
-	}
+	has_sites.assign(num_seqs, false);
 	mapsc = 0.0;
 	spec = 0.0;
 }
@@ -154,7 +150,8 @@ void Motif::read(istream& motin) {
 	
 	// Add sites
 	sitelist.clear();
-	for(int i = 0; i < c.size(); i++) {
+	int num_sites = c.size();
+	for(int i = 0; i < num_sites; i++) {
 		assert(p[i] >= 0);
 		add_site(c[i], p[i], s[i]);
 	}
@@ -197,9 +194,10 @@ void Motif::destroy(){
 }
 
 bool Motif::is_open_site(const int c, const int p){
-	for(int i = 0; i < sitelist.size(); i++){
-    if(chrom(i) == c) {
-      int pp = posit(i);
+	vector<Site>::iterator site_iter = sitelist.begin();
+	for(; site_iter != sitelist.end(); ++site_iter) {
+    if(site_iter->chrom() == c) {
+      int pp = site_iter->posit();
       if(pp > p - width() && pp < p + width()) return false;
     }
   }

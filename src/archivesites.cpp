@@ -14,10 +14,11 @@ arch_sites(0, Motif(seq)) {
 bool ArchiveSites::check_motif(const Motif& m) {
   double cmp;
 	CompareACESites c(m);
-  for(int i = 0; i < arch_sites.size(); i++){
-    if(m.get_spec() <= arch_sites[i].motif()->get_spec()){
-      cmp = c.compare(arch_sites[i]);
-			if(cmp > arch_sim_cutoff && arch_sites[i].motif()->get_dejavu() >= arch_min_visits) {
+	vector<CompareACESites>::iterator iter;
+  for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter){
+    if(m.get_spec() <= iter->motif()->get_spec()){
+      cmp = c.compare(*iter);
+			if(cmp > arch_sim_cutoff && iter->motif()->get_dejavu() >= arch_min_visits) {
 				return false;
       }
     } else {
@@ -87,10 +88,13 @@ void ArchiveSites::read(istream& archin) {
 }
 
 void ArchiveSites::write(ostream& archout) {
-	for(int i = 0; i < arch_sites.size(); i++) {
-		if(arch_sites[i].motif()->get_spec() > 1) {
+	int i = 0;
+	vector<CompareACESites>::iterator iter = arch_sites.begin();
+	for(; iter != arch_sites.end(); ++iter) {
+		if(iter->motif()->get_spec() > 1) {
 			archout << "Motif " << i + 1 << endl;
-			arch_sites[i].motif()->write(archout);
+			iter->motif()->write(archout);
+			i++;
 		}
 	}
 }

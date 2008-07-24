@@ -5,16 +5,16 @@
 #include "site.h"
 
 class Motif {
+	const Seqset& seqset;                    // set of sequences that this motif refers to
   int depth;                               //ie 4 for acgt, 6 for nacgtn
 	int npseudo;                             // pseudocount
-	const Seqset& seqset;                    // set of sequences that this motif refers to
   int num_seqs;                            // total number of sequences in this set
   vector<int> len_seq;                     // length of the sequences in this motif
   int max_width;                           // maximum width of this motif
   vector<Site> sitelist;                   // list of sites that comprise this motif
+  vector<int> columns;                     // columns in this motif
 	int num_seqs_with_sites;                 // number of sequences with sites
 	vector<int> has_sites;                   // number of sites in each sequence
-  vector<int> columns;                     // columns in this motif
   
 	double mapsc;
 	double spec;

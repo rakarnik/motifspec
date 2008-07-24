@@ -10,8 +10,8 @@ class ArchiveSites{
   double arch_map_cutoff;
   double arch_sim_cutoff;
   int arch_min_visits;
-	vector<CompareACESites> arch_sites;
   const Seqset& arch_seqset;
+	vector<CompareACESites> arch_sites;
 
  public:
   ArchiveSites(Seqset& seq, double map_cut, double sim_cut);
