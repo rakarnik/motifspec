@@ -103,12 +103,15 @@ float** get_expr(istream& exprfile, int* npoints, vector<string>& nameset) {
 	// Now read in the values
 	*npoints = 0;
 	gene = 0;
+	vector<string> values;
+	vector<string>::iterator val_iter;
 	while(getline(exprfile, line)) {
-		vector<string> values = split(line, '\t');
+		values = split(line, '\t');
 		nameset.push_back(values[0]);
 		expr[gene] = new float[values.size() - 1];
-		for (int i = 1; i < values.size(); i++) {
-			expr[gene][i - 1] = atof(values[i].c_str());
+		val_iter = values.begin() + 1;
+		for (; val_iter != values.end(); ++val_iter) {
+			expr[gene][distance(values.begin(), val_iter) - 1] = atof(val_iter->c_str());
 		}
 		*npoints = values.size() - 1;
 		gene++;
@@ -403,7 +406,7 @@ double str_to_dbl(const string &s){
 		init=true;
 	}
 	double ret=0.0;double dec=0.0;int pnx=1;int xp=0;double pn=1.0;
-	int i=0;
+	unsigned int i=0;
 	if(s[i]=='-') {pn=-1.0;i++;}
 	if(s[i]=='+') {pn=1.0;i++;}
 	for(;i<s.size();i++){
@@ -489,8 +492,8 @@ string int_to_str(int x){
 
 string clip_white(const string &s){
 	string t;
-	int first=0, last=-1;
-	int i;
+	unsigned int first=0, last=20000;
+	unsigned int i;
 	for(i=0;i<s.size();i++){
 		if(!isspace(s[i])) {
 			first=i;
@@ -503,7 +506,7 @@ string clip_white(const string &s){
 			break;
 		}
 	}
-	if(last==-1) return t;//no non-whitespace
+	if(last==20000) return t;//no non-whitespace
 	for(i=first;i<=last;i++){
 		t+=s[i];
 	}
@@ -532,7 +535,7 @@ int number_motifs(const char* file){
 }
 
 bool is_number(string s){
-  for(int i=0;i<s.size();i++){
+  for(unsigned int i=0;i<s.size();i++){
     if(!isdigit(s[i])&&s[i]!='.') return false;
   }
   return true;

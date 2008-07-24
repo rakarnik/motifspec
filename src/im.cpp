@@ -134,13 +134,13 @@ int read_motifs(SEModel& se) {
 	int nfound = 0;
 	int nmot = 0;
 	int len = 0;
-	int pos = 0;
+	unsigned int pos = 0;
 	workdir = opendir(".");
 	while(dirp = readdir(workdir)) {
 		filename = string(dirp->d_name);
 		len = filename.length();
 		pos = filename.find_last_of('.');
-		if(len > 4 && pos!= string::npos)
+		if(len > 4 && pos != string::npos)
 			extension = filename.substr(pos, len - pos);
 		else
 			extension = "";
@@ -192,7 +192,8 @@ void print_full_ace(ostream& out, SEModel& se) {
 	out << "Parameter values:\n";
   se.output_params(out);
   out << "\nInput sequences:\n";
-  for(int x = 0; x < se.names().size(); x++) out << "#" << x << '\t' << (se.names())[x] << endl;
+  for(unsigned int x = 0; x < se.names().size(); x++)
+		out << "#" << x << '\t' << (se.names())[x] << endl;
   out << '\n';
   se.full_output(out);
 }
@@ -201,7 +202,8 @@ void print_ace(ostream& out, SEModel& se) {
 	out << "Parameter values:\n";
   se.output_params(out);
   out << "\nInput sequences:\n";
-  for(int x = 0; x < se.names().size(); x++) out << "#" << x << '\t' << se.names()[x] << endl;
+  for(unsigned int x = 0; x < se.names().size(); x++)
+		out << "#" << x << '\t' << se.names()[x] << endl;
   out << endl;
 	se.full_output(out);
 }
