@@ -73,6 +73,8 @@ class SEModel {
 	vector<struct idscore> seqranks;
 	vector<double> expscores;
 	vector<struct idscore> expranks;
+
+	double score_site(const int c, const int p, const bool s);
 	void set_seq_cutoffs();
 	void set_expr_cutoffs();
 	void print_possible(ostream& out);
