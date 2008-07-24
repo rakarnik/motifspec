@@ -380,7 +380,6 @@ int Motif::positions_available(const bool* possible) const {
 
 void Motif::columns_open(int &l, int &r){
 	int w = width();
-	l = r = (max_width - w)/2;
 	int c, p, len;
 	bool s;
 	vector<Site>::iterator site_iter;
