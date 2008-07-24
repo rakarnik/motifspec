@@ -100,30 +100,29 @@ int main(int argc, char *argv[]) {
 			fl.l_pid    = getpid();
 			fd = open("arch.lock", O_RDONLY);
 			if(fd == -1) {
-				cerr << "unable to read lock file, error was " << strerror(errno) << endl;
-				continue;
+				cerr << "\t\tUnable to read lock file, error was " << strerror(errno) << endl;
+			} else {
+				while(fcntl(fd, F_SETLK, &fl) == -1) {
+					cerr << "\t\tWaiting for lock release on archive file... " << endl;
+					sleep(10);
+				}
+				ifstream archin(archinstr.c_str());
+				if(archin) {
+					cerr << "\t\tRefreshing archive from " << archinstr << "... ";
+					se.get_archive()->clear();
+					se.get_archive()->read(archin);
+					archin.close();
+					cerr << "done." << endl;
+				}
+				fl.l_type = F_UNLCK;
+				fcntl(fd, F_SETLK, &fl);
+				close(fd);
+				cerr << "\t\tArchive now has " << se.get_archive()->nmots() << " motifs" << endl;
 			}
-			while(fcntl(fd, F_SETLK, &fl) == -1) {
-				cerr << "\t\tWaiting for lock release on archive file... " << endl;
-				sleep(10);
-			}
-			ifstream archin(archinstr.c_str());
-			if(archin) {
-				cerr << "\t\tRefreshing archive from " << archinstr << "... ";
-				se.get_archive()->clear();
-				se.get_archive()->read(archin);
-				archin.close();
-				cerr << "done." << endl;
-			}
-			fl.l_type = F_UNLCK;
-			fcntl(fd, F_SETLK, &fl);
-			close(fd);
-			cerr << "\t\tArchive now has " << se.get_archive()->nmots() << " motifs" << endl;
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 			se.search_for_motif(worker, j);
 		}
 	}
-	
 	return 0;
 }
 
