@@ -6,13 +6,13 @@
 #include "standard.h"
 
 class Seqset{
-
   int ss_num_seqs;
   int* ss_len_seq;
   char** ss_seq;//[ace_num_seqs][ace_len_seq[i]] ~ NACGTN=012345
 	float* gc;
 
  public:
+ 	Seqset();
 	Seqset(const vector<string>& v);
   ~Seqset();
   int num_seqs() const {return ss_num_seqs;}

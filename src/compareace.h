@@ -15,6 +15,7 @@ class CompareACESites{
   int comp_l1,comp_r1,comp_l2,comp_r2;
 
 public:
+	CompareACESites();
 	CompareACESites(const Motif &m);
 	CompareACESites(const CompareACESites& s);
   ~CompareACESites();

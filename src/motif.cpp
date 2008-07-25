@@ -1,5 +1,9 @@
 #include "motif.h"
 
+Motif::Motif() : 
+seqset(Seqset()) {
+}
+
 Motif::Motif(const Seqset& s, int nc, int dp, int np) :
 seqset(s),
 depth(dp),

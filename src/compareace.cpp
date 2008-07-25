@@ -3,6 +3,10 @@
 
 #include "compareace.h"
 
+CompareACESites::CompareACESites() {
+	comp_ready = false;
+}
+
 CompareACESites::CompareACESites(const Motif& m): 
 comp_motif(m) 
 {

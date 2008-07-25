@@ -23,6 +23,7 @@ class Motif {
 	double expr_cutoff;
 
 public:
+	Motif();
   Motif(const Seqset& v, int nc = 10, int dp = 6, int np = 1);
   Motif(const Motif& m);
 	Motif& operator= (const Motif& m);
