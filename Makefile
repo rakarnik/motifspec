@@ -11,8 +11,8 @@
 #
 
 CC = /usr/bin/g++
-CC_OPTIONS = -Os
-CC_DEBUG_OPTIONS = -O0 -g -pg
+CC_OPTIONS = -Os -Wall -Wextra
+CC_DEBUG_OPTIONS = -O0 -g -pg -Wall -Wextra
 LNK_OPTIONS =
 LNK_DEBUG_OPTIONS = -pg
 
@@ -118,7 +118,7 @@ debug/im.o : src/im.h src/im.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/im.cpp -c $(INCLUDE) -o debug/im.o
 
 debug/motif.o : src/motif.h src/motif.cpp
-	$(CC) $(CC_OPTIONS) src/motif.cpp -c $(INCLUDE) -o debug/motif.o
+	$(CC) $(CC_DEBUG_OPTIONS) src/motif.cpp -c $(INCLUDE) -o debug/motif.o
 
 debug/myheap.o : src/myheap.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/myheap.cpp -c $(INCLUDE) -o debug/myheap.o
