@@ -492,23 +492,23 @@ string int_to_str(int x){
 
 string clip_white(const string &s){
 	string t;
-	unsigned int first=0, last=20000;
+	unsigned int first=0;
 	unsigned int i;
-	for(i=0;i<s.size();i++){
+	for(i = 0; i < s.size(); i++){
 		if(!isspace(s[i])) {
-			first=i;
+			first = i;
 			break;
 		}
 	}
-	for(i=s.size()-1;i>=0;i--){
+	unsigned int last = s.size() - 1;
+	for(i = s.size() - 1; i > first; i--){
 		if(!isspace(s[i])) {
-			last=i;
+			last = i;
 			break;
 		}
 	}
-	if(last==20000) return t;//no non-whitespace
-	for(i=first;i<=last;i++){
-		t+=s[i];
+	for(i = first; i <= last; i++){
+		t += s[i];
 	}
 	return t;
 }
