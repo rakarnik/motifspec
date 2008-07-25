@@ -9,7 +9,6 @@ class Motif {
   int depth;                               //ie 4 for acgt, 6 for nacgtn
 	int npseudo;                             // pseudocount
   int num_seqs;                            // total number of sequences in this set
-  vector<int> len_seq;                     // length of the sequences in this motif
   int max_width;                           // maximum width of this motif
   vector<Site> sitelist;                   // list of sites that comprise this motif
   vector<int> columns;                     // columns in this motif
@@ -28,7 +27,7 @@ public:
   Motif(const Motif& m);
 	Motif& operator= (const Motif& m);
   int number() const { return sitelist.size(); }
-  int width() const { return columns.back() + 1; }
+  int width() const { return ((int) columns.back()) + 1; }
   int get_depth() const { return depth; }
   int ncols() const { return columns.size(); }
   int chrom(int i) const { return sitelist[i].chrom(); }
