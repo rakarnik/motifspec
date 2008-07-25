@@ -5,7 +5,7 @@
 
 ArchiveSites::ArchiveSites(Seqset& seq, double map_cut, double sim_cut) : 
 arch_seqset(seq),
-arch_sites(0, Motif(seq)) {
+arch_comp(0) {
   arch_map_cutoff = map_cut;
   arch_sim_cutoff = sim_cut;
   arch_min_visits = 3;
@@ -14,8 +14,8 @@ arch_sites(0, Motif(seq)) {
 bool ArchiveSites::check_motif(const Motif& m) {
   double cmp;
 	CompareACESites c(m);
-	vector<CompareACESites>::iterator iter;
-  for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter){
+	vector<CompareACESites>::iterator iter = arch_comp.begin();
+  for(; iter != arch_comp.end(); ++iter){
     if(m.get_spec() <= iter->motif()->get_spec()){
       cmp = c.compare(*iter);
 			if(cmp > arch_sim_cutoff && iter->motif()->get_dejavu() >= arch_min_visits) {
@@ -36,8 +36,8 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 
 	// Check if similar to better motif.
 	// If so, increment dejavu for better motif and return false
-	vector<CompareACESites>::iterator iter;
-	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter) {
+	vector<CompareACESites>::iterator iter = arch_comp.begin();
+	for(; iter != arch_comp.end(); ++iter) {
 		if(m.get_spec() <= iter->motif()->get_spec()) {
 			cmp = c.compare(*iter);
 			if(cmp > arch_sim_cutoff) {
@@ -51,28 +51,28 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	
 	// There are no better motifs similar to this one, so we add
 	// Step 1: Delete similar motifs with lower scores
-	while(iter != arch_sites.end()) {
+	while(iter != arch_comp.end()) {
 		assert(m.get_spec() > iter->motif()->get_spec());
 		cmp = c.compare(*iter);
 		if(cmp > arch_sim_cutoff)
-			iter = arch_sites.erase(iter);
+			iter = arch_comp.erase(iter);
 		else
 			++iter;
 	}
 	
 	// Step 2: Add the new motif at the correct position by score
-	for(iter = arch_sites.begin(); iter != arch_sites.end(); ++iter)
+	for(iter = arch_comp.begin(); iter != arch_comp.end(); ++iter)
 		if(iter->motif()->get_spec() < m.get_spec()) break;
-	arch_sites.insert(iter, c);
+	arch_comp.insert(iter, c);
 	return true;
 }
 
 Motif* ArchiveSites::return_best(const int i) {
-  return arch_sites[i].motif();
+  return arch_comp[i].motif();
 }
 
 void ArchiveSites::clear() {
-	arch_sites.clear();
+	arch_comp.clear();
 }
 
 void ArchiveSites::read(istream& archin) {
@@ -82,15 +82,15 @@ void ArchiveSites::read(istream& archin) {
 			Motif m(arch_seqset, 12);
 			m.read(archin);
 			CompareACESites c(m);
-			arch_sites.push_back(c);
+			arch_comp.push_back(c);
 		}
 	}
 }
 
 void ArchiveSites::write(ostream& archout) {
 	int i = 0;
-	vector<CompareACESites>::iterator iter = arch_sites.begin();
-	for(; iter != arch_sites.end(); ++iter) {
+	vector<CompareACESites>::iterator iter = arch_comp.begin();
+	for(; iter != arch_comp.end(); ++iter) {
 		if(iter->motif()->get_spec() > 1) {
 			archout << "Motif " << i + 1 << endl;
 			iter->motif()->write(archout);
