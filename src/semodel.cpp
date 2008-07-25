@@ -15,7 +15,6 @@ expranks(ngenes)
 	npossible = 0;
 	possible = new bool[ngenes];
 	clear_all_possible();
-	nameset = names;
 	verbose = false;
 	
 	set_default_params();
