@@ -11,7 +11,7 @@ num_seqs_with_sites(0),
 has_sites(num_seqs)
 {
 	vector<int>::iterator col_iter = columns.begin();
-	for(; col_iter != columns.end(); ++iter) {
+	for(; col_iter != columns.end(); ++col_iter) {
 		*col_iter = distance(columns.begin(), col_iter);
 	}
 	seq_cutoff = 0.00001;
@@ -26,7 +26,6 @@ seqset(m.seqset),
 depth(m.depth),
 npseudo(m.npseudo),
 num_seqs(m.num_seqs),
-len_seq(m.len_seq),
 max_width(m.max_width),
 columns(m.columns),
 num_seqs_with_sites(m.num_seqs_with_sites),
@@ -60,7 +59,7 @@ Motif& Motif::operator= (const Motif& m) {
   return *this;
 }
 
-void Motif::clear_sites(){
+void Motif::clear_sites() {
   sitelist.clear();
 	vector<int>::iterator col_iter = columns.begin();
 	for(; col_iter != columns.end(); ++iter) {
@@ -362,7 +361,7 @@ void Motif::shift_sites(const int shift) {
 int Motif::positions_available() const {
   int ret = 0;
   for(int i = 0; i < num_seqs; i++){
-    ret += len_seq[i] - width() + 1;
+    ret += seqset.len_seq(i) - width() + 1;
   }
   return ret;
 }
@@ -371,7 +370,7 @@ int Motif::positions_available(const bool* possible) const {
 	int ret = 0;
 	for(int i = 0; i < num_seqs; i++) {
 		if(possible[i])
-			ret += len_seq[i] - width() + 1;
+			ret += seqset.len_seq(i) - width() + 1;
 	}
 	return ret;
 }
