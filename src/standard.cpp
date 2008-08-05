@@ -559,7 +559,7 @@ double prob_overlap(int x, int y, int i, int t){
   
   if(x>t||y>t||i>x||i>y||i>t){
     cerr<<"ProbOverlap "<<x<<" "<<y<<" "<<i<<" "<<t<<" Check input parameters.\n";
-    exit(0);
+    abort();
   }
 
   //want to calculate 1 - sum(j=0,i-1){(x,j)*(t-x,y-j)/(t,y)} where () means combination
