@@ -133,8 +133,8 @@ int read_motifs(SEModel& se) {
 	string extension;
 	int nfound = 0;
 	int nmot = 0;
-	int len = 0;
-	unsigned int pos = 0;
+	unsigned int len = 0;
+	unsigned long pos = 0;
 	workdir = opendir(".");
 	while(dirp = readdir(workdir)) {
 		filename = string(dirp->d_name);
@@ -162,12 +162,17 @@ int read_motifs(SEModel& se) {
 	}
 	closedir(workdir);
 	cerr << "Read " << nfound << " motif(s), added " << nmot << " motif(s)" << endl;
-	return nfound;
+	return nmot;
 }
 
 void output(SEModel& se) {
+	string tmpstr(outfile);
 	string outstr(outfile);
+	tmpstr.append(".tmp.ace");
 	outstr.append(".adj.ace");
+	ofstream tmp(tmpstr.c_str(), ios::trunc);
+	print_ace(tmp, se);
+	tmp.close();
 	struct flock fl;
 	int fd;
 	fl.l_type   = F_WRLCK;
@@ -180,9 +185,7 @@ void output(SEModel& se) {
 		cerr << "Waiting for lock release on archive file..." << endl;
 		sleep(10);
 	}
-	ofstream out(outstr.c_str(), ios::trunc);
-	print_ace(out, se);
-	out.close();
+	rename(tmpstr.c_str(), outstr.c_str());
 	fl.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &fl);
 	close(fd);
