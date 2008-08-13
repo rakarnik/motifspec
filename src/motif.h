@@ -21,6 +21,7 @@ class Motif {
 	int dejavu;
 	double seq_cutoff;
 	double expr_cutoff;
+	bool dirty;
 
 public:
 	Motif();
@@ -48,6 +49,8 @@ public:
 	void set_map(const double sc) { mapsc = sc; }
   double get_spec() const { return spec; }
 	void set_spec(const double s) { spec = s; }
+	bool is_dirty() const { return dirty; }
+	void set_dirty(const bool d) { dirty = d; }
 	bool is_open_site(const int c, const int p);
 	int seqs_with_sites() const { return num_seqs_with_sites; }
 	bool seq_has_site(const int c) const { return (has_sites[c] != 0); }
@@ -56,7 +59,7 @@ public:
 	void remove_all_sites();
   void calc_freq_matrix(int *fm);
   void freq_matrix_extended(double *fm) const;
-	void calc_score_matrix(double *sm, double* backfreq);
+	void calc_score_matrix(double *sm, double* backfreq, double* pseudo);
   int column(const int i) const { return columns[i]; };
 	vector<int>::iterator first_column() { return columns.begin(); };
 	vector<int>::iterator last_column() { return columns.end(); };

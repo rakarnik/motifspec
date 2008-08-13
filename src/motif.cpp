@@ -1,7 +1,8 @@
 #include "motif.h"
 
 Motif::Motif() : 
-seqset(Seqset()) {
+seqset(Seqset()),
+dirty(false) {
 }
 
 Motif::Motif(const Seqset& s, int nc, int dp, int np) :
@@ -23,6 +24,7 @@ has_sites(num_seqs)
 	iter = 0;
 	dejavu = 0;
 	spec = 0.0;
+	dirty = false;
 }
 
 Motif::Motif(const Motif& m) :
@@ -42,6 +44,7 @@ has_sites(m.has_sites)
 	seq_cutoff = m.seq_cutoff;
 	expr_cutoff = m.expr_cutoff;
   *this = m;
+	dirty = true;
 }
 
 Motif& Motif::operator= (const Motif& m) {
@@ -59,6 +62,7 @@ Motif& Motif::operator= (const Motif& m) {
 		spec = m.spec;
 		iter = m.iter;
 		dejavu = m.dejavu;
+		dirty = true;
   }
   return *this;
 }
@@ -73,6 +77,7 @@ void Motif::clear_sites() {
 	has_sites.assign(num_seqs, false);
 	mapsc = 0.0;
 	spec = 0.0;
+	dirty = true;
 }
 
 void Motif::remove_all_sites() {
@@ -81,6 +86,7 @@ void Motif::remove_all_sites() {
 	for(int i = 0; i < num_seqs; i++) {
 		has_sites[i] = false;
 	}
+	dirty = true;
 }
 
 void Motif::write(ostream& motout) const {
@@ -189,6 +195,8 @@ void Motif::read(istream& motin) {
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
 	set_dejavu(atoi(strtok(NULL, "\0")));
+
+	dirty = true;
 }
 
 void Motif::destroy(){
@@ -213,9 +221,10 @@ void Motif::add_site(const int c, const int p, const bool s){
 	sitelist.push_back(st);
 	if(has_sites[c] == 0) num_seqs_with_sites++;
 	has_sites[c]++;
+	dirty = true;
 }
 
-void Motif::calc_freq_matrix(int *fm){
+void Motif::calc_freq_matrix(int *fm) {
 	// fm will have allocation for depth() * ncols()
   char** ss_seq = seqset.seq_ptr();
   for(int i = 0; i < depth * ncols(); i++){
@@ -253,7 +262,7 @@ void Motif::calc_freq_matrix(int *fm){
 				}
 				matpos += depth;
       }
-    }      
+    }
   }
 }
 
@@ -306,6 +315,7 @@ int Motif::remove_col(const int c) {
 		cerr << "remove_column called for column " << c << " but it was not found!" << endl; 
 		abort();
 	}
+	dirty = true;
   return ret;
 }
 
@@ -332,6 +342,7 @@ void Motif::add_col(const int c) {
 		if(! found)
 			columns.push_back(c);
   }
+	dirty = true;
 }
 
 bool Motif::has_col(const int c) {
@@ -360,6 +371,7 @@ void Motif::shift_sites(const int shift) {
 	vector<Site>::iterator site_iter;
   for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter)
 		site_iter->shift(shift);
+	dirty = true;
 }
 
 int Motif::positions_available() const {
@@ -420,7 +432,7 @@ void Motif::freq_matrix_extended(double *fm) const {
   for(i = 0; i < fm_size; i++) fm[i] /= (double) number();
 }
 
-void Motif::calc_score_matrix(double *sm, double* backfreq) {
+void Motif::calc_score_matrix(double *sm, double* backfreq, double* pseudo) {
 	int* fm = new int[depth * ncols()];
   double tot = (double) number() + npseudo;
   calc_freq_matrix(fm);
@@ -428,7 +440,7 @@ void Motif::calc_score_matrix(double *sm, double* backfreq) {
     sm[i] = sm[i + 5] = 1.0;
     for(int j = 1; j <= 4; j++){
       int x = fm[i] + fm[i + 5];
-      sm[i + j] = (fm[i + j] + (x + npseudo) * backfreq[j])/(tot * backfreq[j]);
+      sm[i + j] = (fm[i + j] + (x + pseudo[j]) * backfreq[j])/(tot * backfreq[j]);
     }
   }
 	delete [] fm;
