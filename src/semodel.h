@@ -47,7 +47,6 @@ class SEModel {
   Random<double> ran_dbl;
   Seqset seqset;
   Motif motif;
-	Motif select_motif;
   ArchiveSites archive;
 	int members;
   int* freq_matrix;
@@ -116,6 +115,7 @@ class SEModel {
 	Seqset get_seqset() { return seqset; }                  // Return the set of sequences
 	void calc_matrix();                                     // Calculate the PWM for the current set of sites
 	string consensus() const;                               // Return the consensus sequence for the current set of sites
+	double matrix_score();                                  // Calculate the score for the current matrix
 	double map_score();                                     // Calculate the MAP score
 	double spec_score();                                    // Calculate the specificity score
 	
@@ -131,10 +131,7 @@ class SEModel {
 	void seed_random_site();
   void seed_biased_site();
   void single_pass(const double minprob = 0.0, bool greedy = false);
-	void single_pass_select(const double minprob = 0.0);
-	void compute_seq_scores();
-	void compute_expr_scores();
-	void compute_scores() { compute_seq_scores(); compute_expr_scores(); };
+	void compute_scores();
 	void column_sample();
   void expand_search_around_mean(const double corr_cutoff);
 	void expand_search_min_pcorr(const double corr_cutoff);
