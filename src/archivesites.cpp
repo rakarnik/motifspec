@@ -72,7 +72,7 @@ Motif* ArchiveSites::return_best(const int i) {
 }
 
 void ArchiveSites::clear() {
-	arch_comp.clear();
+	vector<CompareACESites>().swap(arch_comp);
 }
 
 void ArchiveSites::read(istream& archin) {

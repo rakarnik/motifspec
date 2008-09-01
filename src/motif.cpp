@@ -64,7 +64,7 @@ Motif& Motif::operator= (const Motif& m) {
 }
 
 void Motif::clear_sites() {
-	sitelist.clear();
+	vector<Site>().swap(sitelist);
 	vector<int>::iterator col_iter = columns.begin();
 	for(; col_iter != columns.end(); ++col_iter) {
 		*col_iter = distance(columns.begin(), col_iter);
