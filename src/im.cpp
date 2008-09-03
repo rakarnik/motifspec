@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 		ifstream archin(archinstr.c_str());
 		if(archin) {
 			cerr << "Refreshing from existing archive file " << archinstr << "... ";
-			se.get_archive()->read(archin);
+			se.get_archive().read(archin);
 			cerr << "done." << endl;
 		}
 		while(true) {
@@ -109,15 +109,15 @@ int main(int argc, char *argv[]) {
 				ifstream archin(archinstr.c_str());
 				if(archin) {
 					cerr << "\t\tRefreshing archive from " << archinstr << "... ";
-					se.get_archive()->clear();
-					se.get_archive()->read(archin);
+					se.get_archive().clear();
+					se.get_archive().read(archin);
 					archin.close();
 					cerr << "done." << endl;
 				}
 				fl.l_type = F_UNLCK;
 				fcntl(fd, F_SETLK, &fl);
 				close(fd);
-				cerr << "\t\tArchive now has " << se.get_archive()->nmots() << " motifs" << endl;
+				cerr << "\t\tArchive now has " << se.get_archive().nmots() << " motifs" << endl;
 			}
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
 			se.search_for_motif(worker, j);

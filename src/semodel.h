@@ -96,7 +96,7 @@ class SEModel {
 	SEParams get_params() const { return separams; };
   void ace_initialize();
 	vector<string> names() const { return nameset; };
-	ArchiveSites* get_archive() { return &archive; };
+	ArchiveSites& get_archive() { return archive; };
 	
 	/* Manage membership */
 	void add_possible(const int gene);                      // Add gene as a potential member
