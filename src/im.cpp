@@ -100,7 +100,8 @@ int main(int argc, char *argv[]) {
 			fl.l_pid    = getpid();
 			fd = open("arch.lock", O_RDONLY);
 			if(fd == -1) {
-				cerr << "\t\tUnable to read lock file, error was " << strerror(errno) << endl;
+				if(errno != ENOENT)
+					cerr << "\t\tUnable to read lock file, error was " << strerror(errno) << endl;
 			} else {
 				while(fcntl(fd, F_SETLK, &fl) == -1) {
 					cerr << "\t\tWaiting for lock release on archive file... " << endl;
