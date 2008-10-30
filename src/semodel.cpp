@@ -205,8 +205,8 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 		for(; col_iter != motif.last_column(); ++col_iter) {
 			assert(p + width - 1 - *col_iter >= 0);
 			assert(p + width - 1 - *col_iter <= seqset.len_seq(c));
-			seq = ss_seq[c][p + *col_iter];
-			L *= score_matrix[matpos + seq];
+			seq = ss_seq[c][p + width - 1 - *col_iter];
+			L *= score_matrix[matpos - seq];
 			matpos += d;
 		}
 	}
