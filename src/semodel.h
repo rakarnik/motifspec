@@ -74,8 +74,10 @@ class SEModel {
 	vector<struct idscore> expranks;
 
 	double score_site(const int c, const int p, const bool s);
-	void set_seq_cutoffs();
-	void set_expr_cutoffs();
+	void set_seq_cutoff();
+	void set_expr_cutoff();
+	void set_expr_cutoff_slowexpand();
+	void set_expr_cutoff_spec();
 	void print_possible(ostream& out);
 	
  public:
@@ -132,7 +134,7 @@ class SEModel {
   void seed_biased_site();
   void single_pass(const double minprob = 0.0, bool greedy = false);
 	void compute_scores();
-	void column_sample();
+	bool column_sample();
   void expand_search_around_mean(const double corr_cutoff);
 	void expand_search_min_pcorr(const double corr_cutoff);
 	void expand_search_avg_pcorr();
