@@ -192,9 +192,10 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 	int d = motif.get_depth();
 	int matpos, seq;
 	vector<int>::iterator col_iter = motif.first_column();
+	vector<int>::iterator last_col = motif.last_column();
 	if(s) {
 		matpos = 0;
-		for(; col_iter != motif.last_column(); ++col_iter) {
+		for(; col_iter != last_col; ++col_iter) {
 			assert(p + *col_iter >= 0);
 			assert(p + *col_iter <= seqset.len_seq(c));
 			seq = ss_seq[c][p + *col_iter];
@@ -203,7 +204,7 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 		}
 	} else {
 		matpos = d - 1;
-		for(; col_iter != motif.last_column(); ++col_iter) {
+		for(; col_iter != last_col; ++col_iter) {
 			assert(p + width - 1 - *col_iter >= 0);
 			assert(p + width - 1 - *col_iter <= seqset.len_seq(c));
 			seq = ss_seq[c][p + width - 1 - *col_iter];
@@ -702,7 +703,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			if(i_worse > 100 * phase) {
 				motif = best_motif;
 				if(size() < 2) {
-					cerr << "\t\t\tLess than 2 genes at bad move threshold! Restarting...";
+					cerr << "\t\t\tLess than 2 genes at bad move threshold! Restarting..." << endl;
 					return;
 				}
 				cerr << "\t\t\tReached bad move threshold, reloading best motif..." << endl;
