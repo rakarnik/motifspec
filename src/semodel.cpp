@@ -677,8 +677,8 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			cerr << "\t\t\tToo many sites! Restarting..." << endl;
 			return;
 		}
-		if(size() < 1) {
-			cerr << "\t\t\tNo sites, reloading best motif..." << endl;
+		if(size() < 2) {
+			cerr << "\t\t\tZero or one sites, reloading best motif..." << endl;
 			motif = best_motif;
 			phase++;
 			print_status(cerr, i, phase);
