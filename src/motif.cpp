@@ -114,8 +114,8 @@ void Motif::write(ostream& motout) const {
 	vector<int>::const_iterator col_iter;
 	for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {	
 		col = *col_iter;
-		motout << '*';
 		for(int k = 0; k < (col - prev_col - 1); k++) motout << ' ';
+		motout << '*';
 		prev_col = col;
 	}
   motout << endl;
