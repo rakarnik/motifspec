@@ -641,6 +641,8 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	motif.set_spec(0.0);
 	int i_worse = 0;
 	int phase = 0;
+
+	// Seed a random site
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
@@ -649,6 +651,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 		return;
 	}
 
+	// Expand search neighborhood until we have a few genes to search
 	clear_all_possible();
 	while(possible_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
 		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
@@ -664,7 +667,6 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	motif.set_map(map_score());
 	motif.set_spec(spec_score());
 	print_status(cerr, 0, phase);
-	
 	Motif best_motif = motif;
 
 	int i;
@@ -701,7 +703,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 			i_worse = 0;
 		} else {
 			i_worse++;
-			if(i_worse > 100 * phase) {
+			if(i_worse > 10 * phase) {
 				motif = best_motif;
 				if(size() < 2) {
 					cerr << "\t\t\tLess than 2 genes at bad move threshold! Restarting..." << endl;
@@ -758,7 +760,6 @@ bool SEModel::consider_motif(const char* filename) {
 
 void SEModel::print_status(ostream& out, const int i, const int phase) {
 	double ms = matrix_score();
-	double es = entropy_score();
 	out << "\t\t\t"; 
 	out << setw(5) << i;
 	out << setw(3) << phase;
@@ -774,10 +775,8 @@ void SEModel::print_status(ostream& out, const int i, const int phase) {
 		out << setw(15) << motif.get_spec();
 		out << setw(15) << motif.get_map();
 		out << setw(15) << ms;
-		out << setw(15) << es;
 	} else {
 		out << setw(40) << "-----------";
-		out << setw(15) << "---";
 		out << setw(15) << "---";
 		out << setw(15) << "---";
 		out << setw(15) << "---";
