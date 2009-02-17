@@ -133,7 +133,7 @@ class SEModel {
 	/* Algorithm steps */
 	void seed_random_site();
   void seed_biased_site();
-  void single_pass(const double minprob = 0.0, bool greedy = false);
+  void single_pass(const double minscore = 0.0);
 	void compute_scores();
 	bool column_sample();
   void expand_search_around_mean(const double corr_cutoff);

@@ -215,16 +215,12 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 	return L;
 }
 
-void SEModel::single_pass(const double minprob, bool greedy) {
-	double ap = (separams.weight * separams.expect * 10
-							+ (1 - separams.weight) * motif.number())
-							/(2.0 * motif.positions_available(possible));
-  calc_matrix();
+void SEModel::single_pass(const double minscore) {
+	calc_matrix();
 	motif.remove_all_sites();
   //will only update once per pass
 	
-  double Lw, Lc, Pw, Pc, F;
-  int considered = 0;
+  double Lw, Lc, L;
   int gadd = -1, jadd = -1;
 	int width = motif.width();
 	for(int g = 0; g < seqset.num_seqs(); g++){
@@ -232,17 +228,10 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 		for(int j = 0; j <= seqset.len_seq(g) - width; j++){
 			Lw = score_site(g, j, 1);
       Lc = score_site(g, j, 0);
-      Pw = Lw * ap/(1.0 - ap + Lw * ap);
-      Pc = Lc * ap/(1.0 - ap + Lc * ap);
-      F = Pw + Pc - Pw * Pc;//probability of either
+      L = Lw + Lc;
 			if(g == gadd && j < jadd + width) continue;
-			if(F < minprob) continue;
-			// cerr << "\t\t\t\tGene:" << g << " Position:"<< j <<  " Score:" << F << endl;
-			considered++;
-			Pw = F * Pw / (Pw + Pc);
-			Pc = F - Pw;
-			if(greedy) {                   // Always add if above minprob
-				if(Pw > Pc) {
+			if(L >= minscore) {            // Add if above minscore
+				if(Lw > Lc) {
 					assert(j >= 0);
 					assert(j <= seqset.len_seq(g) - width);
 					motif.add_site(g, j, true);
@@ -255,10 +244,10 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 					gadd = g;
 					jadd = j;
 				}
-			} else {                       // Add with probability F
+			} else {                       // Add with probability L/minscore
 				double r = ran_dbl.rnum();
-				if(r > F) continue;
-				if (Pw > Pc) {
+				if(r > L/minscore) continue;
+				if (Lw > Lc) {
 					assert(j >= 0);
 					assert(j <= seqset.len_seq(g) - width);
 					motif.add_site(g, j, true);
@@ -278,29 +267,27 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 
 void SEModel::compute_scores() {
 	// Calculate sequence scores
-	double ap = (separams.weight * separams.expect * 10
-							+ (1 - separams.weight) * motif.number())
-							/(2.0 * motif.positions_available(possible));
-  calc_matrix();
-  double Lw, Lc, Pw, Pc, F, bestF;
+	calc_matrix();
+  double Lw, Lc, L, bestL;
 	seqranks.clear();
 	int width = motif.width();
+	ofstream scores("seqscores.txt");
 	for(int g = 0; g < seqset.num_seqs(); g++) {
-		bestF = 0.0;
+		bestL = 0.0;
 		for(int j = 0; j <= seqset.len_seq(g) - width; j++) {
 			Lw = score_site(g, j, 1);
 			Lc = score_site(g, j, 0);
-      Pw = Lw * ap/(1.0 - ap + Lw * ap);
-      Pc = Lc * ap/(1.0 - ap + Lc * ap);
-      F = Pw + Pc - Pw * Pc;//probability of either
-			if(F > bestF) bestF = F;
+      L = Lw + Lc;
+			if(L > bestL) bestL = L;
 		}
-		seqscores[g] = bestF;
+		seqscores[g] = bestL;
+		scores << g << "\t" << bestL << endl;
 		struct idscore ids;
 		ids.id = g;
-		ids.score = bestF;
+		ids.score = bestL;
 		seqranks.push_back(ids);
   }
+	scores.close();
 	sort(seqranks.begin(), seqranks.end(), isc);
 	
 	// Calculate expression scores
@@ -473,7 +460,7 @@ double SEModel::spec_score() {
 	
 	double spec = prob_overlap(expn, seqn, isect, ngenes);
 	spec = (spec > 0.99)? 0 : -log10(spec);
-	spec -= entropy_score();
+	// spec -= entropy_score();
 	return spec;
 }
 
@@ -652,7 +639,7 @@ void SEModel::expand_search_avg_pcorr() {
 void SEModel::search_for_motif(const int worker, const int iter) {
 	motif.clear_sites();
 	motif.set_iter(iter);
-	motif.set_expr_cutoff(0.8);
+	motif.set_expr_cutoff(0.65);
 	motif.set_map(0.0);
 	motif.set_spec(0.0);
 	int i_worse = 0;
@@ -664,7 +651,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 		cerr << "\t\t\tSeeding failed -- restarting..." << endl;
 		return;
 	}
-	
+
 	clear_all_possible();
 	while(possible_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
 		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
@@ -732,7 +719,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	
 	motif = best_motif;
 	cerr << "\t\t\tRunning final greedy pass...";
-	single_pass(motif.get_seq_cutoff(), true);
+	single_pass(motif.get_seq_cutoff());
 	cerr << "done." << endl;
 	motif.orient();
 	compute_scores();
@@ -787,16 +774,16 @@ void SEModel::print_status(ostream& out, const int i, const int phase) {
 	out << setw(5) << possible_size();
 	if(size() > 0) {
 		out << setw(40) << consensus();
-		out << setw(10) << motif.get_spec();
-		out << setw(10) << motif.get_map();
-		out << setw(10) << ms;
-		out << setw(10) << es;
+		out << setw(15) << motif.get_spec();
+		out << setw(15) << motif.get_map();
+		out << setw(15) << ms;
+		out << setw(15) << es;
 	} else {
 		out << setw(40) << "-----------";
-		out << setw(10) << "---";
-		out << setw(10) << "---";
-		out << setw(10) << "---";
-		out << setw(10) << "---";
+		out << setw(15) << "---";
+		out << setw(15) << "---";
+		out << setw(15) << "---";
+		out << setw(15) << "---";
 	}
 	out << endl;
 }
@@ -826,7 +813,7 @@ void SEModel::set_seq_cutoff() {
 	double po, c;
 	for(int i = 0; i < ngenes; i++)
 		if(expscores[i] >= motif.get_expr_cutoff()) expn++;
-	for(c = seqranks[0].score; c > 0.01 && next < ngenes - 1; c = seqranks[next].score) {
+	for(c = seqranks[0].score; next < ngenes - 1; c = seqranks[next].score) {
 		seqn = isect = 0;
 		for(int i = 0; i < ngenes; i++) {
 			if(seqranks[i].score >= c) {
