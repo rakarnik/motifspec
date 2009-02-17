@@ -118,6 +118,7 @@ class SEModel {
 	void calc_matrix();                                     // Calculate the PWM for the current set of sites
 	string consensus() const;                               // Return the consensus sequence for the current set of sites
 	double matrix_score();                                  // Calculate the score for the current matrix
+	double entropy_score();																	// Calculate the entropy score for the current matrix
 	double map_score();                                     // Calculate the MAP score
 	double spec_score();                                    // Calculate the specificity score
 	

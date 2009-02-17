@@ -431,6 +431,23 @@ double SEModel::matrix_score() {
 	return ms;
 }
 
+double SEModel::entropy_score() {
+	double es = 0.0;
+	motif.calc_freq_matrix(freq_matrix);
+  int d = motif.get_depth();
+	int nc = motif.ncols();
+	double f;
+	for(int i = 0; i != d * nc; i += d) {
+    for(int j = 1; j <= 4; j++) {
+			f = (double) freq_matrix[i + j] + separams.pseudo[j];
+			es += f * log(1/f);
+    }
+  }
+	// Normalize for number of columns
+	es /= nc;
+	return es;
+}
+
 double SEModel::map_score() {
   double ms = 0.0;
   double map_N = motif.positions_available(possible);  
@@ -456,7 +473,7 @@ double SEModel::spec_score() {
 	
 	double spec = prob_overlap(expn, seqn, isect, ngenes);
 	spec = (spec > 0.99)? 0 : -log10(spec);
-	// spec += matrix_score();
+	spec -= entropy_score();
 	return spec;
 }
 
@@ -647,7 +664,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 		cerr << "\t\t\tSeeding failed -- restarting..." << endl;
 		return;
 	}
-
+	
 	clear_all_possible();
 	while(possible_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
 		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
@@ -757,6 +774,7 @@ bool SEModel::consider_motif(const char* filename) {
 
 void SEModel::print_status(ostream& out, const int i, const int phase) {
 	double ms = matrix_score();
+	double es = entropy_score();
 	out << "\t\t\t"; 
 	out << setw(5) << i;
 	out << setw(3) << phase;
@@ -769,14 +787,16 @@ void SEModel::print_status(ostream& out, const int i, const int phase) {
 	out << setw(5) << possible_size();
 	if(size() > 0) {
 		out << setw(40) << consensus();
-		out << setw(15) << motif.get_spec();
-		out << setw(15) << motif.get_map();
-		out << setw(15) << ms;
+		out << setw(10) << motif.get_spec();
+		out << setw(10) << motif.get_map();
+		out << setw(10) << ms;
+		out << setw(10) << es;
 	} else {
 		out << setw(40) << "-----------";
-		out << setw(15) << "---";
-		out << setw(15) << "---";
-		out << setw(15) << "---";
+		out << setw(10) << "---";
+		out << setw(10) << "---";
+		out << setw(10) << "---";
+		out << setw(10) << "---";
 	}
 	out << endl;
 }
