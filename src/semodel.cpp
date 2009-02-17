@@ -271,7 +271,6 @@ void SEModel::compute_scores() {
   double Lw, Lc, L, bestL;
 	seqranks.clear();
 	int width = motif.width();
-	ofstream scores("seqscores.txt");
 	for(int g = 0; g < seqset.num_seqs(); g++) {
 		bestL = 0.0;
 		for(int j = 0; j <= seqset.len_seq(g) - width; j++) {
@@ -281,13 +280,11 @@ void SEModel::compute_scores() {
 			if(L > bestL) bestL = L;
 		}
 		seqscores[g] = bestL;
-		scores << g << "\t" << bestL << endl;
 		struct idscore ids;
 		ids.id = g;
 		ids.score = bestL;
 		seqranks.push_back(ids);
   }
-	scores.close();
 	sort(seqranks.begin(), seqranks.end(), isc);
 	
 	// Calculate expression scores
