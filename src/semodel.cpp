@@ -803,34 +803,33 @@ void SEModel::full_output(char *name){
 }
 
 void SEModel::set_seq_cutoff() {
-	int expn, seqn, isect, next;
-	expn = next = 0;
+	int expn, seqn, isect;
+	seqn = expn = isect = 0;
 	double best_po = 1;
-	double best_sitecut = 0.001;
+	double best_c;
 	double po, c;
-	for(int i = 0; i < ngenes; i++)
-		if(expscores[i] >= motif.get_expr_cutoff()) expn++;
-	for(c = seqranks[0].score; next < ngenes - 1; c = seqranks[next].score) {
-		seqn = isect = 0;
-		for(int i = 0; i < ngenes; i++) {
-			if(seqranks[i].score >= c) {
-				seqn++;
-				if(expscores[seqranks[i].id] >= motif.get_expr_cutoff())
-					isect++;
-			} else {
-				next = i;
-				break;
+	vector<double>::iterator sc_iter = expscores.begin();
+	for(; sc_iter != expscores.end(); ++sc_iter)
+		if(*sc_iter >= motif.get_expr_cutoff()) expn++;
+	vector<struct idscore>::iterator rank_iter = seqranks.begin();
+	c = rank_iter->score;
+	best_c = c;
+	for(; rank_iter != seqranks.end(); ++rank_iter) {
+		if(c > rank_iter->score) {
+			po = prob_overlap(expn, seqn, isect, ngenes);
+			// cerr << "\t\t\t\t" << c << ":\t" << isect << "/(" << seqn << "," << expn << ")/" << ngenes << "\t" << -log10(po) << endl;			
+			if(po <= best_po && isect >= 0) {
+				best_c = c;
+				best_po = po;
 			}
 		}
-		po = prob_overlap(expn, seqn, isect, ngenes);
-		// cerr << "\t\t\t\t" << c << ":\t" << ceil(isect) << "/(" << ceil(seqn) << "," << expn << ")/" << ngenes << "\t" << -log10(po) << endl;
-		if(po <= best_po && isect > 0) {
-			best_po = po;
-			best_sitecut = c;
-		}
+		seqn++;
+		if(expscores[rank_iter->id] >= motif.get_expr_cutoff())
+			isect++;
+		c = rank_iter->score;
 	}
-	cerr << "\t\t\tSetting sequence cutoff to " << best_sitecut << endl;
-	motif.set_seq_cutoff(best_sitecut);
+	cerr << "\t\t\tSetting sequence cutoff to " << best_c << endl;
+	motif.set_seq_cutoff(best_c);
 }
 
 void SEModel::set_expr_cutoff() {
