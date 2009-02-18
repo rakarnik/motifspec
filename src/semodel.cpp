@@ -688,8 +688,10 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 		}
 		compute_scores();
 		if(phase > 1) {
-			set_expr_cutoff();
-			set_seq_cutoff();
+			if(i % 2 == 0)
+				set_seq_cutoff();
+			else
+				set_expr_cutoff();
 		}
 		motif.set_spec(spec_score());
 		motif.set_map(map_score());
