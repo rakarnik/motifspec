@@ -19,7 +19,7 @@ comp_motif(m)
     b1[i]=-1;
     b1v[i]=0.0;
   }
-  comp_fmsize = (m.width() + 2 * m.ncols()) * m.get_depth();
+  comp_fmsize = (m.get_width() + 2 * m.ncols()) * m.get_depth();
   comp_fm1 = new double[comp_fmsize];
   comp_fm2 = new double[comp_fmsize];//2=reverse complement of 1
   m.freq_matrix_extended(comp_fm1);
