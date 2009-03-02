@@ -18,6 +18,7 @@ has_sites(num_seqs)
 	for(; col_iter != columns.end(); ++col_iter) {
 		*col_iter = distance(columns.begin(), col_iter);
 	}
+	width = ((int) columns.back()) + 1;
 	seq_cutoff = 0.00001;
 	expr_cutoff = 0.70;
 	iter = 0;
@@ -27,6 +28,7 @@ has_sites(num_seqs)
 
 Motif::Motif(const Motif& m) :
 seqset(m.seqset),
+width(m.width),
 depth(m.depth),
 npseudo(m.npseudo),
 num_seqs(m.num_seqs),
@@ -53,6 +55,7 @@ Motif& Motif::operator= (const Motif& m) {
 		num_seqs_with_sites = m.num_seqs_with_sites;
 		has_sites.assign(m.has_sites.begin(), m.has_sites.end());
     columns.assign(m.columns.begin(), m.columns.end());
+		width = ((int) columns.back()) + 1;
 		seq_cutoff = m.seq_cutoff;
 		expr_cutoff = m.expr_cutoff;
 		mapsc = m.mapsc;
@@ -69,6 +72,7 @@ void Motif::clear_sites() {
 	for(; col_iter != columns.end(); ++col_iter) {
 		*col_iter = distance(columns.begin(), col_iter);
 	}
+	width = ((int) columns.back()) + 1;
   num_seqs_with_sites = 0;
 	has_sites.assign(num_seqs, false);
 	mapsc = 0.0;
@@ -96,15 +100,15 @@ void Motif::write(ostream& motout) const {
     int c = site_iter->chrom();
     int p = site_iter->posit();
     bool s = site_iter->strand();
-    for(int j = 0; j < width(); j++){
+    for(int j = 0; j < width; j++){
       if(s) {
 				if(p + j >= 0 && p + j < seqset.len_seq(c))
 					motout << nt[ss_seq[c][p + j]];
 				else motout << ' ';
       }
       else {
-				if(p + width() - 1 - j >= 0 && p + width()-1-j < seqset.len_seq(c))
-					motout << nt[depth - 1 - ss_seq[c][p + width() - 1 - j]];
+				if(p + width - 1 - j >= 0 && p + width - 1 - j < seqset.len_seq(c))
+					motout << nt[depth - 1 - ss_seq[c][p + width - 1 - j]];
 				else motout << ' ';
       }
     }
@@ -201,7 +205,7 @@ bool Motif::is_open_site(const int c, const int p){
 	for(; site_iter != sitelist.end(); ++site_iter) {
     if(site_iter->chrom() == c) {
       int pp = site_iter->posit();
-      if(pp > p - width() && pp < p + width()) return false;
+      if(pp > p - width && pp < p + width) return false;
     }
   }
   return true;
@@ -221,7 +225,6 @@ void Motif::calc_freq_matrix(int *fm) {
   for(int i = 0; i < depth * ncols(); i++){
 		fm[i] = 0;
   }
-	int w = width();
 	int c, p, pos, matpos, seq;
 	bool s;
   vector<Site>::iterator site_iter;
@@ -246,7 +249,7 @@ void Motif::calc_freq_matrix(int *fm) {
       pos = 0;
 			vector<int>::iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
-				pos = p + w - 1 - *col_iter;
+				pos = p + width - 1 - *col_iter;
 				if(pos >= 0 && pos < seqset.len_seq(c)) {
 					seq = ss_seq[c][pos];
 					fm[matpos - seq]++;
@@ -270,8 +273,8 @@ bool Motif::column_freq(const int col, int *ret){
       int seq = ss_seq[c][p + col];
       ret[seq]++;
     } else {
-      if((p + width() - 1 - col > seqset.len_seq(c) - 1) || (p + width() - 1 - col < 0)) return false;
-      int seq = ss_seq[c][p + width() - 1 - col];
+      if((p + width - 1 - col > seqset.len_seq(c) - 1) || (p + width - 1 - col < 0)) return false;
+      int seq = ss_seq[c][p + width - 1 - col];
       ret[depth - seq - 1]++;
     }
   }
@@ -306,6 +309,7 @@ int Motif::remove_col(const int c) {
 		cerr << "remove_column called for column " << c << " but it was not found!" << endl; 
 		abort();
 	}
+	width = ((int) columns.back()) + 1;
   return ret;
 }
 
@@ -332,6 +336,7 @@ void Motif::add_col(const int c) {
 		if(! found)
 			columns.push_back(c);
   }
+	width = ((int) columns.back()) + 1;
 }
 
 bool Motif::has_col(const int c) {
@@ -343,10 +348,9 @@ void Motif::flip_sites() {
   for(i = 0; i < number(); i++) {
     sitelist[i].flip();
   }
-	int w = width();
 	vector<int>::iterator col_iter;
 	for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
-		*col_iter = w - *col_iter - 1;
+		*col_iter = width - *col_iter - 1;
 	}
 	vector<int> temp;
 	vector<int>::reverse_iterator rev_iter;
@@ -365,7 +369,7 @@ void Motif::shift_sites(const int shift) {
 int Motif::positions_available() const {
   int ret = 0;
   for(int i = 0; i < num_seqs; i++){
-    ret += seqset.len_seq(i) - width() + 1;
+    ret += seqset.len_seq(i) - width + 1;
   }
   return ret;
 }
@@ -374,13 +378,13 @@ int Motif::positions_available(const bool* possible) const {
 	int ret = 0;
 	for(int i = 0; i < num_seqs; i++) {
 		if(possible[i])
-			ret += seqset.len_seq(i) - width() + 1;
+			ret += seqset.len_seq(i) - width + 1;
 	}
 	return ret;
 }
 
 void Motif::columns_open(int &l, int &r){
-	int w = width();
+	int w = width;
 	int c, p, len;
 	bool s;
 	vector<Site>::iterator site_iter;
@@ -398,21 +402,21 @@ void Motif::freq_matrix_extended(double *fm) const {
   //assumes fm of dimension (sites_width+2*sites_num_cols)*depth, fills in edges with Ns
   char** ss_seq = seqset.seq_ptr();
   int i, col, j, seq;
-  int fm_size = (width() + 2 * ncols()) * depth;
+  int fm_size = (width + 2 * ncols()) * depth;
   for(i = 0; i < fm_size; i++) fm[i] = 0.0;
   if(number() == 0) return;
   for(i = 0; i < number(); i++) {//i = site number
     int c = chrom(i);
     int p = posit(i);
     bool t = strand(i);
-    for(j = 0, col = -ncols(); col < width() + ncols(); col++, j += depth) {
+    for(j = 0, col = -ncols(); col < width + ncols(); col++, j += depth) {
       if(t) {
 				if((p + col > seqset.len_seq(c) - 1) || (p + col < 0)) seq = 0;
 				else seq = ss_seq[c][p + col];
 				fm[j + seq] += 1.0;
       } else {
-				if((p + width() - 1 - col > seqset.len_seq(c) - 1) || (p + width() - 1 - col < 0)) seq = 0;
-				else seq = ss_seq[c][p + width() - 1 - col];
+				if((p + width - 1 - col > seqset.len_seq(c) - 1) || (p + width - 1 - col < 0)) seq = 0;
+				else seq = ss_seq[c][p + width - 1 - col];
 				fm[j + depth - 1 - seq] += 1.0;
       }
     }
@@ -463,14 +467,13 @@ void Motif::print_columns(ostream& out) {
 bool Motif::check_sites() {
 	int c, p;
 	bool s;
-	int w = width();
 	vector<Site>::iterator site_iter;
 	for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
 		c = site_iter->chrom();
 		p = site_iter->posit();
 		s = site_iter->strand();
-		if(p < 0 || p + w - 1 >= seqset.len_seq(c)) {
-			cerr << "\t\t\t\t\tc: " << c << " p: " << p << " s: " << s << " w: " << w << " len: " << seqset.len_seq(c) << endl;
+		if(p < 0 || p + width - 1 >= seqset.len_seq(c)) {
+			cerr << "\t\t\t\t\tc: " << c << " p: " << p << " s: " << s << " w: " << width << " len: " << seqset.len_seq(c) << endl;
 			return false;
 		}
 	}
