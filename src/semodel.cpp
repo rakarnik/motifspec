@@ -473,7 +473,6 @@ double SEModel::spec_score() {
 	
 	double spec = prob_overlap(expn, seqn, isect, ngenes);
 	spec = (spec > 0.99)? 0 : -log10(spec);
-	spec -= entropy_score();
 	return spec;
 }
 
