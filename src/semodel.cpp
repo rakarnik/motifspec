@@ -54,7 +54,7 @@ void SEModel::set_default_params(){
   separams.minpass = 50;
   separams.seed = -1;
   separams.psfact = 0.1;
-  separams.weight = 0.8; 
+  separams.weight = 0.5; 
   separams.npass = 1000000;
   separams.fragment = true;
   separams.flanking = 0;
@@ -649,7 +649,7 @@ void SEModel::expand_search_avg_pcorr() {
 	}
 }
 
-void SEModel::search_for_motif(const int worker, const int iter) {
+int SEModel::search_for_motif(const int worker, const int iter) {
 	motif.clear_sites();
 	motif.set_iter(iter);
 	motif.set_expr_cutoff(0.8);
@@ -662,7 +662,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	seed_random_site();
 	if(size() < 1) {
 		cerr << "\t\t\tSeeding failed -- restarting..." << endl;
-		return;
+		return BAD_SEED;
 	}
 	
 	clear_all_possible();
@@ -672,7 +672,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	}
 	if(possible_size() < 2) {
 		cerr << "\t\t\tBad search start -- no genes within " << separams.mincorr << endl;
-		return;
+		return BAD_SEARCH_SPACE;
 	}
 
 	compute_scores();
@@ -692,7 +692,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 		print_status(cerr, i, phase);
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting..." << endl;
-			return;
+			return TOO_MANY_SITES;
 		}
 		if(size() < 2) {
 			cerr << "\t\t\tZero or one sites, reloading best motif..." << endl;
@@ -711,7 +711,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 		if(motif.get_spec() > best_motif.get_spec()) {
 			if(! archive.check_motif(motif)) {
 				cerr << "\t\t\tToo similar! Restarting..." << endl;
-				return;
+				return TOO_SIMILAR;
 			}
 			cerr << "\t\t\t\tNew best motif!" << endl;
 			best_motif = motif;
@@ -722,7 +722,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 				motif = best_motif;
 				if(size() < 2) {
 					cerr << "\t\t\tLess than 2 genes at bad move threshold! Restarting..." << endl;
-					return;
+					return TOO_FEW_SITES;
 				}
 				cerr << "\t\t\tReached bad move threshold, reloading best motif..." << endl;
 				phase++;
@@ -743,15 +743,15 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	
 	if(size() < separams.minsize) {
 		cerr << "\t\t\tToo few sites! Restarting..." << endl;
-		return;
+		return TOO_FEW_SITES;
 	}
 	if(size() > ngenes/3) {
 		cerr << "\t\t\tToo many sites! Restarting..." << endl;
-		return;
+		return TOO_MANY_SITES;
 	}
 	if(! archive.check_motif(motif)) {
 		cerr << "\t\t\tToo similar! Restarting..." << endl;
-		return;
+		return TOO_SIMILAR;
 	}
 	
 	char tmpfilename[30], motfilename[30];
@@ -762,6 +762,7 @@ void SEModel::search_for_motif(const int worker, const int iter) {
 	motout.close();
 	rename(tmpfilename, motfilename);
 	cerr << "\t\t\tWrote motif to " << motfilename << endl;
+	return 0;
 }
 
 bool SEModel::consider_motif(const char* filename) {

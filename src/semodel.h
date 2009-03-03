@@ -86,7 +86,8 @@ class SEModel {
 	static const int TOO_SIMILAR = 2;
 	static const int BAD_SEED = 3;
 	static const int TOO_FEW_SITES = 4;
-		
+	static const int TOO_MANY_SITES = 5;
+
 	/* General */
 	SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc = 10, const int bf = 1000, const double map_cut = -20.0, const double sim_cut = 0.8);
   ~SEModel();
@@ -139,7 +140,7 @@ class SEModel {
   void expand_search_around_mean(const double corr_cutoff);
 	void expand_search_min_pcorr(const double corr_cutoff);
 	void expand_search_avg_pcorr();
-	void search_for_motif(const int worker, const int iter);
+	int search_for_motif(const int worker, const int iter);
 	bool consider_motif(const char* filename);
 	
 	/* Output */
