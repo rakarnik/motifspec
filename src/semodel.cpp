@@ -656,6 +656,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	motif.set_spec(0.0);
 	int i_worse = 0;
 	int phase = 0;
+
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
@@ -700,7 +701,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 			print_status(cerr, i, phase);
 		}
 		compute_scores();
-		if(phase > 1)
+		if(size() > separams.minsize)
 			if(i % 2 == 0)
 				set_seq_cutoff();
 			else
@@ -833,8 +834,10 @@ void SEModel::set_seq_cutoff() {
 		if(c > rank_iter->score) {
 			po = prob_overlap(expn, seqn, isect, ngenes);
 			// cerr << "\t\t\t\t" << c << ":\t" << isect << "/(" << seqn << "," << expn << ")/" << ngenes << "\t" << -log10(po) << endl;
-			if(po <= best_po && isect >= 0)
+			if(po <= best_po && isect >= 0) {
 				best_c = c;
+				best_po = po;
+			}
 		}
 		seqn++;
 		if(expscores[rank_iter->id] >= motif.get_expr_cutoff()) {
