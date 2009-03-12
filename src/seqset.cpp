@@ -14,6 +14,7 @@ Seqset::Seqset() {
   ss_len_seq = new int[ss_num_seqs];
   ss_seq = new char*[ss_num_seqs];
   gc = new float[ss_num_seqs];
+	gc_genome = 0;
 }
 
 Seqset::Seqset(const vector<string>& v) {
