@@ -114,7 +114,7 @@ class SEModel {
 	void genes(int* genes) const;                           // Return the genes that are assigned to this model
 	
 	/* Sequence model*/
-	Seqset get_seqset() { return seqset; }                  // Return the set of sequences
+	Seqset& get_seqset() { return seqset; }                 // Return the set of sequences
 	void calc_matrix();                                     // Calculate the PWM for the current set of sites
 	string consensus() const;                               // Return the consensus sequence for the current set of sites
 	double matrix_score();                                  // Calculate the score for the current matrix
