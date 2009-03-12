@@ -83,8 +83,6 @@ int main(int argc, char *argv[]) {
 		}
 	} else {
 		cerr << "Running as worker " << worker << "..." << endl;
-		for(int g = 0; g < ngenes; g++)
-			se.add_possible(g);
 		int nruns = se.possible_positions()
 								/ se.get_params().expect
 								/ ncol
