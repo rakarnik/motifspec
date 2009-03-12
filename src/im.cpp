@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 		}
 	} else {
 		cerr << "Running as worker " << worker << "..." << endl;
-		int nruns = se.possible_positions()
+		int nruns = se.total_positions()
 								/ se.get_params().expect
 								/ ncol
 								/ se.get_params().undersample
