@@ -50,7 +50,6 @@ SEModel::~SEModel(){
 
 void SEModel::set_default_params(){
   separams.expect = 10;
-  separams.gcback = 0.38;
   separams.minpass = 50;
   separams.seed = -1;
   separams.psfact = 0.1;
@@ -66,9 +65,9 @@ void SEModel::set_default_params(){
 
 void SEModel::set_final_params(){
   separams.npseudo = separams.expect * separams.psfact;
-  separams.backfreq[0]=separams.backfreq[5] = 0.25;
-  separams.backfreq[1]=separams.backfreq[4] = (1 - separams.gcback)/2.0;
-  separams.backfreq[2]=separams.backfreq[3] = separams.gcback/2.0;
+  separams.backfreq[0] = separams.backfreq[5] = 0.25;
+  separams.backfreq[1] = separams.backfreq[4] = (1 - seqset.gcgenome())/2.0;
+  separams.backfreq[2] = separams.backfreq[3] = seqset.gcgenome()/2.0;
   for(int i = 0; i < 6; i++) {
 		separams.pseudo[i] = separams.npseudo * separams.backfreq[i];
   }
@@ -533,7 +532,6 @@ string SEModel::consensus() const {
 
 void SEModel::output_params(ostream &fout){
   fout<<" expect =      \t"<<separams.expect<<'\n';
-  fout<<" gcback =      \t"<<separams.gcback<<'\n';
   fout<<" minpass =     \t"<<separams.minpass<<'\n';
   fout<<" seed =        \t"<<separams.seed<<'\n';
   fout<<" numcols =     \t"<<motif.ncols()<<'\n';
@@ -543,7 +541,6 @@ void SEModel::output_params(ostream &fout){
 
 void SEModel::modify_params(int argc, char *argv[]){
   GetArg2(argc,argv,"-expect",separams.expect);
-  GetArg2(argc,argv,"-gcback",separams.gcback);
   GetArg2(argc,argv,"-minpass",separams.minpass);
   GetArg2(argc,argv,"-seed",separams.seed);
   GetArg2(argc,argv,"-undersample",separams.undersample);

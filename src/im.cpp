@@ -64,6 +64,8 @@ int main(int argc, char *argv[]) {
 	se.ace_initialize();
 	cerr << "done." << endl;
 	
+	cerr << "Genome GC content is " << se.get_seqset().gcgenome() << endl;
+	
 	if(archive) {
 		cerr << "Running in archive mode..." << endl;
 		string archinstr(outfile);
@@ -219,7 +221,6 @@ void print_usage(ostream& fout) {
   fout<<"Options:\n";
 	fout<<" -numcols    \tnumber of columns to align (10)\n";
   fout<<" -expect     \tnumber of sites expected in model (10)\n";
-  fout<<" -gcback     \tbackground fractional GC content of input sequence (0.38)\n";
   fout<<" -minpass    \tminimum number of non-improved passes in phase 1 (200)\n";
   fout<<" -seed       \tset seed for random number generator (time)\n";
   fout<<" -undersample\tpossible sites / (expect * numcols * seedings) (1)\n"; 

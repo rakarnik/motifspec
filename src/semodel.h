@@ -12,7 +12,6 @@ struct SEParams{
   double weight;				//fractional weight on priors
   double psfact;				//psfact*numsites=npseudo
   double npseudo;				//number of pseudo counts
-  double gcback;				//genome gc content
   double backfreq[6];		//array for gc content
   double pseudo[6];
   int maxlen;						//maximum length of sites
