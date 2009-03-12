@@ -18,6 +18,7 @@ Seqset::Seqset() {
 
 Seqset::Seqset(const vector<string>& v) {
   map<char,int> code;
+	int total_seq_len = 0;
   code['n'] = code['N'] = 0;
   code['a'] = code['A'] = 1;
   code['c'] = code['C'] = 2;
@@ -37,8 +38,11 @@ Seqset::Seqset(const vector<string>& v) {
 				gc[i]++;
 			}
     }
+		gc_genome += gc[i];
+		total_seq_len += ss_len_seq[i];
 		gc[i] /= ss_len_seq[i];
   }
+	gc_genome /= total_seq_len;
 }
 
 Seqset::~Seqset(){
