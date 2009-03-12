@@ -68,6 +68,7 @@ class SEModel {
 	} isc;
 	
 	vector<double> seqscores;
+	vector<int> bestpos;
 	vector<struct idscore> seqranks;
 	vector<double> expscores;
 	vector<struct idscore> expranks;
@@ -106,6 +107,7 @@ class SEModel {
 	void clear_all_possible();                              // Remove all genes as potential members
 	bool is_possible(const int gene) const;									// Return whether this gene is a potential member
 	int possible_size() const;															// Return number of potential members
+	int total_positions() const;														// Return total number of possible positions
 	int possible_positions() const;													// Return number of potential positions
 	void clear_sites();																			// Remove all sites currently in model
 	bool is_member(const int gene) const;										// Return whether the gene is a member
@@ -134,7 +136,9 @@ class SEModel {
 	void seed_random_site();
   void seed_biased_site();
   void single_pass(const double minprob = 0.0, bool greedy = false);
-	void compute_scores();
+	void compute_seq_scores();
+	void compute_seq_scores_minimal();
+	void compute_expr_scores();
 	bool column_sample();
   void expand_search_around_mean(const double corr_cutoff);
 	void expand_search_min_pcorr(const double corr_cutoff);
