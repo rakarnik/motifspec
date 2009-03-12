@@ -688,7 +688,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	int i_worse = 0;
 	int phase = 0;
 
-	/*
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
@@ -696,8 +695,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		cerr << "\t\t\tSeeding failed -- restarting..." << endl;
 		return BAD_SEED;
 	}
-	*/
-	motif.add_site(64, 358, 1);
 	
 	clear_all_possible();
 	while(possible_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
