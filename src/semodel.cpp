@@ -497,6 +497,7 @@ double SEModel::spec_score() {
 	int isect, seqn, expn;
 	isect = seqn = expn = 0;
 	compute_seq_scores_minimal();
+	if(seqranks[0].score <= 0.85) compute_seq_scores();
 	compute_expr_scores();
 	for(int g = 0; g < ngenes; g++) {
 		if(seqscores[g] >= motif.get_seq_cutoff()) seqn++;
