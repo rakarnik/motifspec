@@ -9,7 +9,7 @@ seqset(s),
 depth(dp),
 npseudo(np),
 num_seqs(s.num_seqs()),
-max_width(2 * nc),
+max_width(3 * nc),
 columns(nc),
 num_seqs_with_sites(0),
 has_sites(num_seqs)
