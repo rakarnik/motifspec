@@ -29,6 +29,7 @@ Seqset::Seqset(const vector<string>& v) {
   ss_len_seq = new int[ss_num_seqs];
   ss_seq = new char*[ss_num_seqs];
   gc = new float[ss_num_seqs];
+	gc_genome = 0;
 	for(int i = 0; i < ss_num_seqs; i++) {
     ss_len_seq[i] = v[i].length();
     ss_seq[i] = new char[ss_len_seq[i]];
