@@ -12,7 +12,7 @@ class Site {
 	bool str;
 public:
 	Site() {};
-	Site::Site(const int c, const int p, const bool s);
+	Site(const int c, const int p, const bool s);
 	int chrom() const { return chr; };
 	int posit() const { return pos; };
 	bool strand() const { return str; };
