@@ -137,7 +137,7 @@ int read_motifs(SEModel& se) {
 	unsigned int len = 0;
 	unsigned long pos = 0;
 	workdir = opendir(".");
-	while(dirp = readdir(workdir)) {
+	while((dirp = readdir(workdir))) {
 		filename = string(dirp->d_name);
 		len = filename.length();
 		pos = filename.find_last_of('.');
