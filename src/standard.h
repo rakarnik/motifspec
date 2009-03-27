@@ -3,6 +3,7 @@
 
 #ifndef _standard
 #define _standard
+#include <cassert>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
