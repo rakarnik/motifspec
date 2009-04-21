@@ -5,10 +5,10 @@
 
 Seqset::Seqset() : 
 ss_num_seqs(0),
-ss_seq(ss_num_seqs),
 total_seq_len(0),
-gc(ss_num_seqs),
+ss_seq(ss_num_seqs),
 gc_genome(0),
+gc(ss_num_seqs),
 bgmodel0(4),
 bgmodel1(16),
 bgmodel2(64),
@@ -19,10 +19,10 @@ cbgscores(ss_num_seqs) {
 
 Seqset::Seqset(const vector<string>& v) :
 ss_num_seqs(v.size()),
-ss_seq(ss_num_seqs),
 total_seq_len(0),
-gc(ss_num_seqs),
+ss_seq(ss_num_seqs),
 gc_genome(0),
+gc(ss_num_seqs),
 bgmodel0(4),
 bgmodel1(16),
 bgmodel2(64),
@@ -176,7 +176,7 @@ void Seqset::train_background1() {
 	}
 	
 	// Add pseudocounts
-	for(int i = 0; i < 64; i++) {
+	for(int i = 0; i < 16; i++) {
 		float atpseudo = 10 * (1 - gc_genome)/2;
 		float gcpseudo = 10 * gc_genome/2;
 		switch(i % 4) {
