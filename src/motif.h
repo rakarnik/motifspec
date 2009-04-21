@@ -7,8 +7,7 @@
 class Motif {
 	const Seqset& seqset;                    // set of sequences that this motif refers to
 	int width;															 // width of the motif (including non-informative columns)
-  int depth;                               // ie 4 for acgt, 6 for nacgtn
-	int npseudo;                             // pseudocount
+  int npseudo;                             // pseudocount
   int num_seqs;                            // total number of sequences in this set
   int max_width;                           // maximum width of this motif
   vector<Site> sitelist;                   // list of sites that comprise this motif
@@ -25,12 +24,11 @@ class Motif {
 
 public:
 	Motif();
-  Motif(const Seqset& v, int nc = 10, int dp = 6, int np = 1);
+  Motif(const Seqset& v, int nc = 10, int np = 1);
   Motif(const Motif& m);
 	Motif& operator= (const Motif& m);
   int number() const { return sitelist.size(); }
   int get_width() const { return width; }
-  int get_depth() const { return depth; }
   int ncols() const { return columns.size(); }
   int chrom(int i) const { return sitelist[i].chrom(); }
   int posit(int i) const { return sitelist[i].posit(); }
@@ -57,7 +55,7 @@ public:
 	void remove_all_sites();
   void calc_freq_matrix(int *fm);
   void freq_matrix_extended(double *fm) const;
-	void calc_score_matrix(double *sm, double* backfreq, double* pseudo);
+	void calc_score_matrix(double *sm, double* pseudo);
   int column(const int i) const { return columns[i]; };
 	vector<int>::iterator first_column() { return columns.begin(); };
 	vector<int>::iterator last_column() { return columns.end(); };
@@ -65,15 +63,16 @@ public:
   int remove_col(const int c);
 	void add_col(const int c);
 	bool has_col(const int c);
-  int positions_available() const;
-	int positions_available(const bool* possible) const;
   void shift_sites(const int shift);
   void flip_sites();
 	void orient();
+  int positions_available() const;
+	int positions_available(const bool* possible) const;
   void columns_open(int &l, int &r);
-	void write(ostream& motout) const;
-	void read(istream& motin);
-  void destroy();
+	string consensus() const;                                                // Return the consensus sequence for the current set of sites
+	void read(istream& motin);                                               // Read list of sites from a stream
+	void write(ostream& motout) const;                                       // Write list of sites to a stream
+	void destroy();
 	void print_columns(ostream& out);
 	bool check_sites();
 };
