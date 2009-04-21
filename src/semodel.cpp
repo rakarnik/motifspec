@@ -199,7 +199,7 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 		matpos = 0;
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + *col_iter >= 0);
-			assert(p + *col_iter <= seqset.len_seq(c));
+			assert(p + *col_iter < seqset.len_seq(c));
 			L *= score_matrix[matpos + ss_seq[c][p + *col_iter]];
 			L /= seqset.bgscore(c, p + *col_iter, s);
 			matpos += 4;
@@ -208,7 +208,7 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 		matpos = 0;
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + width - 1 - *col_iter >= 0);
-			assert(p + width - 1 - *col_iter <= seqset.len_seq(c));
+			assert(p + width - 1 - *col_iter < seqset.len_seq(c));
 			seq = ss_seq[c][p + width - 1 - *col_iter];
 			L *= score_matrix[matpos + 3 - ss_seq[c][p + width - 1 - *col_iter]];
 			L /= seqset.bgscore(c, p + width - 1 - *col_iter, s);
