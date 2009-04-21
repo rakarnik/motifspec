@@ -312,7 +312,8 @@ void Motif::freq_matrix_extended(double *fm) const {
     bool s = strand(i);
     for(j = 0, col = -ncols(); col < width + ncols(); col++, j += 4) {
       if(s) {
-				if((p + col <= seqset.len_seq(c) - 1) || (p + col >= 0)) {
+				if((p + col <= seqset.len_seq(c) - 1) && (p + col >= 0)) {
+					assert(j + seq[c][p + col] < fm_size);
 					fm[j + seq[c][p + col]] += 1.0;
 				} else {
 					for(int k = 0; k < 4; k++) {
@@ -320,7 +321,8 @@ void Motif::freq_matrix_extended(double *fm) const {
 					}
 				}
       } else {
-				if((p + width - 1 - col <= seqset.len_seq(c) - 1) || (p + width - 1 - col >= 0)) {
+				if((p + width - 1 - col <= seqset.len_seq(c) - 1) && (p + width - 1 - col >= 0)) {
+					assert(j + 3 - seq[c][p + width - 1 - col] < fm_size);
 					fm[j + 3 - seq[c][p + width - 1 - col]] += 1.0;
 				} else {
 					for(int k = 0; k < 4; k++) {
