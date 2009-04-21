@@ -21,8 +21,8 @@ expranks(ngenes)
   max_motifs = bf;
   map_cutoff = map_cut;
   sim_cutoff = sim_cut;
-  freq_matrix = new int[motif.get_depth() * motif.ncols()];
-  score_matrix = new double[motif.get_depth() * motif.ncols()];
+  freq_matrix = new int[4 * motif.ncols()];
+  score_matrix = new double[4 * motif.ncols()];
 	
 	expr = exprtab;
 	npoints = numexpr;
@@ -66,10 +66,9 @@ void SEModel::set_default_params(){
 
 void SEModel::set_final_params(){
   separams.npseudo = separams.expect * separams.psfact;
-  separams.backfreq[0] = separams.backfreq[5] = 0.25;
-  separams.backfreq[1] = separams.backfreq[4] = (1 - seqset.gcgenome())/2.0;
-  separams.backfreq[2] = separams.backfreq[3] = seqset.gcgenome()/2.0;
-  for(int i = 0; i < 6; i++) {
+  separams.backfreq[0] = separams.backfreq[3] = (1 - seqset.gcgenome())/2.0;
+  separams.backfreq[1] = separams.backfreq[2] = seqset.gcgenome()/2.0;
+  for(int i = 0; i < 4; i++) {
 		separams.pseudo[i] = separams.npseudo * separams.backfreq[i];
   }
   separams.maxlen = 3 * motif.get_width();
@@ -186,14 +185,13 @@ void SEModel::seed_random_site() {
 }
 
 void SEModel::calc_matrix() {
-  motif.calc_score_matrix(score_matrix, separams.backfreq, separams.pseudo);
+  motif.calc_score_matrix(score_matrix, separams.pseudo);
 }
 
 double SEModel::score_site(const int c, const int p, const bool s) {
-	char **ss_seq = seqset.seq_ptr();
+	const vector<vector<int> >& ss_seq = seqset.seq();
 	double L = 1.0;
 	int width = motif.get_width();
-	int d = motif.get_depth();
 	int matpos, seq;
 	vector<int>::iterator col_iter = motif.first_column();
 	vector<int>::iterator last_col = motif.last_column();
@@ -202,18 +200,19 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + *col_iter >= 0);
 			assert(p + *col_iter <= seqset.len_seq(c));
-			seq = ss_seq[c][p + *col_iter];
-			L *= score_matrix[matpos + seq];
-			matpos += d;
+			L *= score_matrix[matpos + ss_seq[c][p + *col_iter]];
+			L /= seqset.bgscore(c, p + *col_iter, s);
+			matpos += 4;
 		}
 	} else {
-		matpos = d - 1;
+		matpos = 0;
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + width - 1 - *col_iter >= 0);
 			assert(p + width - 1 - *col_iter <= seqset.len_seq(c));
 			seq = ss_seq[c][p + width - 1 - *col_iter];
-			L *= score_matrix[matpos - seq];
-			matpos += d;
+			L *= score_matrix[matpos + 3 - ss_seq[c][p + width - 1 - *col_iter]];
+			L /= seqset.bgscore(c, p + width - 1 - *col_iter, s);
+			matpos += 4;
 		}
 	}
 	return L;
@@ -350,7 +349,7 @@ void SEModel::compute_expr_scores() {
 
 bool SEModel::column_sample(){
 	bool changed = false;
-	int *freq = new int[motif.get_depth()];
+	int *freq = new int[4];
 	int width = motif.get_width();
 	// Compute scores for current and surrounding columns
   int max_left, max_right;
@@ -367,7 +366,7 @@ bool SEModel::column_sample(){
 		wtx[i].score = -DBL_MAX;
 		if(motif.column_freq(i - x, freq)){
       wt = 0.0;
-      for(int j = 0;j < motif.get_depth(); j++){
+      for(int j = 0;j < 4; j++){
 				wt += gammaln(freq[j] + separams.pseudo[j]);
 				wt -= (double)freq[j] * log(separams.backfreq[j]);
       }
@@ -433,31 +432,27 @@ bool SEModel::column_sample(){
 double SEModel::matrix_score() {
 	double ms = 0.0;
 	motif.calc_freq_matrix(freq_matrix);
-  int d = motif.get_depth();
-	int nc = motif.ncols();
+  int nc = motif.ncols();
 	int w = motif.get_width();
-	double sc[6] = {0.0,0.0,0.0,0.0,0.0,0.0};
-  for(int i = 0; i != d * nc; i += d) {
-    int x = freq_matrix[i] + freq_matrix[i + 5];
-    for(int j = 1; j <= 4; j++) {
-      ms += gammaln((double) freq_matrix[i + j] + x * separams.backfreq[j] + separams.pseudo[j]);
-      sc[j] += freq_matrix[i + j] + x * separams.backfreq[j];
+	double sc[] = {0.0,0.0,0.0,0.0};
+  for(int i = 0; i < 4 * nc; i += 4) {
+    for(int j = 0; j < 4; j++) {
+      ms += gammaln((double) freq_matrix[i + j] + separams.pseudo[j]);
+      sc[j] += freq_matrix[i + j];
     }
   }
-  ms -= nc * gammaln((double) motif.number() + separams.npseudo);
-	for (int j = 1; j <= 4; j++) {
-    ms -= sc[j] * log(separams.backfreq[j]);
-  }
-  /* 
+	ms -= nc * gammaln((double) motif.number() + separams.npseudo);
+	for (int j = 0; j < 4; j++)
+		ms -= sc[j] * log(separams.backfreq[j]);
+	/* 
 		This factor arises from a modification of the model of Liu, et al 
 		in which the background frequencies of DNA bases are taken to be
 		constant for the organism under consideration
 	*/
 	double vg = 0.0;
   ms -= lnbico(w - 2, nc - 2);
-  for(int j = 1; j <= 4; j++) {
+  for(int j = 0; j < 4; j++)
     vg += gammaln(separams.pseudo[j]);
-  }
   vg -= gammaln((double) (separams.npseudo));
   ms -= ((double) nc * vg);
 	return ms;
@@ -466,10 +461,9 @@ double SEModel::matrix_score() {
 double SEModel::entropy_score() {
 	double es = 0.0;
 	motif.calc_freq_matrix(freq_matrix);
-  int d = motif.get_depth();
 	int nc = motif.ncols();
 	double f;
-	for(int i = 0; i != d * nc; i += d) {
+	for(int i = 0; i < 4 * nc; i += 4) {
     for(int j = 1; j <= 4; j++) {
 			f = (double) freq_matrix[i + j] + separams.pseudo[j];
 			es += f * log(1/f);
@@ -508,61 +502,6 @@ double SEModel::spec_score() {
 	double spec = prob_overlap(expn, seqn, isect, ngenes);
 	spec = (spec > 0.99)? 0 : -log10(spec);
 	return spec;
-}
-
-string SEModel::consensus() const {
-	map<char,char> nt;
-  nt[0]=nt[5]='N';
-  nt[1]='A';nt[2]='C';nt[3]='G';nt[4]='T';
-	char** ss_seq=seqset.seq_ptr();
-	
-	int numsites = motif.number();
-	if(numsites < 1) return "";
-	
-	int width = motif.get_width();
-	vector<string> hits(numsites);
-	for(int i = 0; i < numsites; i++){
-		int c = motif.chrom(i);
-    int p = motif.posit(i);
-    bool s = motif.strand(i);
-    for(int j = 0; j < width; j++){
-      if(s) {
-				if(p + j >= 0 && p+j < seqset.len_seq(c))
-					 hits[i] += nt[ss_seq[c][p+j]];
-				else hits[i] += ' ';
-      } else {
-				if(p + width - 1 - j >= 0 && p + width - 1 - j < seqset.len_seq(c))
-					hits[i] += nt[motif.get_depth() - 1 - ss_seq[c][p + width - 1 - j]];
-				else hits[i] += ' ';
-      }
-    }
-  }
-	
-	string cons;
-  int wide1 = hits[0].size();
-  int num1 = hits.size();
-  int num1a, num1c, num1g, num1t;
-  for(int i = 0; i < wide1; i++){
-    num1a = num1c = num1g = num1t = 0;
-    for(int j = 0; j < num1; j++){
-      if(hits[j][i] == 'a' || hits[j][i] == 'A') num1a += 1;
-      if(hits[j][i] == 'c' || hits[j][i] == 'C') num1c += 1;
-      if(hits[j][i] == 'g' || hits[j][i] == 'G') num1g += 1;
-      if(hits[j][i] == 't' || hits[j][i] == 'T') num1t += 1;
-    }
-    if(num1a > num1*0.7) cons += 'A';
-    else if(num1c > num1*0.7) cons += 'C';
-    else if(num1g > num1*0.7) cons += 'G';
-    else if(num1t > num1*0.7) cons += 'T';
-    else if((num1a + num1t) > num1 * 0.85) cons +='W';
-    else if((num1a + num1c) > num1 * 0.85) cons +='M';
-    else if((num1a + num1g) > num1 * 0.85) cons +='R';
-    else if((num1t + num1c) > num1 * 0.85) cons +='Y';
-    else if((num1t + num1g) > num1 * 0.85) cons +='K';
-    else if((num1c + num1g) > num1 * 0.85) cons +='S';
-    else cons += '-';
-  }
-  return cons;
 }
 
 void SEModel::output_params(ostream &fout){
@@ -688,7 +627,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	motif.set_spec(0.0);
 	int i_worse = 0;
 	int phase = 0;
-
+	
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
@@ -710,10 +649,10 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	compute_seq_scores();
 	compute_expr_scores();
 	set_seq_cutoff();
+	
 	motif.set_map(map_score());
 	motif.set_spec(spec_score());
 	print_status(cerr, 0, phase);
-	
 	Motif best_motif = motif;
 
 	int i;
@@ -807,7 +746,6 @@ bool SEModel::consider_motif(const char* filename) {
 }
 
 void SEModel::print_status(ostream& out, const int i, const int phase) {
-	double ms = matrix_score();
 	out << "\t\t\t"; 
 	out << setw(5) << i;
 	out << setw(3) << phase;
@@ -819,13 +757,11 @@ void SEModel::print_status(ostream& out, const int i, const int phase) {
 	out << setw(5) << size();
 	out << setw(5) << possible_size();
 	if(size() > 0) {
-		out << setw(40) << consensus();
+		out << setw(40) << motif.consensus();
 		out << setw(15) << motif.get_spec();
 		out << setw(15) << motif.get_map();
-		out << setw(15) << ms;
 	} else {
 		out << setw(40) << "-----------";
-		out << setw(15) << "---";
 		out << setw(15) << "---";
 		out << setw(15) << "---";
 	}

@@ -8,13 +8,13 @@
 #include "myheap.h"
 
 struct SEParams{
-  int expect;						//number of expected sites
-  double weight;				//fractional weight on priors
-  double psfact;				//psfact*numsites=npseudo
-  double npseudo;				//number of pseudo counts
-  double backfreq[6];		//array for gc content
-  double pseudo[6];
-  int maxlen;						//maximum length of sites
+  int expect;						           // number of expected sites
+  double weight;				           // fractional weight on priors
+  double psfact;				           // psfact * numsites=npseudo
+  double npseudo;				           // number of pseudo counts
+  double backfreq[4];		           // array for gc content
+  double pseudo[4];                // pseudocounts for any frequency calculations
+  int maxlen;						           // maximum length of sites
   int npass;
   int minpass;
   int nruns;
@@ -118,7 +118,6 @@ class SEModel {
 	/* Sequence model*/
 	Seqset& get_seqset() { return seqset; }                 // Return the set of sequences
 	void calc_matrix();                                     // Calculate the PWM for the current set of sites
-	string consensus() const;                               // Return the consensus sequence for the current set of sites
 	double matrix_score();                                  // Calculate the score for the current matrix
 	double entropy_score();																	// Calculate the entropy score for the current matrix
 	double map_score();                                     // Calculate the MAP score
