@@ -256,13 +256,13 @@ void Motif::orient() {
 	
   calc_freq_matrix(freq_matrix);
   for(int i = 0; i < 4 * ncols(); i += 4) {
-    for(int j = 1; j <= 4; j++)
+    for(int j = 1; j < 4; j++)
       freq[j] += freq_matrix[i + j];
   }
 	for(int i = 0; i < 4; i++)
 		freq[i] /= number();
 	
-  double flip = 1.5 * freq[3] + 1.0 * freq[1] - 1.0 * freq[4] - 1.5 * freq[2];
+  double flip = 1.5 * freq[2] + 1.0 * freq[0] - 1.0 * freq[3] - 1.5 * freq[1];
   if(flip < 0.0) flip_sites();
 	delete [] freq_matrix;
   delete [] freq;
