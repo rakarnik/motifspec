@@ -232,7 +232,7 @@ void SEModel::single_pass(const double minprob, bool greedy) {
 	int width = motif.get_width();
 	for(int g = 0; g < seqset.num_seqs(); g++){
 		if (! is_possible(g)) continue;
-		for(int j = 0; j <= seqset.len_seq(g) - width; j++){
+		for(int j = 0; j < seqset.len_seq(g) - width; j++){
 			Lw = score_site(g, j, 1);
       Lc = score_site(g, j, 0);
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
@@ -289,7 +289,8 @@ void SEModel::compute_seq_scores() {
 	int width = motif.get_width();
 	for(int g = 0; g < seqset.num_seqs(); g++) {
 		bestF = 0.0;
-		for(int j = 0; j <= seqset.len_seq(g) - width; j++) {
+		bestpos[g] = -1;
+		for(int j = 0; j < seqset.len_seq(g) - width; j++) {
 			Lw = score_site(g, j, 1);
 			Lc = score_site(g, j, 0);
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
@@ -314,11 +315,10 @@ void SEModel::compute_seq_scores_minimal() {
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
   calc_matrix();
-	int width = motif.get_width();
   double Lw, Lc, Pw, Pc, F;
 	seqranks.clear();
 	for(int g = 0; g < seqset.num_seqs(); g++) {
-		if(bestpos[g] + width - 1 > seqset.len_seq(g)) continue;
+		if(bestpos[g] == -1) continue;
 		Lw = score_site(g, bestpos[g], 1);
 		Lc = score_site(g, bestpos[g], 0);
 		Pw = Lw * ap/(1.0 - ap + Lw * ap);
@@ -426,7 +426,7 @@ bool SEModel::column_sample(){
 		abort();
 	}
 	
-	return true;
+	return changed;
 }
 
 double SEModel::matrix_score() {
@@ -655,13 +655,18 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	print_status(cerr, 0, phase);
 	Motif best_motif = motif;
 
-	int i;
+	int i, old_width;
 	phase = 1;
 	for(i = 1; i < 10000 && phase < 3; i++) {
 		expand_search_around_mean(motif.get_expr_cutoff());
 		single_pass(motif.get_seq_cutoff());
-		column_sample();
+		motif.set_spec(spec_score());
+		motif.set_map(map_score());
 		print_status(cerr, i, phase);
+		old_width = motif.get_width();
+		column_sample();
+		if(motif.get_width() > old_width)
+			compute_seq_scores();
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting..." << endl;
 			return TOO_MANY_SITES;
@@ -696,9 +701,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 				set_seq_cutoff();
 			}
 		}
-		motif.set_spec(spec_score());
-		motif.set_map(map_score());
-		print_status(cerr, i, phase);
 	}
 	
 	motif = best_motif;
