@@ -95,5 +95,8 @@ int Heap::minchild(int x)
 	return minc;
 }
 
-void Heap::heap_error(char *s){cerr<<"dheap: "<<s<<'\n';exit(3);}
+void Heap::heap_error(const char *s){
+	cerr<<"dheap: "<<s<<'\n';
+	exit(3);
+}
 

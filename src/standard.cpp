@@ -129,7 +129,7 @@ void get_cluster(istream &clusfile, const int num, vector<string>& nameset) {
 //command line for filename inputs.
 
 
-bool GetArg2(int argc, char *argv[], char *c, int &cval){
+bool GetArg2(int argc, char *argv[], const char *c, int &cval){
   if(argc < 2) return false;
   for (int arg=1;arg<argc;arg++) {
     if (strcmp(argv[arg],c)==0) {
@@ -141,7 +141,7 @@ bool GetArg2(int argc, char *argv[], char *c, int &cval){
   return false;
 }
 
-bool GetArg2(int argc, char *argv[], char *c, float &cval){
+bool GetArg2(int argc, char *argv[], const char *c, float &cval){
   if(argc < 2) return false;
   for (int arg=1;arg<argc;arg++) {
     if (strcmp(argv[arg],c)==0) {
@@ -153,7 +153,7 @@ bool GetArg2(int argc, char *argv[], char *c, float &cval){
   return false;
 }
 
-bool GetArg2(int argc, char *argv[], char *c, double &cval){
+bool GetArg2(int argc, char *argv[], const char *c, double &cval){
   if(argc < 2) return false;
   for (int arg=1;arg<argc;arg++) {
     if (strcmp(argv[arg],c)==0) {
@@ -165,7 +165,7 @@ bool GetArg2(int argc, char *argv[], char *c, double &cval){
   return false;
 }
 
-bool GetArg2(int argc, char *argv[], char *c, string &cval){
+bool GetArg2(int argc, char *argv[], const char *c, string &cval){
   if(argc < 2) return false;
   for (int arg=1;arg<argc;arg++) {
     if (strcmp(argv[arg],c)==0) {
@@ -176,7 +176,7 @@ bool GetArg2(int argc, char *argv[], char *c, string &cval){
   return false;
 }
 
-bool GetArg2(int argc, char *argv[], char *c){
+bool GetArg2(int argc, char *argv[], const char *c){
   if(argc < 2) return false;
   for (int arg=1;arg<argc;arg++) {
     if (strcmp(argv[arg],c)==0) {

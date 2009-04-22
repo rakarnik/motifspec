@@ -29,7 +29,7 @@ class Heap{
 	int	minchild(int i);	/* returm smallest child of item */
 	void siftup(int i ,int x);/* move item up to restore heap order */
 	void siftdown(int i,int x);	/* move item down to restore heap order */
-	void heap_error(char *s);
+	void heap_error(const char *s);
 	/* parent of item, leftmost and rightmost children */
 	int parent(int x) {return (x+base-2)/base;}
 	//guarantees that parent(2)=1
