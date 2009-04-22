@@ -3,71 +3,41 @@
 
 #include "standard.h"
 
-void get_fasta_fast(istream &test,/*const char* fname,*/ vector<string>& seqset, vector<string>& nameset){
+void get_fasta_fast(istream &test,/*const char* fname,*/ vector<string>& seqset, vector<string>& nameset) {
 /*This is a routine that reads in a fasta formatted file fname
 and returns a vector of strings seqset corresponding to the sequences
 in the file.  Fasta format allows for a set of sequences separated by
 titles beginning with '>' and ending with '\n'.*/
-/*This version of the routine was written because on some
-implementations, namely Microsoft Visual C++ 5.0, the memory
-allocation for strings is very inefficient.  It is not improved by
-using reserve() either.  So the initial input is low-level with char
-arrays, which are then converted to strings.  This conversion is very
-fast.  At some point, the strings may be done away with altogether,
-but for the time being they are still useful in other parts of the
-code.*/
-	string x,seq,name;
-	char c;
-	const int max_name=1000;
-	const int max_seq=5000000;
-	char *y=new char[max_name+1];//name
-	char *z=new char[max_seq+1];//sequence
-	int i=0;
-	while(test.get(c)){
-		if(c=='>'){
-			if(i!=0){//push seq
-				z[i]='\0';
-				string t=z;
-				seqset.push_back(t);
-				i=0;
+	string line, name, seq;
+	while(getline(test, line)) {
+		if(line[0] == '>') {
+			if(! name.empty()) {
+				string namen = name;
+				nameset.push_back(namen);
+				string seqn = seq;
+				seqset.push_back(seqn);
+				seq.clear();
 			}
-			test.get(c);//ignore '>'
-			int j;
-			for(j=0;c!=' ' && c != '\n';test.get(c)){//read name
-				y[j]=c;
-				j++;
-				if(j==max_name) break;
-			}
-			y[j]='\0';
-			string s=y;
-			nameset.push_back(s);
-		}
-		else if(!isspace(c)&&!isdigit(c)){
-			z[i]=c;
-			i++;
-			if(i==max_seq){
-			  cout<<"Input sequences are too long.\n";
-			  exit(1);
-			}
+			name = line.substr(1);
+		} else {
+			seq.append(line);
 		}
 	}
-	//add on the last sequence
-	z[i]='\0';
-	string v=z;
-	if(i!=0) seqset.push_back(v);
-	delete[] y;
-	delete[] z;
-	return;
+	if(! name.empty()) {
+		nameset.push_back(name);
+		string seqn = seq;
+		seqset.push_back(seqn);
+	}
+	assert(nameset.size() == seqset.size());
 }
 
-
-void get_fasta_fast(const char* fname, vector<string>& seqset, vector<string>& nameset){
+void get_fasta_fast(const char* fname, vector<string>& seqset, vector<string>& nameset) {
 	ifstream test(fname);
-	if(!test){
-	  cerr<<"No such file "<<fname<<'\n';
+	if(! test) {
+	  cerr << "No such file '" << fname << "'" << endl;
 	  exit(0);
 	}
-	get_fasta_fast(test,seqset,nameset);
+	get_fasta_fast(test, seqset, nameset);
 }
 
 void get_fasta_fast(const char* filename, vector<string>& seqset){
@@ -79,7 +49,7 @@ void get_fasta_fast(const char* filename, vector<string>& seqset){
 float** get_expr(const char* filename, int* npoints, vector<string>& nameset){
 	ifstream exprfile(filename);
 	if(! exprfile){
-	  cerr<<"No such file "<< filename<<'\n';
+	  cerr << "No such file '" << filename << "'" << endl;
 	  exit(0);
 	}
 	return get_expr(exprfile, npoints, nameset);
