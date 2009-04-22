@@ -402,6 +402,7 @@ string Motif::consensus() const {
 }
 
 void Motif::write(ostream& motout) const {
+	int nt[] = {'A', 'C', 'G', 'T'};
 	const vector<vector <int> >& seq = seqset.seq();
 	vector<Site>::const_iterator site_iter;
   for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
@@ -411,13 +412,13 @@ void Motif::write(ostream& motout) const {
     for(int j = 0; j < width; j++){
       if(s) {
 				if(p + j >= 0 && p + j < seqset.len_seq(c))
-					motout << seq[c][p + j];
+					motout << nt[seq[c][p + j]];
 				else motout << ' ';
       }
       else {
 				if(p + width - 1 - j >= 0 && p + width - 1 - j < seqset.len_seq(c))
 					// TOFIX: Take complement
-					motout << seq[c][p + width - 1 - j];
+					motout << nt[3 - seq[c][p + width - 1 - j]];
 				else motout << ' ';
       }
     }
