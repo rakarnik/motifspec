@@ -259,7 +259,7 @@ void Seqset::calc_bg_scores() {
 																+ (3 - ss_seq[i][j])]);
 		}
 		
-		// Use lower order models for first few Watson bases
+		// Use lower order models for last few Crick bases
 		cbgscores[i].push_back(bgmodel2[(3 - ss_seq[i][len - 1]) * 16 
 															+ (3 - ss_seq[len - 2][1]) * 4 
 															+ (3 - ss_seq[len - 1][2])]);
