@@ -315,15 +315,22 @@ void SEModel::compute_seq_scores_minimal() {
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
   calc_matrix();
+	int width = motif.get_width();
   double Lw, Lc, Pw, Pc, F;
 	seqranks.clear();
 	for(int g = 0; g < seqset.num_seqs(); g++) {
-		if(bestpos[g] == -1) continue;
-		Lw = score_site(g, bestpos[g], 1);
-		Lc = score_site(g, bestpos[g], 0);
-		Pw = Lw * ap/(1.0 - ap + Lw * ap);
-		Pc = Lc * ap/(1.0 - ap + Lc * ap);
-		F = Pw + Pc - Pw * Pc;
+		// Some best positions might have been invalidated by column sampling
+		// We mark these as invalid and don't score them
+		if(bestpos[g] < 0 || bestpos[g] + width > seqset.len_seq(g)) {
+			bestpos[g] = -1;
+			F = 0;
+		} else {
+			Lw = score_site(g, bestpos[g], 1);
+			Lc = score_site(g, bestpos[g], 0);
+			Pw = Lw * ap/(1.0 - ap + Lw * ap);
+			Pc = Lc * ap/(1.0 - ap + Lc * ap);
+			F = Pw + Pc - Pw * Pc;
+		}
 		seqscores[g] = F;
 		struct idscore ids;
 		ids.id = g;
