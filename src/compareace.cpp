@@ -23,13 +23,6 @@ comp_motif(m)
   comp_fm1 = new double[comp_fmsize];
   comp_fm2 = new double[comp_fmsize];//2=reverse complement of 1
   m.freq_matrix_extended(comp_fm1);
-  //assuming nacgtn here
-  for(i = 0; i < comp_fmsize; i += 6){
-    comp_fm1[i+1] += (comp_fm1[i]+comp_fm1[i+5])/4.0;
-    comp_fm1[i+2] += (comp_fm1[i]+comp_fm1[i+5])/4.0;
-    comp_fm1[i+3] += (comp_fm1[i]+comp_fm1[i+5])/4.0;
-    comp_fm1[i+4] += (comp_fm1[i]+comp_fm1[i+5])/4.0;
-  } 
   for(i = 0; i < comp_fmsize; i++){
     comp_fm2[i] = comp_fm1[comp_fmsize - 1 - i];
   }
