@@ -224,8 +224,8 @@ void Seqset::train_background0() {
 	}
 	
 	// Just use genome-wide GC content
-	bgmodel0[0] = 10 * (1 - gc_genome)/2;
-	bgmodel0[1] = 10 * gc_genome/2;
+	bgmodel0[0] = (1 - gc_genome)/2;
+	bgmodel0[1] = gc_genome/2;
 	bgmodel0[2] = bgmodel0[1];
 	bgmodel0[3] = bgmodel0[0];
 }
