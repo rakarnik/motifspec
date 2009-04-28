@@ -261,11 +261,10 @@ void Seqset::calc_bg_scores() {
 		
 		// Use lower order models for last few Crick bases
 		cbgscores[i].push_back(bgmodel2[(3 - ss_seq[i][len - 1]) * 16 
-															+ (3 - ss_seq[len - 2][1]) * 4 
-															+ (3 - ss_seq[len - 1][2])]);
-		cbgscores[i].push_back(bgmodel2[(3 - ss_seq[len - 2][1]) * 4 
-															+ (3 - ss_seq[len - 1][2])]);
-		cbgscores[i].push_back(bgmodel0[3 - ss_seq[len - 1][2]]);
-		
+															+ (3 - ss_seq[i][len - 2]) * 4 
+															+ (3 - ss_seq[i][len - 3])]);
+		cbgscores[i].push_back(bgmodel2[(3 - ss_seq[i][len - 1]) * 4 
+															+ (3 - ss_seq[i][len - 2])]);
+		cbgscores[i].push_back(bgmodel0[3 - ss_seq[i][len - 1]]);
 	}
 }
