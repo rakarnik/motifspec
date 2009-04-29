@@ -177,7 +177,7 @@ void SEModel::seed_random_site() {
 		if(watson && (chosen_posit > seqset.len_seq(chosen_seq) - width - 1)) continue;
 		if((! watson) && (chosen_posit < width)) continue;
 		if(motif.is_open_site(chosen_seq, chosen_posit)) {
-      cerr << "\t\t\tSeeding with (" << chosen_seq << "," << chosen_posit << "," << watson << ")" << endl;
+      cerr << "\t\t\tSeeding with (" << chosen_seq << "," << chosen_posit << "," << watson << ")\n";
 			motif.add_site(chosen_seq, chosen_posit, watson);
       break;
     }
@@ -190,7 +190,10 @@ void SEModel::calc_matrix() {
 
 double SEModel::score_site(const int c, const int p, const bool s) {
 	const vector<vector<int> >& ss_seq = seqset.seq();
-	double L = 1.0;
+	const vector<int>& bgpos = seqset.get_bgpos();
+	const vector<float>& wbgscores = seqset.get_wbgscores();
+	const vector<float>& cbgscores = seqset.get_cbgscores();
+	double L = 0.0;
 	int width = motif.get_width();
 	int matpos, seq;
 	vector<int>::iterator col_iter = motif.first_column();
@@ -200,8 +203,8 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + *col_iter >= 0);
 			assert(p + *col_iter < seqset.len_seq(c));
-			L *= score_matrix[matpos + ss_seq[c][p + *col_iter]];
-			L /= seqset.bgscore(c, p + *col_iter, s);
+			L += score_matrix[matpos + ss_seq[c][p + *col_iter]];
+			L -= wbgscores[bgpos[c] + p + *col_iter];
 			matpos += 4;
 		}
 	} else {
@@ -210,12 +213,12 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 			assert(p + width - 1 - *col_iter >= 0);
 			assert(p + width - 1 - *col_iter < seqset.len_seq(c));
 			seq = ss_seq[c][p + width - 1 - *col_iter];
-			L *= score_matrix[matpos + 3 - ss_seq[c][p + width - 1 - *col_iter]];
-			L /= seqset.bgscore(c, p + width - 1 - *col_iter, s);
+			L += score_matrix[matpos + 3 - ss_seq[c][p + width - 1 - *col_iter]];
+			L -= cbgscores[bgpos[c] + p + width - 1 - *col_iter];
 			matpos += 4;
 		}
 	}
-	return L;
+	return exp(L);
 }
 
 void SEModel::single_pass(const double minprob, bool greedy) {
@@ -240,7 +243,7 @@ void SEModel::single_pass(const double minprob, bool greedy) {
       F = Pw + Pc - Pw * Pc;//probability of either
 			if(g == gadd && j < jadd + width) continue;
 			if(F < minprob) continue;
-			// cerr << "\t\t\t\tGene:" << g << " Position:"<< j <<  " Score:" << F << endl;
+			// cerr << "\t\t\t\tGene:" << g << " Position:"<< j <<  " Score:" << F << "\n";
 			considered++;
 			Pw = F * Pw / (Pw + Pc);
 			Pc = F - Pw;
@@ -521,11 +524,11 @@ void SEModel::output_params(ostream &fout){
 }
 
 void SEModel::modify_params(int argc, char *argv[]){
-  GetArg2(argc,argv,"-expect",separams.expect);
-  GetArg2(argc,argv,"-minpass",separams.minpass);
-  GetArg2(argc,argv,"-seed",separams.seed);
-  GetArg2(argc,argv,"-undersample",separams.undersample);
-  GetArg2(argc,argv,"-oversample",separams.oversample);
+  GetArg2(argc, argv, "-expect", separams.expect);
+  GetArg2(argc, argv, "-minpass", separams.minpass);
+  GetArg2(argc, argv, "-seed", separams.seed);
+  GetArg2(argc, argv, "-undersample", separams.undersample);
+  GetArg2(argc, argv, "-oversample", separams.oversample);
 }
 
 void SEModel::calc_mean() {
