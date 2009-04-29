@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < ngenes; i++) {
 		match = match && (nameset1[i] == nameset2[i]);
 		if (nameset1[i] != nameset2[i]) {
-			cerr << "Row " << i << ": Sequence: '" << nameset1[i] << "'  " << "Expression: '" << nameset2[i] << "'" << endl;
+			cerr << "Row " << i << ": Sequence: '" << nameset1[i] << "'  " << "Expression: '" << nameset2[i] << "'\n";
 		}
 	}
 	if(! match) {
@@ -55,26 +55,26 @@ int main(int argc, char *argv[]) {
 		exit(0);
 	}
 	
-	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints" << endl;
+	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints\n";
 	
 	cerr << "Setting up SEModel... ";
 	SEModel se(seqs, expr, npoints, nameset1, ncol);
 	se.modify_params(argc, argv);
 	se.set_final_params();
 	se.ace_initialize();
-	cerr << "done." << endl;
+	cerr << "done.\n";
 	
-	cerr << "Genome GC content is " << se.get_seqset().gcgenome() << endl;
+	cerr << "Genome GC content is " << se.get_seqset().gcgenome() << "\n";
 	
 	if(archive) {
-		cerr << "Running in archive mode..." << endl;
+		cerr << "Running in archive mode...\n";
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
 		ifstream archin(archinstr.c_str());
 		if(archin) {
 			cerr << "Refreshing from existing archive file " << archinstr << "... ";
 			se.get_archive().read(archin);
-			cerr << "done." << endl;
+			cerr << "done.\n";
 		}
 		while(true) {
 			int found = read_motifs(se);
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 			sleep(60);
 		}
 	} else {
-		cerr << "Running as worker " << worker << "..." << endl;
+		cerr << "Running as worker " << worker << "...\n";
 		int nruns = se.total_positions()
 								/ se.get_params().expect
 								/ ncol
@@ -101,10 +101,10 @@ int main(int argc, char *argv[]) {
 			fd = open("arch.lock", O_RDONLY);
 			if(fd == -1) {
 				if(errno != ENOENT)
-					cerr << "\t\tUnable to read lock file, error was " << strerror(errno) << endl;
+					cerr << "\t\tUnable to read lock file, error was " << strerror(errno) << "\n";
 			} else {
 				while(fcntl(fd, F_SETLK, &fl) == -1) {
-					cerr << "\t\tWaiting for lock release on archive file... " << endl;
+					cerr << "\t\tWaiting for lock release on archive file... \n";
 					sleep(10);
 				}
 				ifstream archin(archinstr.c_str());
@@ -113,14 +113,14 @@ int main(int argc, char *argv[]) {
 					se.get_archive().clear();
 					se.get_archive().read(archin);
 					archin.close();
-					cerr << "done." << endl;
+					cerr << "done.\n";
 				}
 				fl.l_type = F_UNLCK;
 				fcntl(fd, F_SETLK, &fl);
 				close(fd);
-				cerr << "\t\tArchive now has " << se.get_archive().nmots() << " motifs" << endl;
+				cerr << "\t\tArchive now has " << se.get_archive().nmots() << " motifs\n";
 			}
-			cerr << "\t\tSearch restart #" << j << "/" << nruns << endl;
+			cerr << "\t\tSearch restart #" << j << "/" << nruns << "\n";
 			se.search_for_motif(worker, j);
 		}
 	}
@@ -151,18 +151,18 @@ int read_motifs(SEModel& se) {
 			string newname("mots/");
 			newname.append(filename.c_str());
 			if(se.consider_motif(filename.c_str())) {
-				cerr << "Motif was added" << endl;
+				cerr << "Motif was added\n";
 				nmot++;
 			} else {
-				cerr << "Motif was not added" << endl;
+				cerr << "Motif was not added\n";
 			}
-			cerr << "Moving motif to " << newname << endl << endl;
+			cerr << "Moving motif to " << newname << "\n\n";
 			rename(filename.c_str(), newname.c_str());
 			nfound++;
 		}
 	}
 	closedir(workdir);
-	cerr << "Read " << nfound << " motif(s), added " << nmot << " motif(s)" << endl;
+	cerr << "Read " << nfound << " motif(s), added " << nmot << " motif(s)\n";
 	return nmot;
 }
 
@@ -183,7 +183,7 @@ void output(SEModel& se) {
 	fl.l_pid    = getpid();
 	fd = open("arch.lock", O_WRONLY | O_CREAT, 0644);
 	while(fcntl(fd, F_SETLK, &fl) == -1) {
-		cerr << "Waiting for lock release on archive file..." << endl;
+		cerr << "Waiting for lock release on archive file...\n";
 		sleep(10);
 	}
 	rename(tmpstr.c_str(), outstr.c_str());
