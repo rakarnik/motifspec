@@ -341,7 +341,7 @@ void Motif::calc_score_matrix(double *sm, double* pseudo) {
   calc_freq_matrix(fm);
   for(int i = 0; i < 4 * ncols(); i += 4){
 		for(int j = 0; j < 4; j++){
-      sm[i + j] = (fm[i + j] + pseudo[j])/tot;
+      sm[i + j] = log((fm[i + j] + pseudo[j])/tot);
 		}
 	}
 	delete [] fm;
@@ -433,12 +433,12 @@ void Motif::write(ostream& motout) const {
 	}
   motout << endl;
 	
-	motout << "MAP Score: " << mapsc << endl;
-	motout << "Specificity Score: " << spec << endl;
-	motout << "Sequence cutoff: " << seq_cutoff << endl;
-	motout << "Expression cutoff: " << expr_cutoff << endl;
-	motout << "Iteration found: " << iter << endl;
-	motout << "Dejavu: " << dejavu << endl << endl;
+	motout << "MAP Score: " << mapsc << "\n";
+	motout << "Specificity Score: " << spec << "\n";
+	motout << "Sequence cutoff: " << seq_cutoff << "\n";
+	motout << "Expression cutoff: " << expr_cutoff << "\n";
+	motout << "Iteration found: " << iter << "\n";
+	motout << "Dejavu: " << dejavu << endl << "\n";
 }
 
 void Motif::read(istream& motin) {
