@@ -15,15 +15,10 @@ bool ArchiveSites::check_motif(const Motif& m) {
   double cmp;
 	CompareACESites c(m);
 	vector<CompareACESites>::iterator iter = arch_comp.begin();
-  for(; iter != arch_comp.end(); ++iter){
-    if(m.get_spec() <= iter->motif()->get_spec()){
-      cmp = c.compare(*iter);
-			if(cmp > arch_sim_cutoff && iter->motif()->get_dejavu() >= arch_min_visits) {
-				return false;
-      }
-    } else {
-			break;
-		}
+  for(; iter != arch_comp.end() && m.get_spec() <= iter->motif()->get_spec(); ++iter){
+    cmp = c.compare(*iter);
+		if(cmp > arch_sim_cutoff && iter->motif()->get_dejavu() >= arch_min_visits)
+			return false;
   }
   return true;
 }
@@ -37,15 +32,11 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	// Check if similar to better motif.
 	// If so, increment dejavu for better motif and return false
 	vector<CompareACESites>::iterator iter = arch_comp.begin();
-	for(; iter != arch_comp.end(); ++iter) {
-		if(m.get_spec() <= iter->motif()->get_spec()) {
-			cmp = c.compare(*iter);
-			if(cmp > arch_sim_cutoff) {
-				iter->motif()->inc_dejavu();
-				return false;
-			}
-		} else {
-			break;
+	for(; iter != arch_comp.end() && m.get_spec() <= iter->motif()->get_spec(); ++iter) {
+		cmp = c.compare(*iter);
+		if(cmp > arch_sim_cutoff) {
+			iter->motif()->inc_dejavu();
+			return false;
 		}
 	}
 	
@@ -92,7 +83,7 @@ void ArchiveSites::write(ostream& archout) {
 	vector<CompareACESites>::iterator iter = arch_comp.begin();
 	for(; iter != arch_comp.end(); ++iter) {
 		if(iter->motif()->get_spec() > 1) {
-			archout << "Motif " << i + 1 << endl;
+			archout << "Motif " << i + 1 << "\n";
 			iter->motif()->write(archout);
 			i++;
 		}
