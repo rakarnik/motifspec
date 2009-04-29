@@ -34,7 +34,7 @@ titles beginning with '>' and ending with '\n'.*/
 void get_fasta_fast(const char* fname, vector<string>& seqset, vector<string>& nameset) {
 	ifstream test(fname);
 	if(! test) {
-	  cerr << "No such file '" << fname << "'" << endl;
+	  cerr << "No such file '" << fname << "'\n";
 	  exit(0);
 	}
 	get_fasta_fast(test, seqset, nameset);
@@ -49,7 +49,7 @@ void get_fasta_fast(const char* filename, vector<string>& seqset){
 float** get_expr(const char* filename, int* npoints, vector<string>& nameset){
 	ifstream exprfile(filename);
 	if(! exprfile){
-	  cerr << "No such file '" << filename << "'" << endl;
+	  cerr << "No such file '" << filename << "'\n";
 	  exit(0);
 	}
 	return get_expr(exprfile, npoints, nameset);
@@ -617,7 +617,7 @@ double ace_mapscore(const char* file, int mot_num){
 }
 
 void alloc_error() {
-	cerr << "Memory allocation failed!" << endl;
+	cerr << "Memory allocation failed!\n";
 	abort();
 }
 
