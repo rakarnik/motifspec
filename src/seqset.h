@@ -15,8 +15,9 @@ class Seqset{
 	vector<float> bgmodel1;
 	vector<float> bgmodel2;
 	vector<float> bgmodel3;
-	vector<vector<float> > wbgscores;
-	vector<vector<float> > cbgscores;
+	vector<int> bgpos;
+	vector<float> wbgscores;
+	vector<float> cbgscores;
 	
 	void train_background3();                                     // Train third order background model
 	void train_background2();                                     // Train second order background model
@@ -34,7 +35,10 @@ class Seqset{
   vector<vector<int> > const& seq() const { return ss_seq; }    // Return reference to sequence data
 	float gcgenome() const { return gc_genome; }                  // Return GC content of the set
 	float gccontent(const int i) const { return gc[i]; }          // Return GC content of a specified sequence
-	float bgscore(const int g, const int p, const bool s);        // Return score of a specific base according to the background model
+	float bgscore(const int g, const int p, const bool s) const;  // Return score of a specific base according to the background model
+	vector<int> const& get_bgpos() const { return bgpos; }
+	vector<float> const& get_wbgscores() const { return wbgscores; }
+	vector<float> const& get_cbgscores() const { return cbgscores; }
 };
 
 #endif
