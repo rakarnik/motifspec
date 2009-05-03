@@ -675,8 +675,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		print_status(cerr, i, phase);
 		old_width = motif.get_width();
 		column_sample();
-		if(motif.get_width() > old_width)
-			compute_seq_scores();
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting..." << endl;
 			return TOO_MANY_SITES;
