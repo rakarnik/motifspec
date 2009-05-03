@@ -13,9 +13,8 @@ bgmodel0(4),
 bgmodel1(16),
 bgmodel2(64),
 bgmodel3(256),
-bgpos(ss_num_seqs),
-wbgscores(0),
-cbgscores(0) {
+wbgscores(ss_num_seqs),
+cbgscores(ss_num_seqs) {
 }
 
 Seqset::Seqset(const vector<string>& v) :
@@ -28,10 +27,8 @@ bgmodel0(4),
 bgmodel1(16),
 bgmodel2(64),
 bgmodel3(256),
-bgpos(ss_num_seqs),
-wbgscores(0),
-cbgscores(0) {
-	cerr << "Initializing seqset...";
+wbgscores(ss_num_seqs),
+cbgscores(ss_num_seqs) {
 	map<char, int> nt;
 	nt['A'] = nt['a'] = 0;
 	nt['C'] = nt['c'] = 1;
@@ -57,22 +54,10 @@ cbgscores(0) {
 	train_background2();
 	train_background1();
 	train_background0();
-	bgpos[0] = 0;
-	for(int i = 1; i < ss_num_seqs; i++)
-		bgpos[i] = bgpos[i - 1] + len_seq(i);
 	calc_bg_scores();
-	cerr << "done.\n";
 }
 
 Seqset::~Seqset(){
-}
-
-float Seqset::bgscore(const int g, const int p, const bool s) const {
-	if(s) {
-		return wbgscores[bgpos[g] + p];
-	} else {
-		return cbgscores[bgpos[g] + p];
-	}
 }
 
 void Seqset::train_background3() {
@@ -239,43 +224,40 @@ void Seqset::train_background0() {
 
 void Seqset::calc_bg_scores() {
 	int len;
-	wbgscores.reserve(total_seq_len);
-	cbgscores.reserve(total_seq_len);
-	bgpos[0] = 0;
+	
 	for(int i = 0; i < ss_num_seqs; i++) {
 		len = ss_seq[i].size();
-		if(i > 0) {
-			bgpos[i] = bgpos[i - 1] + len;
-		}
+		wbgscores[i].reserve(len);
+		cbgscores[i].reserve(len);
 		
 		// Use lower order models for first few Watson bases
-		wbgscores.push_back(log(bgmodel0[ss_seq[i][0]]));
-		wbgscores.push_back(log(bgmodel1[ss_seq[i][0] * 4 
+		wbgscores[i].push_back(log(bgmodel0[ss_seq[i][0]]));
+		wbgscores[i].push_back(log(bgmodel1[ss_seq[i][0] * 4 
 															+ ss_seq[i][1]]));
-		wbgscores.push_back(log(bgmodel2[ss_seq[i][0] * 16 
+		wbgscores[i].push_back(log(bgmodel2[ss_seq[i][0] * 16 
 															+ ss_seq[i][1] * 4 
 															+ ss_seq[i][2]]));
 				
 		// Use third-order model for most bases
 		for(int j = 3; j < len; j++) {
-			wbgscores.push_back(log(bgmodel3[ss_seq[i][j - 3] * 64
+			wbgscores[i].push_back(log(bgmodel3[ss_seq[i][j - 3] * 64
 																+ ss_seq[i][j - 2] * 16 
 																+ ss_seq[i][j - 1] * 4
 																+ ss_seq[i][j]]));
 		}
 		for(int j = len - 4; j >= 0; j--) {
-			cbgscores.push_back(log(bgmodel3[(3 - ss_seq[i][j + 3]) * 64
+			cbgscores[i].push_back(log(bgmodel3[(3 - ss_seq[i][j + 3]) * 64
 																+ (3 - ss_seq[i][j + 2]) * 16
 																+ (3 - ss_seq[i][j + 1]) * 4
 																+ (3 - ss_seq[i][j])]));
 		}
 		
 		// Use lower order models for last few Crick bases
-		cbgscores.push_back(log(bgmodel2[(3 - ss_seq[i][len - 1]) * 16 
+		cbgscores[i].push_back(log(bgmodel2[(3 - ss_seq[i][len - 1]) * 16 
 															+ (3 - ss_seq[i][len - 2]) * 4 
 															+ (3 - ss_seq[i][len - 3])]));
-		cbgscores.push_back(log(bgmodel2[(3 - ss_seq[i][len - 1]) * 4 
+		cbgscores[i].push_back(log(bgmodel2[(3 - ss_seq[i][len - 1]) * 4 
 															+ (3 - ss_seq[i][len - 2])]));
-		cbgscores.push_back(log(bgmodel0[3 - ss_seq[i][len - 1]]));
+		cbgscores[i].push_back(log(bgmodel0[3 - ss_seq[i][len - 1]]));
 	}
 }
