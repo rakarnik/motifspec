@@ -665,7 +665,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	print_status(cerr, 0, phase);
 	Motif best_motif = motif;
 
-	int i, old_width;
+	int i;
 	phase = 1;
 	for(i = 1; i < 10000 && phase < 3; i++) {
 		expand_search_around_mean(motif.get_expr_cutoff());
@@ -673,7 +673,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		motif.set_spec(spec_score());
 		motif.set_map(map_score());
 		print_status(cerr, i, phase);
-		old_width = motif.get_width();
 		column_sample();
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting..." << endl;
