@@ -3,10 +3,11 @@
 
 #include "archivesites.h"
 
-ArchiveSites::ArchiveSites(Seqset& seq, double map_cut, double sim_cut) : 
+ArchiveSites::ArchiveSites(Seqset& seq, double sim_cut) : 
 arch_seqset(seq),
-arch_comp(0) {
-  arch_map_cutoff = map_cut;
+arch_comp(0),
+arch_sim_cutoff(sim_cut),
+arch_min_visits(3) {
   arch_sim_cutoff = sim_cut;
   arch_min_visits = 3;
 }

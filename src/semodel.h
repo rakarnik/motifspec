@@ -38,8 +38,6 @@ class SEModel {
 	
 	/* Sequence model */
 	SEParams separams;
-  int max_motifs;
-  double map_cutoff;
   double sim_cutoff;
   bool verbose;
   Random<int> ran_int;
@@ -90,7 +88,7 @@ class SEModel {
 	static const int TOO_MANY_SITES = 5;
 
 	/* General */
-	SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc = 10, const int bf = 1000, const double map_cut = -20.0, const double sim_cut = 0.8);
+	SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc = 10, const double sim_cut = 0.8);
   ~SEModel();
 	void modify_params(int argc, char *argv[]);
   double get_best_motif(int i=0);

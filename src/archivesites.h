@@ -7,14 +7,13 @@
 #include "compareace.h"
 
 class ArchiveSites{
-  double arch_map_cutoff;
   double arch_sim_cutoff;
   int arch_min_visits;
   const Seqset& arch_seqset;
 	vector<CompareACESites> arch_comp;
 
  public:
-  ArchiveSites(Seqset& seq, double map_cut, double sim_cut);
+  ArchiveSites(Seqset& seq, double sim_cut);
 	int nmots() const { return arch_comp.size(); }
   bool check_motif(const Motif& m);               // Returns true if no better motif, false otherwise
   bool consider_motif(const Motif& m);            // Returns true if motif was added, false otherwise

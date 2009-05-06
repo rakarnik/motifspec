@@ -1,11 +1,11 @@
 #include "semodel.h"
 
-SEModel::SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc, const int bf, const double map_cut, const double sim_cut):
+SEModel::SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc, const double sim_cut):
 nameset(names),
 ngenes(names.size()),
 seqset(seqs),
 motif(seqset, nc),
-archive(seqset, map_cut, sim_cut),
+archive(seqset, sim_cut),
 seqscores(ngenes),
 bestpos(ngenes),
 seqranks(ngenes),
@@ -18,8 +18,7 @@ expranks(ngenes)
 	verbose = false;
 	
 	set_default_params();
-  max_motifs = bf;
-  map_cutoff = map_cut;
+  
   sim_cutoff = sim_cut;
   freq_matrix = new int[4 * motif.ncols()];
   score_matrix = new double[4 * motif.ncols()];
