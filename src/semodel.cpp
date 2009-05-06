@@ -857,7 +857,7 @@ void SEModel::full_output(char *name){
 
 void SEModel::set_cutoffs() {
 	int expn, seqn, isect;
-	float exprcut, seqcut, best_exprcut, best_seqcut;
+	float exprcut, seqcut, best_exprcut = 0.0, best_seqcut = 0.0;
 	double po, best_po;
 	best_po = 1;
 	vector<struct idscore>::const_iterator er_iter = expranks.begin();
