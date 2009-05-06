@@ -209,11 +209,13 @@ string reverse_comp(const string &forward){
 	return rev;
 }
 
-double  bico(long N,long k)
-{ return floor(0.5+exp(lnfact(N)-lnfact(k)-lnfact(N-k))); }
+double  bico(int N, int k) {
+	return floor(0.5 + exp(lnfact(N) - lnfact(k) - lnfact(N-k)));
+}
 
-double  lnbico(register long N, register long k)
-{ return lnfact(N)-lnfact(k)-lnfact(N-k); }
+double  lnbico(int N, int k) {
+	return lnfact(N) - lnfact(k) - lnfact(N-k);
+}
 
 float corr(const float* expr1, const float* expr2, const int num, const int jindex) {
 	int i;
@@ -256,7 +258,7 @@ float jack_corr(const float* expr1, const float* expr2, const int num) {
 	return ret;
 }
 
-double	lnfact(long n)
+double	lnfact(int n)
 /* static variables are guaranteed to be initialized to zero */
 {
 	static double lnft[7000];
@@ -267,25 +269,21 @@ double	lnfact(long n)
 }
 
 double gammaln(double xx) {
-	double x,y,tmp,ser;
-	static double cof[6]={76.18009172947146,-86.50532032941677,
-		24.01409824083091,-1.231739572450155,0.1208650973866179e-2,
+	double x, y, tmp, ser;
+	static double cof[6]={76.18009172947146, -86.50532032941677,
+		24.01409824083091, -1.231739572450155, 0.1208650973866179e-2,
 		-0.5395239384953e-5};
-	int j;
-
-	y=x=xx;tmp=x+5.5;
-	tmp-= (x+0.5)*log(tmp);
-	ser=1.000000000190015;
-	for (j=0;j<=5;j++) ser+=cof[j]/++y;
-
-	return -tmp+log(2.5066282746310005*ser/x);
+	y = x = xx;
+	tmp = x + 5.5;
+	tmp -= (x + 0.5) * log(tmp);
+	ser = 1.000000000190015;
+	for (int j = 0; j <= 5; j++)
+		ser += cof[j]/++y;
+	return -tmp + log(2.5066282746310005*ser/x);
 }
 
 double stirlingln(int n) {
-	double ret = 0.91894;          // 0.5 * log(2 * Pi)
-	ret += (n + 0.5) * log(n);
-	ret -= n;
-	return ret;
+	return (0.91984 + (n + 0.5) * log(n) - n);
 }
 
 vector<string> split(string s, char c, bool skipall){
@@ -525,24 +523,22 @@ int number_lines_beg(const char* file, string k){
   return x;
 }
 
-double prob_overlap(int x, int y, int i, int t){
+double prob_overlap(int x, int y, int i, int t) {
   assert(i <= x);
 	assert(i <= y);
 	assert(x <= t);
 	assert(y <= t);
 	
-  //want to calculate 1 - sum(j=0,i-1){(x,j)*(t-x,y-j)/(t,y)} where () means combination
-  //will use logarithms
-
-  double lnterm,sum=0.0;
-  int j;
-
-  sum=0.0;
-  for(j=i;j<=x&&j<=y;j++){
-    lnterm=lnbico(x,j)+lnbico(t-x,y-j)-lnbico(t,y);
-    sum+=exp(lnterm);
-  }
-  return sum;
+	if(i == 0) {
+		return 1;
+	} else {
+		double lnterm, sum = 0.0;
+		for(int j = i; j <= x && j <= y; j++){
+			lnterm = lnbico(x, j) + lnbico(t - x, y - j) - lnbico(t, y);
+			sum += exp(lnterm);
+		}
+		return sum;
+	}
 }
 
 string ace_consensus(const char* file, int mot_num){
