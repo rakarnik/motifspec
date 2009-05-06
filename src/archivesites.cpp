@@ -8,8 +8,6 @@ arch_seqset(seq),
 arch_comp(0),
 arch_sim_cutoff(sim_cut),
 arch_min_visits(3) {
-  arch_sim_cutoff = sim_cut;
-  arch_min_visits = 3;
 }
 
 bool ArchiveSites::check_motif(const Motif& m) {

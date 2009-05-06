@@ -7,10 +7,10 @@
 #include "compareace.h"
 
 class ArchiveSites{
-  double arch_sim_cutoff;
-  int arch_min_visits;
   const Seqset& arch_seqset;
 	vector<CompareACESites> arch_comp;
+  double arch_sim_cutoff;
+  int arch_min_visits;
 
  public:
   ArchiveSites(Seqset& seq, double sim_cut);
