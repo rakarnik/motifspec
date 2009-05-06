@@ -807,7 +807,7 @@ void SEModel::set_seq_cutoff() {
 	vector<struct idscore>::iterator rank_iter = seqranks.begin();
 	c = rank_iter->score;
 	best_c = c;
-	for(; rank_iter->score > 0.01 && rank_iter != seqranks.end(); ++rank_iter, c = rank_iter->score) {
+	for(; rank_iter->score > 0.01 && rank_iter != seqranks.end(); ++rank_iter) {
 		if(c > rank_iter->score) {
 			po = prob_overlap(expn, seqn, isect, ngenes);
 			// cerr << "\t\t\t\t" << c << ":\t" << isect << "/(" << seqn << "," << expn << ")/" << ngenes << "\t" << -log10(po) << endl;
@@ -820,6 +820,7 @@ void SEModel::set_seq_cutoff() {
 		if(expscores[rank_iter->id] >= motif.get_expr_cutoff()) {
 			isect++;
 		}
+		c = rank_iter->score;
   }
 	
 	cerr << "\t\t\tSetting sequence cutoff to " << best_c << endl;
