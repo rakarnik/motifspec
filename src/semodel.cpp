@@ -5,13 +5,13 @@ nameset(names),
 ngenes(names.size()),
 seqset(seqs),
 motif(seqset, nc),
+select_sites(seqset, nc),
 archive(seqset, sim_cut),
 seqscores(ngenes),
 bestpos(ngenes),
 seqranks(ngenes),
 expscores(ngenes),
-expranks(ngenes)
-{
+expranks(ngenes) {
 	npossible = 0;
 	possible = new bool[ngenes];
 	clear_all_possible();
@@ -220,11 +220,12 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 }
 
 void SEModel::single_pass(const double minprob, bool greedy) {
-	double ap = (separams.weight * separams.expect * 10
+	double ap = (separams.weight * possible_size()
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
   calc_matrix();
 	motif.remove_all_sites();
+	select_sites.remove_all_sites();
   //will only update once per pass
 	
   double Lw, Lc, Pw, Pc, F;
@@ -240,8 +241,8 @@ void SEModel::single_pass(const double minprob, bool greedy) {
       Pc = Lc * ap/(1.0 - ap + Lc * ap);
       F = Pw + Pc - Pw * Pc;//probability of either
 			if(g == gadd && j < jadd + width) continue;
+			if(F > minprob/5.0) select_sites.add_site(g, j, true);
 			if(F < minprob) continue;
-			// cerr << "\t\t\t\tGene:" << g << " Position:"<< j <<  " Score:" << F << "\n";
 			considered++;
 			Pw = F * Pw / (Pw + Pc);
 			Pc = F - Pw;
@@ -280,8 +281,68 @@ void SEModel::single_pass(const double minprob, bool greedy) {
   }
 }
 
+void SEModel::single_pass_select(const double minprob, bool greedy) {
+	double ap = (separams.weight * possible_size()
+							+ (1 - separams.weight) * motif.number())
+							/(2.0 * motif.positions_available(possible));
+  calc_matrix();
+	motif.remove_all_sites();
+	
+  double Lw, Lc, Pw, Pc, F;
+	int g, j;
+  int gadd = -1, jadd = -1;
+	int width = motif.get_width();
+	int num_sites = select_sites.number();
+	for(int i = 0; i < num_sites; i++) {
+		g = select_sites.chrom(i);
+		j = select_sites.posit(i);
+		if (! is_possible(g)) continue;
+		if(j < 0 || j + width > seqset.len_seq(g)) continue;
+		Lw = score_site(g, j, 1);
+		Lc = score_site(g, j, 0);
+		Pw = Lw * ap/(1.0 - ap + Lw * ap);
+		Pc = Lc * ap/(1.0 - ap + Lc * ap);
+		F = Pw + Pc - Pw * Pc;//probability of either
+		if(g == gadd && j < jadd + width) continue;
+		if(F < minprob) continue;
+		Pw = F * Pw / (Pw + Pc);
+		Pc = F - Pw;
+		if(greedy) {                   // Always add if above minprob
+			if(Pw > Pc) {
+				assert(j >= 0);
+				assert(j <= seqset.len_seq(g) - width);
+				motif.add_site(g, j, true);
+				gadd = g;
+				jadd = j;
+			} else {
+				assert(j >= 0);
+				assert(j <= seqset.len_seq(g) - width);
+				motif.add_site(g, j, false);
+				gadd = g;
+				jadd = j;
+			}
+		} else {                       // Add with probability F
+			double r = ran_dbl.rnum();
+			if(r > F) continue;
+			if (Pw > Pc) {
+				assert(j >= 0);
+				assert(j <= seqset.len_seq(g) - width);
+				motif.add_site(g, j, true);
+				gadd = g;
+				jadd = j;
+			} else {
+				assert(j >= 0);
+				assert(j <= seqset.len_seq(g) - width);
+				motif.add_site(g, j, false);
+				gadd = g;
+				jadd = j;
+			}
+		}
+  }
+}
+
 void SEModel::compute_seq_scores() {
-	double ap = (separams.weight * separams.expect * 10
+	double ap = (separams.weight * possible_size()
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
   calc_matrix();
@@ -312,7 +373,7 @@ void SEModel::compute_seq_scores() {
 }
 
 void SEModel::compute_seq_scores_minimal() {
-	double ap = (separams.weight * separams.expect * 10
+	double ap = (separams.weight * possible_size()
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
   calc_matrix();
@@ -629,11 +690,9 @@ void SEModel::expand_search_avg_pcorr() {
 
 int SEModel::search_for_motif(const int worker, const int iter) {
 	motif.clear_sites();
+	select_sites.clear_sites();
 	motif.set_iter(iter);
 	motif.set_expr_cutoff(0.8);
-	motif.set_map(0.0);
-	motif.set_spec(0.0);
-	int i_worse = 0;
 	int phase = 0;
 	
 	for(int g = 0; g < ngenes; g++)
@@ -643,7 +702,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
 		return BAD_SEED;
 	}
-
+	
 	clear_all_possible();
 	while(possible_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
 		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
@@ -663,11 +722,14 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	print_status(cerr, 0, phase);
 	Motif best_motif = motif;
 
-	int i;
+	int i, i_worse = 0;
 	phase = 1;
 	for(i = 1; i < 10000 && phase < 3; i++) {
 		expand_search_around_mean(motif.get_expr_cutoff());
-		single_pass(motif.get_seq_cutoff());
+		if(i_worse > 0)
+			single_pass_select(motif.get_seq_cutoff());
+		else
+			single_pass(motif.get_seq_cutoff());
 		column_sample();
 		motif.set_spec(spec_score());
 		motif.set_map(map_score());

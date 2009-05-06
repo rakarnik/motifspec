@@ -44,6 +44,7 @@ class SEModel {
   Random<double> ran_dbl;
   Seqset seqset;
   Motif motif;
+	Motif select_sites;
   ArchiveSites archive;
 	int members;
   int* freq_matrix;
@@ -132,8 +133,8 @@ class SEModel {
 	
 	/* Algorithm steps */
 	void seed_random_site();
-  void seed_biased_site();
   void single_pass(const double minprob = 0.0, bool greedy = false);
+	void single_pass_select(const double minprob = 0.0, bool greedy = false);
 	void compute_seq_scores();
 	void compute_seq_scores_minimal();
 	void compute_expr_scores();
