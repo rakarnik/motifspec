@@ -223,7 +223,7 @@ void Seqset::train_background0() {
 }
 
 void Seqset::calc_bg_scores() {
-	int len;
+	unsigned int len;
 	
 	for(int i = 0; i < ss_num_seqs; i++) {
 		len = ss_seq[i].size();
@@ -239,13 +239,13 @@ void Seqset::calc_bg_scores() {
 															+ ss_seq[i][2]]));
 				
 		// Use third-order model for most bases
-		for(int j = 3; j < len; j++) {
+		for(unsigned int j = 3; j < len; j++) {
 			wbgscores[i].push_back(log(bgmodel3[ss_seq[i][j - 3] * 64
 																+ ss_seq[i][j - 2] * 16 
 																+ ss_seq[i][j - 1] * 4
 																+ ss_seq[i][j]]));
 		}
-		for(int j = len - 4; j >= 0; j--) {
+		for(unsigned int j = 0; j < len - 3; j++) {
 			cbgscores[i].push_back(log(bgmodel3[(3 - ss_seq[i][j + 3]) * 64
 																+ (3 - ss_seq[i][j + 2]) * 16
 																+ (3 - ss_seq[i][j + 1]) * 4
@@ -256,8 +256,11 @@ void Seqset::calc_bg_scores() {
 		cbgscores[i].push_back(log(bgmodel2[(3 - ss_seq[i][len - 1]) * 16 
 															+ (3 - ss_seq[i][len - 2]) * 4 
 															+ (3 - ss_seq[i][len - 3])]));
-		cbgscores[i].push_back(log(bgmodel2[(3 - ss_seq[i][len - 1]) * 4 
+		cbgscores[i].push_back(log(bgmodel1[(3 - ss_seq[i][len - 1]) * 4 
 															+ (3 - ss_seq[i][len - 2])]));
 		cbgscores[i].push_back(log(bgmodel0[3 - ss_seq[i][len - 1]]));
+	
+		assert(wbgscores[i].size() == len);
+		assert(cbgscores[i].size() == len);
 	}
 }
