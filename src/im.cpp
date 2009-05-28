@@ -89,34 +89,36 @@ int main(int argc, char *argv[]) {
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
 		for(int j = 1; j <= 1; j++) {
-			struct flock fl;
-			int fd;
-			fl.l_type   = F_RDLCK;
-			fl.l_whence = SEEK_SET;
-			fl.l_start  = 0;
-			fl.l_len    = 0;
-			fl.l_pid    = getpid();
-			fd = open("arch.lock", O_RDONLY);
-			if(fd == -1) {
-				if(errno != ENOENT)
-					cerr << "\t\tUnable to read lock file, error was " << strerror(errno) << "\n";
-			} else {
-				while(fcntl(fd, F_SETLK, &fl) == -1) {
-					cerr << "\t\tWaiting for lock release on archive file... \n";
-					sleep(10);
+			if(j % 100 == 0) {
+				struct flock fl;
+				int fd;
+				fl.l_type   = F_RDLCK;
+				fl.l_whence = SEEK_SET;
+				fl.l_start  = 0;
+				fl.l_len    = 0;
+				fl.l_pid    = getpid();
+				fd = open("arch.lock", O_RDONLY);
+				if(fd == -1) {
+					if(errno != ENOENT)
+						cerr << "\t\tUnable to read lock file, error was " << strerror(errno) << "\n";
+				} else {
+					while(fcntl(fd, F_SETLK, &fl) == -1) {
+						cerr << "\t\tWaiting for lock release on archive file... \n";
+						sleep(10);
+					}
+					ifstream archin(archinstr.c_str());
+					if(archin) {
+						cerr << "\t\tRefreshing archive from " << archinstr << "... ";
+						se.get_archive().clear();
+						se.get_archive().read(archin);
+						archin.close();
+						cerr << "done.\n";
+					}
+					fl.l_type = F_UNLCK;
+					fcntl(fd, F_SETLK, &fl);
+					close(fd);
+					cerr << "\t\tArchive now has " << se.get_archive().nmots() << " motifs\n";
 				}
-				ifstream archin(archinstr.c_str());
-				if(archin) {
-					cerr << "\t\tRefreshing archive from " << archinstr << "... ";
-					se.get_archive().clear();
-					se.get_archive().read(archin);
-					archin.close();
-					cerr << "done.\n";
-				}
-				fl.l_type = F_UNLCK;
-				fcntl(fd, F_SETLK, &fl);
-				close(fd);
-				cerr << "\t\tArchive now has " << se.get_archive().nmots() << " motifs\n";
 			}
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << "\n";
 			se.search_for_motif(worker, j);
