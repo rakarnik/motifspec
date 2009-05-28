@@ -2,14 +2,14 @@
 
 int main(int argc, char *argv[]) {
 	set_new_handler(alloc_error);
-
-	string seqfile;                       // file with sequences
-	string exprfile;                      // file with expression data
+	
 	if(argc < 6) {
     print_usage(cout);
     exit(0);
   }
 	
+	string seqfile;                       // file with sequences
+	string exprfile;                      // file with expression data
 	if ((! GetArg2(argc, argv, "-s", seqfile)) 
 				|| (! GetArg2(argc, argv, "-e", exprfile)) 
 				|| (! GetArg2(argc, argv, "-o", outfile))) {
@@ -64,8 +64,6 @@ int main(int argc, char *argv[]) {
 	se.ace_initialize();
 	cerr << "done.\n";
 	
-	cerr << "Genome GC content is " << se.get_seqset().gcgenome() << "\n";
-	
 	if(archive) {
 		cerr << "Running in archive mode...\n";
 		string archinstr(outfile);
@@ -90,7 +88,7 @@ int main(int argc, char *argv[]) {
 								* se.get_params().oversample;
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
-		for(int j = 1; j <= nruns; j++) {
+		for(int j = 1; j <= 1; j++) {
 			struct flock fl;
 			int fd;
 			fl.l_type   = F_RDLCK;

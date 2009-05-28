@@ -4,6 +4,7 @@ SEModel::SEModel(const vector<string>& seqs, float** exprtab, const int numexpr,
 nameset(names),
 ngenes(names.size()),
 seqset(seqs),
+bgmodel(seqset),
 motif(seqset, nc),
 select_sites(seqset, nc),
 archive(seqset, sim_cut),
@@ -65,8 +66,8 @@ void SEModel::set_default_params(){
 
 void SEModel::set_final_params(){
   separams.npseudo = separams.expect * separams.psfact;
-  separams.backfreq[0] = separams.backfreq[3] = (1 - seqset.gcgenome())/2.0;
-  separams.backfreq[1] = separams.backfreq[2] = seqset.gcgenome()/2.0;
+  separams.backfreq[0] = separams.backfreq[3] = (1 - bgmodel.gcgenome())/2.0;
+  separams.backfreq[1] = separams.backfreq[2] = bgmodel.gcgenome()/2.0;
   for(int i = 0; i < 4; i++) {
 		separams.pseudo[i] = separams.npseudo * separams.backfreq[i];
   }
@@ -189,8 +190,8 @@ void SEModel::calc_matrix() {
 
 double SEModel::score_site(const int c, const int p, const bool s) {
 	const vector<vector<int> >& ss_seq = seqset.seq();
-	const vector<vector<float> >& wbgscores = seqset.get_wbgscores();
-	const vector<vector<float> >& cbgscores = seqset.get_cbgscores();
+	const vector<vector<float> >& wbgscores = bgmodel.get_wbgscores();
+	const vector<vector<float> >& cbgscores = bgmodel.get_cbgscores();
 	double L = 0.0;
 	int width = motif.get_width();
 	int matpos, seq;
@@ -349,10 +350,12 @@ void SEModel::compute_seq_scores() {
   double Lw, Lc, Pw, Pc, F, bestF;
 	seqranks.clear();
 	int width = motif.get_width();
-	for(int g = 0; g < seqset.num_seqs(); g++) {
+	int len;
+	for(int g = 0; g < ngenes; g++) {
 		bestF = 0.0;
 		bestpos[g] = -1;
-		for(int j = 0; j < seqset.len_seq(g) - width; j++) {
+		len = seqset.len_seq(g);
+		for(int j = 0; j < len - width; j++) {
 			Lw = score_site(g, j, 1);
 			Lc = score_site(g, j, 0);
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
@@ -401,7 +404,6 @@ void SEModel::compute_seq_scores_minimal() {
   }
 	sort(seqranks.begin(), seqranks.end(), isc);
 }
-
 
 void SEModel::compute_expr_scores() {
 	calc_mean();
@@ -713,6 +715,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		return BAD_SEARCH_SPACE;
 	}
 	expand_search_around_mean(motif.get_expr_cutoff());
+	print_status(cerr, 0, phase);
 	
 	compute_seq_scores();
 	compute_expr_scores();

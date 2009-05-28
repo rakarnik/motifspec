@@ -4,6 +4,7 @@
 #include "standard.h"
 #include "Random.h"
 #include "seqset.h"
+#include "bgmodel.h"
 #include "archivesites.h"
 #include "myheap.h"
 
@@ -43,6 +44,7 @@ class SEModel {
   Random<int> ran_int;
   Random<double> ran_dbl;
   Seqset seqset;
+	BGModel bgmodel;
   Motif motif;
 	Motif select_sites;
   ArchiveSites archive;
