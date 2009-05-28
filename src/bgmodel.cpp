@@ -400,8 +400,8 @@ void BGModel::calc_bg_scores_5() {
 															+ (3 - ss_seq[i][len - 2])]));
 		cbgscores[i].push_back(log(model0[3 - ss_seq[i][len - 1]]));
 	
-		assert(wbgscores[i].size() == len);
-		assert(cbgscores[i].size() == len);
+		assert(wbgscores[i].size() == (unsigned int) len);
+		assert(cbgscores[i].size() == (unsigned int) len);
 	}
 }
 
@@ -461,8 +461,8 @@ void BGModel::calc_bg_scores_4() {
 															+ (3 - ss_seq[i][len - 2])]));
 		cbgscores[i].push_back(log(model0[3 - ss_seq[i][len - 1]]));
 	
-		assert(wbgscores[i].size() == len);
-		assert(cbgscores[i].size() == len);
+		assert(wbgscores[i].size() == (unsigned int) len);
+		assert(cbgscores[i].size() == (unsigned int) len);
 	}
 }
 
@@ -508,8 +508,8 @@ void BGModel::calc_bg_scores_3() {
 															+ (3 - ss_seq[i][len - 2])]));
 		cbgscores[i].push_back(log(model0[3 - ss_seq[i][len - 1]]));
 	
-		assert(wbgscores[i].size() == len);
-		assert(cbgscores[i].size() == len);
+		assert(wbgscores[i].size() == (unsigned int) len);
+		assert(cbgscores[i].size() == (unsigned int) len);
 	}
 }
 
@@ -547,8 +547,8 @@ void BGModel::calc_bg_scores_2() {
 															+ (3 - ss_seq[i][len - 2])]));
 		cbgscores[i].push_back(log(model0[3 - ss_seq[i][len - 1]]));
 	
-		assert(wbgscores[i].size() == len);
-		assert(cbgscores[i].size() == len);
+		assert(wbgscores[i].size() == (unsigned int) len);
+		assert(cbgscores[i].size() == (unsigned int) len);
 	}
 }
 
@@ -580,8 +580,8 @@ void BGModel::calc_bg_scores_1() {
 		// Use 0th order model for last Crick base
 		cbgscores[i].push_back(log(model0[3 - ss_seq[i][len - 1]]));
 	
-		assert(wbgscores[i].size() == len);
-		assert(cbgscores[i].size() == len);
+		assert(wbgscores[i].size() == (unsigned int) len);
+		assert(cbgscores[i].size() == (unsigned int) len);
 	}
 }
 
@@ -605,7 +605,7 @@ void BGModel::calc_bg_scores_0() {
 			cbgscores[i].push_back(log(model0[(3 - ss_seq[i][j])]));
 		}
 		
-		assert(wbgscores[i].size() == len);
-		assert(cbgscores[i].size() == len);
+		assert(wbgscores[i].size() == (unsigned int) len);
+		assert(cbgscores[i].size() == (unsigned int) len);
 	}
 }
