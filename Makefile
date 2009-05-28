@@ -32,6 +32,7 @@ all: im im-debug
 
 im : \
 		bin/archivesites.o\
+		bin/bgmodel.o\
 		bin/compareace.o\
 		bin/im.o\
 		bin/motif.o\
@@ -42,6 +43,7 @@ im : \
 		bin/standard.o
 	$(CC) $(LNK_OPTIONS) \
 		bin/archivesites.o\
+		bin/bgmodel.o\
 		bin/compareace.o\
 		bin/im.o\
 		bin/motif.o\
@@ -54,6 +56,7 @@ im : \
 
 im-debug : \
 		debug/archivesites.o\
+		debug/bgmodel.o\
 		debug/compareace.o\
 		debug/im.o\
 		debug/motif.o\
@@ -64,6 +67,7 @@ im-debug : \
 		debug/standard.o
 	$(CC) $(LNK_DEBUG_OPTIONS) \
 		debug/archivesites.o\
+		debug/bgmodel.o\
 		debug/compareace.o\
 		debug/im.o\
 		debug/motif.o\
@@ -75,14 +79,13 @@ im-debug : \
 		-o im-debug
 
 clean : 
-	rm -f\
-	bin/*.o\
-	debug/*.o\
-	im\
-	im-debug
+	rm -f bin/*.o debug/*.o im im-debug
 
 bin/archivesites.o : src/archivesites.h src/archivesites.cpp
 	$(CC) $(CC_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o bin/archivesites.o
+
+bin/bgmodel.o : src/bgmodel.h src/bgmodel.cpp
+	$(CC) $(CC_OPTIONS) src/bgmodel.cpp -c $(INCLUDE) -o bin/bgmodel.o
 
 bin/compareace.o : src/compareace.h src/compareace.cpp
 	$(CC) $(CC_OPTIONS) src/compareace.cpp -c $(INCLUDE) -o bin/compareace.o
@@ -110,6 +113,9 @@ bin/standard.o : src/standard.h src/standard.cpp
 
 debug/archivesites.o : src/archivesites.h src/archivesites.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o debug/archivesites.o
+
+debug/bgmodel.o : src/bgmodel.h src/bgmodel.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/bgmodel.cpp -c $(INCLUDE) -o debug/bgmodel.o
 
 debug/compareace.o : src/compareace.h src/compareace.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/compareace.cpp -c $(INCLUDE) -o debug/compareace.o
