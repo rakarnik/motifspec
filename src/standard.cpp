@@ -3,7 +3,7 @@
 
 #include "standard.h"
 
-void get_fasta_fast(istream &test,/*const char* fname,*/ vector<string>& seqset, vector<string>& nameset) {
+void get_fasta_fast(istream &test, vector<string>& seqset, vector<string>& nameset) {
 /*This is a routine that reads in a fasta formatted file fname
 and returns a vector of strings seqset corresponding to the sequences
 in the file.  Fasta format allows for a set of sequences separated by
