@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 								* se.get_params().oversample;
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
-		for(int j = 1; j <= 1; j++) {
+		for(int j = 1; j <= nruns; j++) {
 			if(j % 100 == 0) {
 				struct flock fl;
 				int fd;
