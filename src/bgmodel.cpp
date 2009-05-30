@@ -56,11 +56,11 @@ void BGModel::train_background_5() {
 		switch(i % 4) {
 			case 1:
 			case 4:
-				model4[i] += atpseudo;
+				model5[i] += atpseudo;
 				break;
 			case 2:
 			case 3:
-				model3[i] += gcpseudo;
+				model5[i] += gcpseudo;
 				break;
 		}
 	}
@@ -119,7 +119,7 @@ void BGModel::train_background_4() {
 				break;
 			case 2:
 			case 3:
-				model3[i] += gcpseudo;
+				model4[i] += gcpseudo;
 				break;
 		}
 	}
