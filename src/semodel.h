@@ -78,8 +78,6 @@ class SEModel {
 	void set_cutoffs();
 	void set_seq_cutoff();
 	void set_expr_cutoff();
-	void set_expr_cutoff_slowexpand();
-	void set_expr_cutoff_spec();
 	void print_possible(ostream& out);
 	
  public:

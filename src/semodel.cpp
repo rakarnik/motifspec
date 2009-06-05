@@ -403,6 +403,8 @@ void SEModel::compute_seq_scores_minimal() {
 		seqranks.push_back(ids);
   }
 	sort(seqranks.begin(), seqranks.end(), isc);
+	if(seqranks[0].score <= 0.85)
+		compute_seq_scores();
 }
 
 void SEModel::compute_expr_scores() {
@@ -561,9 +563,6 @@ double SEModel::map_score() {
 double SEModel::spec_score() {
 	int isect, seqn, expn;
 	isect = seqn = expn = 0;
-	compute_seq_scores_minimal();
-	if(seqranks[0].score <= 0.85) compute_seq_scores();
-	compute_expr_scores();
 	for(int g = 0; g < ngenes; g++) {
 		if(seqscores[g] >= motif.get_seq_cutoff()) seqn++;
 		if(expscores[g] >= motif.get_expr_cutoff()) expn++;
@@ -719,7 +718,8 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	
 	compute_seq_scores();
 	compute_expr_scores();
-	set_cutoffs();
+	set_seq_cutoff();
+	set_expr_cutoff();
 	motif.set_map(map_score());
 	motif.set_spec(spec_score());
 	print_status(cerr, 0, phase);
@@ -734,6 +734,10 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		else
 			single_pass(motif.get_seq_cutoff());
 		column_sample();
+		compute_seq_scores_minimal();
+		compute_expr_scores();
+		set_seq_cutoff();
+		set_expr_cutoff();
 		motif.set_spec(spec_score());
 		motif.set_map(map_score());
 		print_status(cerr, i, phase);
@@ -756,9 +760,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 			}
 			cerr << "\t\t\t\tNew best motif!\n";
 			best_motif = motif;
-			compute_seq_scores_minimal();
-			compute_expr_scores();
-			set_cutoffs();
 			i_worse = 0;
 		} else {
 			i_worse++;
@@ -858,44 +859,63 @@ void SEModel::full_output(char *name){
   full_output(fout);
 }
 
-void SEModel::set_cutoffs() {
-	int expn, seqn, isect;
-	float exprcut, seqcut, best_exprcut = 0.0, best_seqcut = 0.0;
-	double po, best_po;
-	best_po = 1;
+void SEModel::set_expr_cutoff() {
+	int expn = 0, seqn = 0, isect = 0;
+	float exprcut, best_exprcut = 0.0;
+	double po, best_po = 1;
+	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
+	while(sr_iter->score > motif.get_seq_cutoff()) {
+		seqn++;
+		++sr_iter;
+	}
 	vector<struct idscore>::const_iterator er_iter = expranks.begin();
-	expn = 0;
-	for(exprcut = 1; exprcut >= 0; exprcut -= 0.05) {
-		seqn = isect = 0;
+	for(exprcut = 0.95; exprcut >= 0; exprcut -= 0.01) {
 		while(er_iter->score >= exprcut) {
 			expn++;
+			if(seqscores[er_iter->id] > motif.get_seq_cutoff())
+				isect++;
 			++er_iter;
 		}
-		vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
-		seqcut = sr_iter->score;
-		for(; sr_iter->score > 0.1 && sr_iter != seqranks.end(); ++sr_iter) {
-			if(seqcut > sr_iter->score) {
-				po = prob_overlap(expn, seqn, isect, ngenes);
-				if(po <= best_po) {
-					best_seqcut = seqcut;
-					best_exprcut = exprcut;
-					best_po = po;
-				}
-			}
-			seqn++;
-			if(expscores[sr_iter->id] >= exprcut) {
-				isect++;
-			}
-			seqcut = sr_iter->score;
+		po = prob_overlap(expn, seqn, isect, ngenes);
+		// cerr << "\t\t\t" << exprcut << '\t' << motif.get_seq_cutoff() << '\t' << expn << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
+		if(po <= best_po) {
+			best_exprcut = exprcut;
+			best_po = po;
 		}
-  }
-	
-	motif.set_seq_cutoff(best_seqcut);
+	}
+	// cerr << "\t\t\tSetting expression cutoff to " << best_exprcut << '\n';
 	motif.set_expr_cutoff(best_exprcut);
+}
+
+void SEModel::set_seq_cutoff() {
+	int expn = 0, seqn = 0, isect = 0;
+	float seqcut, best_seqcut = 0.0;
+	double po, best_po = 1;
+	vector<struct idscore>::const_iterator er_iter = expranks.begin();
+	while(er_iter->score > motif.get_expr_cutoff()) {
+		expn++;
+		++er_iter;
+	}
+	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
+	for(seqcut = sr_iter->score; sr_iter->score >= 0.1 && sr_iter != seqranks.end(); ++sr_iter) {
+		if(seqcut > sr_iter->score) {
+			po = prob_overlap(expn, seqn, isect, ngenes);
+			// cerr << "\t\t\t" << motif.get_expr_cutoff() << '\t' << seqcut << '\t' << expn << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
+			if(po < best_po) {
+				best_seqcut = seqcut;
+				best_po = po;
+			}
+		}
+		seqn++;
+		if(expscores[sr_iter->id] > motif.get_expr_cutoff())
+			isect++;
+		seqcut = sr_iter->score;
+	}
+	// cerr << "\t\t\tSetting sequence cutoff to " << best_seqcut << '\n';
+	motif.set_seq_cutoff(best_seqcut);
 }
 
 void SEModel::print_possible(ostream& out) {
 	for(int g = 0; g < ngenes; g++)
 		if(is_possible(g)) out << nameset[g] << endl;
 }
-
