@@ -16,8 +16,10 @@
 #include <cmath>
 #include <sstream>
 #include <fcntl.h>
+#include "limits.h"
 #include "time.h"
 #include "stdlib.h"
+#include "string.h"
 #include "float.h"
 using namespace std;
 
