@@ -12,8 +12,7 @@ model3(256),
 model4(1024),
 model5(4096),
 wbgscores(seqset.num_seqs()),
-cbgscores(seqset.num_seqs()),
-train_background(4) {
+cbgscores(seqset.num_seqs()) {
 	const vector<vector <int> > ss_seq = seqset.seq();
 	int ss_num_seqs = seqset.num_seqs();
 	

@@ -17,7 +17,6 @@ class BGModel {
 	vector<float> model5;
 	vector<vector <float> > wbgscores;
 	vector<vector <float> > cbgscores;
-	vector<void (BGModel::*) ()> train_background;
 
 public:
 	BGModel(const Seqset& s);
