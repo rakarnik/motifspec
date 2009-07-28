@@ -381,7 +381,7 @@ void BGModel::calc_bg_scores_5() {
 		
 		// Use lower order models for last four Crick bases
 		if(len > 4) {
-			cbgscores[i].push_back(log(model3[(3 - ss_seq[i][len - 1]) * 256
+			cbgscores[i].push_back(log(model4[(3 - ss_seq[i][len - 1]) * 256
 																+ (3 - ss_seq[i][len - 2]) * 64
 																+ (3 - ss_seq[i][len - 3]) * 16
 																+ (3 - ss_seq[i][len - 4]) * 4
