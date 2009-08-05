@@ -11,7 +11,7 @@
 #
 
 CC = /usr/bin/g++
-CC_OPTIONS = -Os -Wall -Wextra
+CC_OPTIONS = -O3 -Wall -Wextra
 CC_DEBUG_OPTIONS = -O0 -g -pg -Wall -Wextra
 LNK_OPTIONS =
 LNK_DEBUG_OPTIONS = -pg
