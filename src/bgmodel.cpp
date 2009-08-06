@@ -37,7 +37,7 @@ cbgscores(seqset.num_seqs()) {
 	train_background_2();
 	train_background_1();
 	train_background_0();
-	calc_bg_scores_0();
+	calc_bg_scores_5();
 }
 
 void BGModel::train_background_5() {
