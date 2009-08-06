@@ -46,48 +46,32 @@ void get_fasta_fast(const char* filename, vector<string>& seqset){
 	get_fasta_fast(filename, seqset, nameset);
 }
 
-float** get_expr(const char* filename, int* npoints, vector<string>& nameset){
+void get_expr(const char* filename, vector<vector <float> >& expr, vector<string>& nameset){
 	ifstream exprfile(filename);
 	if(! exprfile){
 	  cerr << "No such file '" << filename << "'\n";
 	  exit(0);
 	}
-	return get_expr(exprfile, npoints, nameset);
+	return get_expr(exprfile, expr, nameset);
 }
 
-float** get_expr(istream& exprfile, int* npoints, vector<string>& nameset) {
-	float** expr;
+void get_expr(istream& exprfile, vector<vector <float> >& expr, vector<string>& nameset) {
 	string line;
-	int gene = 0;
+	int npoints = 0;
 	
-	// First count the number of lines in the file and allocate some storage
-	while(getline(exprfile, line)) {
-		gene++;
-	}
-	expr = new float*[gene];
-	
-	// Go back to the beginning of the file
-	exprfile.clear();
-	exprfile.seekg(0);
-		
-	// Now read in the values
-	*npoints = 0;
-	gene = 0;
 	vector<string> values;
 	vector<string>::iterator val_iter;
 	while(getline(exprfile, line)) {
+		vector<float> row;
+		row.reserve(npoints);
 		values = split(line, '\t');
 		nameset.push_back(values[0]);
-		expr[gene] = new float[values.size() - 1];
 		val_iter = values.begin() + 1;
 		for (; val_iter != values.end(); ++val_iter) {
-			expr[gene][distance(values.begin(), val_iter) - 1] = atof(val_iter->c_str());
+			row.push_back(atof(val_iter->c_str()));
 		}
-		*npoints = values.size() - 1;
-		gene++;
+		expr.push_back(row);
 	}
-	
-	return expr;
 }
 
 void get_cluster(const char* filename, const int num, vector<string>& nameset) {
@@ -217,12 +201,13 @@ double  lnbico(int N, int k) {
 	return lnfact(N) - lnfact(k) - lnfact(N-k);
 }
 
-float corr(const float* expr1, const float* expr2, const int num, const int jindex) {
+float corr(const vector<float>& expr1, const vector<float>& expr2, const int jindex) {
 	int i;
 	float u1, u2;
 	float s1, s2;
 	float c;
 	u1 = u2 = s1 = s2 = c = 0.0;
+	int num = expr1.size();
 	for (i = 0; i < num; i++) {
 		if(i != jindex) {
 			u1 += expr1[i];
@@ -246,16 +231,6 @@ float corr(const float* expr1, const float* expr2, const int num, const int jind
 		c = 0;
 	}
 	return c;
-}
-
-float jack_corr(const float* expr1, const float* expr2, const int num) {
-	float ret = 1;
-	float c = 0;
-	for(int i = 0; i < num; i++) {
-		c = corr(expr1, expr2, num, i);
-		if(c < ret) ret = c;
-	}
-	return ret;
 }
 
 double	lnfact(int n)
