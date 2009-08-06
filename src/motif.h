@@ -67,7 +67,7 @@ public:
   void flip_sites();
 	void orient();
   int positions_available() const;
-	int positions_available(const bool* possible) const;
+	int positions_available(const vector<bool>& possible) const;
   void columns_open(int &l, int &r);
 	string consensus() const;                                                // Return the consensus sequence for the current set of sites
 	void read(istream& motin);                                               // Read list of sites from a stream

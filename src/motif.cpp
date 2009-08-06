@@ -276,7 +276,7 @@ int Motif::positions_available() const {
   return ret;
 }
 
-int Motif::positions_available(const bool* possible) const {
+int Motif::positions_available(const vector<bool>& possible) const {
 	int ret = 0;
 	for(int i = 0; i < num_seqs; i++) {
 		if(possible[i])
