@@ -135,8 +135,6 @@ class SEModel {
 	void compute_expr_scores();
 	bool column_sample();
   void expand_search_around_mean(const double corr_cutoff);
-	void expand_search_min_pcorr(const double corr_cutoff);
-	void expand_search_avg_pcorr();
 	int search_for_motif(const int worker, const int iter);
 	bool consider_motif(const char* filename);
 	
