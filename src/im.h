@@ -5,13 +5,13 @@
 #include "semodel.h"
 #include "standard.h"
 
-int worker;                // worker ID if worker, -1 if archive
-bool archive;              // archive mode
+int worker;                                // worker ID if worker, -1 if archive
+bool archive;                              // archive mode
 
-int ngenes;                // number of genes
-int npoints;               // number of data points
-int ncol;                  // number of columns
-float** expr;              // the expression data
+int ngenes;                                // number of genes
+int npoints;                               // number of data points
+int ncol;                                  // number of columns
+vector<vector <float> > expr;              // the expression data
 
 string outfile;
 

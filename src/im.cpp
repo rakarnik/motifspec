@@ -33,8 +33,9 @@ int main(int argc, char *argv[]) {
 	
 	vector<string> nameset2;
 	cerr << "Reading expression data from '" << exprfile << "'... ";
-  expr = get_expr(exprfile.c_str(), &npoints, nameset2);
+  get_expr(exprfile.c_str(), expr, nameset2);
 	cerr << "done.\n";
+	npoints = expr[0].size();
 	
 	if(nameset1.size() == nameset2.size()) {
 		ngenes = nameset1.size();
@@ -58,7 +59,7 @@ int main(int argc, char *argv[]) {
 	cerr << "Successfully read input files -- dataset size is " << ngenes << " genes X " << npoints << " timepoints\n";
 	
 	cerr << "Setting up SEModel... ";
-	SEModel se(seqs, expr, npoints, nameset1, ncol);
+	SEModel se(seqs, expr, nameset1, ncol);
 	se.modify_params(argc, argv);
 	se.set_final_params();
 	se.ace_initialize();
