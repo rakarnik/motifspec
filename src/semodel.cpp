@@ -1,20 +1,23 @@
 #include "semodel.h"
 
-SEModel::SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc, const double sim_cut):
+SEModel::SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& names, const int nc, const double sim_cut):
 nameset(names),
 ngenes(names.size()),
+possible(ngenes),
 seqset(seqs),
 bgmodel(seqset),
 motif(seqset, nc),
 select_sites(seqset, nc),
 archive(seqset, sim_cut),
+expr(exprtab),
+npoints(expr[0].size()),
+mean(npoints),
 seqscores(ngenes),
 bestpos(ngenes),
 seqranks(ngenes),
 expscores(ngenes),
 expranks(ngenes) {
 	npossible = 0;
-	possible = new bool[ngenes];
 	clear_all_possible();
 	verbose = false;
 	
@@ -23,30 +26,12 @@ expranks(ngenes) {
   sim_cutoff = sim_cut;
   freq_matrix = new int[4 * motif.ncols()];
   score_matrix = new double[4 * motif.ncols()];
-	
-	expr = exprtab;
-	npoints = numexpr;
-	mean = new float[npoints];
-	stdev = new float[npoints];
-	pcorr = new float*[ngenes];
-	for(int i = 0; i < ngenes; i++) {
-		pcorr[i] = new float[ngenes];
-		for(int j = 0; j < ngenes; j++) {
-			pcorr[i][j] = -2;
-		}
-	}
+
 }
 
 SEModel::~SEModel(){
-  delete [] possible;
 	delete [] freq_matrix;
   delete [] score_matrix;
-	delete [] mean;
-	delete [] stdev;
-  for(int i=0;i<seqset.num_seqs();i++){
-		delete [] pcorr[i];
-  }
-	delete [] pcorr;
 }
 
 void SEModel::set_default_params(){
@@ -602,36 +587,8 @@ void SEModel::calc_mean() {
 	}
 }
 
-void SEModel::calc_stdev() {
-	calc_mean();
-	for(int i = 0; i < npoints; i++) {
-		stdev[i] = 0;
-		for(int j = 0; j < ngenes; j++)
-			if(is_member(j))
-				stdev[i] += (expr[j][i] - mean[i]) * (expr[j][i] - mean[i]);
-		stdev[i] /= size() - 1;
-		stdev[i] = sqrt(stdev[i]);
-	} 
-}
-
-float SEModel::get_avg_pcorr() {
-	float curr_avg_pcorr = 0.0;
-	for(int g1 = 0; g1 < ngenes; g1++)
-		for(int g2 = g1 + 1; g2 < ngenes; g2++)
-			if(is_member(g1) && is_member(g2))
-				curr_avg_pcorr += get_pcorr(g1, g2);
-	curr_avg_pcorr = (2 * curr_avg_pcorr) / (size() * (size() - 1));
-	return curr_avg_pcorr;
-}
-
-float SEModel::get_pcorr(const int g1, const int g2) {
-	if(pcorr[g1][g2] == -2)
-		pcorr[g1][g2] = pcorr[g2][g1] = corr(expr[g1], expr[g2], npoints);
-	return pcorr[g1][g2];
-}
-
-float SEModel::get_corr_with_mean(const float* pattern) const {
-	return corr(mean, pattern, npoints);
+float SEModel::get_corr_with_mean(const vector<float>& pattern) const {
+	return corr(mean, pattern);
 }
 
 void SEModel::expand_search_around_mean(const double cutoff) {
@@ -639,54 +596,6 @@ void SEModel::expand_search_around_mean(const double cutoff) {
 	clear_all_possible();
 	for(int g = 0; g < ngenes; g++)
 		if(get_corr_with_mean(expr[g]) >= cutoff) add_possible(g);
-}
-
-void SEModel::expand_search_min_pcorr(const double cutoff) {
- 	// First add all genes to list of candidates
- 	list<int> candidates;
- 	for(int g = 0; g < ngenes; g++)
- 		candidates.push_back(g);
- 	
- 	// Now run through list of genes with sites, and only keep genes within minimum corr_cutoff
- 	for(int g = 0; g < ngenes; g++) {
- 		if(! is_member(g)) continue;
- 		list<int> survivors;
- 		for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++)
- 			if(get_pcorr(g, *iter) > cutoff) survivors.push_back(*iter);
- 		candidates.assign(survivors.begin(), survivors.end());
- 	}
- 	
- 	// Start with clean slate
- 	clear_all_possible();
- 	
- 	// Add genes which already have sites to the search space
- 	for(int g = 0; g < ngenes; g++)
- 		if(is_member(g)) add_possible(g);
-	for(list<int>::iterator iter = candidates.begin(); iter != candidates.end(); iter++)
-		add_possible(*iter);
-}
-
-void SEModel::expand_search_avg_pcorr() {
-	if(size() > 10) {
-		motif.set_expr_cutoff(max(0.9 * get_avg_pcorr(), 0.4));
-	}
-
-	if(size() > 0) {
-		float avg_pcorr;
-		clear_all_possible();
-		for(int g1 = 0; g1 < ngenes; g1++) {
-			if(is_member(g1)) continue;
-			avg_pcorr = 0;
-			for(int g2 = 0; g2 < ngenes; g2++) {
-				if(! is_member(g2)) continue;
-				avg_pcorr += get_pcorr(g1, g2);
-			}
-			avg_pcorr /= size();
-			if(avg_pcorr > motif.get_expr_cutoff()) add_possible(g1);
-		}
-		for(int g1 = 0; g1 < ngenes; g1++)
-			if(is_member(g1)) add_possible(g1);
-	}
 }
 
 int SEModel::search_for_motif(const int worker, const int iter) {
@@ -876,6 +785,8 @@ void SEModel::set_expr_cutoff() {
 				isect++;
 			++er_iter;
 		}
+		assert(isect <= expn);
+		assert(isect <= seqn);
 		po = prob_overlap(expn, seqn, isect, ngenes);
 		// cerr << "\t\t\t" << exprcut << '\t' << motif.get_seq_cutoff() << '\t' << expn << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
 		if(po <= best_po) {
@@ -899,6 +810,8 @@ void SEModel::set_seq_cutoff() {
 	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
 	for(seqcut = sr_iter->score; sr_iter->score >= 0.1 && sr_iter != seqranks.end(); ++sr_iter) {
 		if(seqcut > sr_iter->score) {
+			assert(isect <= expn);
+			assert(isect <= seqn);
 			po = prob_overlap(expn, seqn, isect, ngenes);
 			// cerr << "\t\t\t" << motif.get_expr_cutoff() << '\t' << seqcut << '\t' << expn << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
 			if(po < best_po) {

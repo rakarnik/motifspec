@@ -34,7 +34,7 @@ class SEModel {
 	/* Common */
 	vector<string> nameset;
 	int ngenes;
-	bool* possible;
+	vector<bool> possible;
 	int npossible;
 	
 	/* Sequence model */
@@ -53,11 +53,9 @@ class SEModel {
   double* score_matrix;
   
   /* Expression model */
-	float** expr;
+	vector<vector <float> >& expr;
 	int npoints;
-	float* mean;
-	float* stdev;
-	float** pcorr;
+	vector<float> mean;
 	
 	struct idscore {
 		int id;
@@ -89,7 +87,7 @@ class SEModel {
 	static const int TOO_MANY_SITES = 5;
 
 	/* General */
-	SEModel(const vector<string>& seqs, float** exprtab, const int numexpr, const vector<string>& names, const int nc = 10, const double sim_cut = 0.8);
+	SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& names, const int nc = 10, const double sim_cut = 0.8);
   ~SEModel();
 	void modify_params(int argc, char *argv[]);
   double get_best_motif(int i=0);
@@ -102,34 +100,31 @@ class SEModel {
 	ArchiveSites& get_archive() { return archive; };
 	
 	/* Manage membership */
-	void add_possible(const int gene);                      // Add gene as a potential member
-	void remove_possible(const int gene);                   // Remove gene as a potential member
-	void clear_all_possible();                              // Remove all genes as potential members
-	bool is_possible(const int gene) const;									// Return whether this gene is a potential member
-	int possible_size() const;															// Return number of potential members
-	int total_positions() const;														// Return total number of possible positions
-	int possible_positions() const;													// Return number of potential positions
-	void clear_sites();																			// Remove all sites currently in model
-	bool is_member(const int gene) const;										// Return whether the gene is a member
-	int size() const;                                       // Return number of genes
-	int motif_size() const;																	// Return number of sites
-	void genes(int* genes) const;                           // Return the genes that are assigned to this model
+	void add_possible(const int gene);                            // Add gene as a potential member
+	void remove_possible(const int gene);                         // Remove gene as a potential member
+	void clear_all_possible();                                    // Remove all genes as potential members
+	bool is_possible(const int gene) const;									      // Return whether this gene is a potential member
+	int possible_size() const;															      // Return number of potential members
+	int total_positions() const;														      // Return total number of possible positions
+	int possible_positions() const;													      // Return number of potential positions
+	void clear_sites();																			      // Remove all sites currently in model
+	bool is_member(const int gene) const;										      // Return whether the gene is a member
+	int size() const;                                             // Return number of genes
+	int motif_size() const;																	      // Return number of sites
+	void genes(int* genes) const;                                 // Return the genes that are assigned to this model
 	
 	/* Sequence model*/
-	Seqset& get_seqset() { return seqset; }                 // Return the set of sequences
-	void calc_matrix();                                     // Calculate the PWM for the current set of sites
-	double matrix_score();                                  // Calculate the score for the current matrix
-	double entropy_score();																	// Calculate the entropy score for the current matrix
-	double map_score();                                     // Calculate the MAP score
-	double spec_score();                                    // Calculate the specificity score
+	Seqset& get_seqset() { return seqset; }                       // Return the set of sequences
+	void calc_matrix();                                           // Calculate the PWM for the current set of sites
+	double matrix_score();                                        // Calculate the score for the current matrix
+	double entropy_score();																	      // Calculate the entropy score for the current matrix
+	double map_score();                                           // Calculate the MAP score
+	double spec_score();                                          // Calculate the specificity score
 	
 	/* Expression model */
-	void calc_mean();                                       // Calculate the mean for this model
-	float* get_mean() { return mean; };                     // Get the mean for this model
-	void calc_stdev();																			// Calculate the standard deviation for this model
-	float get_avg_pcorr();																	// Calculate the average pairwise correlaion of current model
-	float get_pcorr(const int g1, const int g2);            // Calculate the pairwise correlation for this pair of genes
-	float get_corr_with_mean(const float* pattern) const;   // Calculate the correlation between the model mean and 'pattern
+	void calc_mean();                                             // Calculate the mean for this model
+	vector<float>& get_mean() { return mean; };                   // Get the mean for this model
+	float get_corr_with_mean(const vector<float>& pattern) const; // Calculate the correlation between the model mean and 'pattern
 	
 	/* Algorithm steps */
 	void seed_random_site();
