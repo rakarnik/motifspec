@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
 		for(int j = 1; j <= nruns; j++) {
-			if(j % 100 == 0) {
+			if(j % 300 == 0) {
 				struct flock fl;
 				int fd;
 				fl.l_type   = F_RDLCK;
