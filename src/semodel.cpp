@@ -59,6 +59,11 @@ void SEModel::set_final_params(){
   separams.maxlen = 3 * motif.get_width();
   separams.nruns = motif.positions_available() / separams.expect / motif.ncols() / separams.undersample * separams.oversample;
 	separams.select = 5.0;
+	separams.minprob[0] = 0.01;
+	separams.minprob[1] = 0.01;
+	separams.minprob[2] = 0.1;
+	separams.minprob[3] = 0.2;
+	separams.minprob[4] = 0.6;
 }
 
 void SEModel::ace_initialize(){
@@ -205,7 +210,7 @@ double SEModel::score_site(const int c, const int p, const bool s) {
 	return exp(L);
 }
 
-void SEModel::single_pass(const double minprob, bool greedy) {
+void SEModel::single_pass(const double seqcut, bool greedy) {
 	double ap = (separams.weight * possible_size()
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
@@ -227,8 +232,8 @@ void SEModel::single_pass(const double minprob, bool greedy) {
       Pc = Lc * ap/(1.0 - ap + Lc * ap);
       F = Pw + Pc - Pw * Pc;//probability of either
 			if(g == gadd && j < jadd + width) continue;
-			if(F > minprob/5.0) select_sites.add_site(g, j, true);
-			if(F < minprob) continue;
+			if(F > seqcut/5.0) select_sites.add_site(g, j, true);
+			if(F < seqcut) continue;
 			considered++;
 			Pw = F * Pw / (Pw + Pc);
 			Pc = F - Pw;
@@ -267,7 +272,7 @@ void SEModel::single_pass(const double minprob, bool greedy) {
   }
 }
 
-void SEModel::single_pass_select(const double minprob, bool greedy) {
+void SEModel::single_pass_select(const double seqcut, bool greedy) {
 	double ap = (separams.weight * possible_size()
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
@@ -290,7 +295,7 @@ void SEModel::single_pass_select(const double minprob, bool greedy) {
 		Pc = Lc * ap/(1.0 - ap + Lc * ap);
 		F = Pw + Pc - Pw * Pc;//probability of either
 		if(g == gadd && j < jadd + width) continue;
-		if(F < minprob) continue;
+		if(F < seqcut) continue;
 		Pw = F * Pw / (Pw + Pc);
 		Pc = F - Pw;
 		if(greedy) {                   // Always add if above minprob
@@ -435,7 +440,7 @@ bool SEModel::column_sample(){
   }
 	
 	// Penalize outermost columns for length
-  double scale = 0.0;
+	double scale = 0.0;
   if(best_wt > 100.0) scale = best_wt - 100.0; //keep exp from overflowing
 	for(int i = 0; i < cs_span; i++){
 		wtx[i].score -= scale;
@@ -602,7 +607,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	motif.clear_sites();
 	select_sites.clear_sites();
 	motif.set_iter(iter);
-	motif.set_expr_cutoff(0.8);
 	int phase = 0;
 	
 	for(int g = 0; g < ngenes; g++)
@@ -614,6 +618,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	}
 	
 	clear_all_possible();
+	motif.set_expr_cutoff(0.8);
 	while(possible_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
 		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
 		expand_search_around_mean(motif.get_expr_cutoff());
@@ -623,12 +628,10 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		return BAD_SEARCH_SPACE;
 	}
 	expand_search_around_mean(motif.get_expr_cutoff());
-	print_status(cerr, 0, phase);
 	
 	compute_seq_scores();
 	compute_expr_scores();
-	set_seq_cutoff();
-	set_expr_cutoff();
+	set_seq_cutoff(phase);
 	motif.set_map(map_score());
 	motif.set_spec(spec_score());
 	print_status(cerr, 0, phase);
@@ -636,7 +639,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 
 	int i, i_worse = 0;
 	phase = 1;
-	for(i = 1; i < 10000 && phase < 3; i++) {
+	for(i = 1; i < 10000 && phase < 4; i++) {
 		expand_search_around_mean(motif.get_expr_cutoff());
 		if(i_worse > 0)
 			single_pass_select(motif.get_seq_cutoff());
@@ -645,8 +648,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		column_sample();
 		compute_seq_scores_minimal();
 		compute_expr_scores();
-		set_seq_cutoff();
-		set_expr_cutoff();
 		motif.set_spec(spec_score());
 		motif.set_map(map_score());
 		print_status(cerr, i, phase);
@@ -657,9 +658,16 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		}
 		if(size() < 2) {
 			cerr << "\t\t\tZero or one sites, reloading best motif...\n";
-			motif = best_motif;
 			phase++;
+			best_motif.set_seq_cutoff(separams.minprob[phase]);
+			motif = best_motif;
+			select_sites.clear_sites();
+			compute_seq_scores_minimal();
+			compute_expr_scores();
+			set_seq_cutoff(phase);
+			set_expr_cutoff();
 			print_status(cerr, i, phase);
+			i_worse = 0;
 			continue;
 		}
 		if(motif.get_spec() > best_motif.get_spec()) {
@@ -673,18 +681,24 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		} else {
 			i_worse++;
 			if(i_worse > separams.minpass * phase) {
-				motif = best_motif;
 				if(size() < 2) {
 					cerr << "\t\t\tLess than 2 genes at bad move threshold! Restarting...\n";
 					return TOO_FEW_SITES;
 				}
 				cerr << "\t\t\tReached bad move threshold, reloading best motif...\n";
 				phase++;
+				best_motif.set_seq_cutoff(separams.minprob[phase]);
+				motif = best_motif;
+				select_sites.clear_sites();
+				compute_seq_scores_minimal();
+				compute_expr_scores();
+				set_seq_cutoff(phase);
+				set_expr_cutoff();
+				print_status(cerr, i, phase);
 			}
 		}
 	}
 	
-	motif = best_motif;
 	cerr << "\t\t\tRunning final greedy pass...";
 	single_pass(motif.get_seq_cutoff(), true);
 	cerr << "done.\n";
@@ -768,6 +782,37 @@ void SEModel::full_output(char *name){
   full_output(fout);
 }
 
+void SEModel::set_seq_cutoff(const int phase) {
+	int expn = 0, seqn = 0, isect = 0;
+	float seqcut, best_seqcut = separams.minprob[phase];
+	double po, best_po = 1;
+	vector<struct idscore>::const_iterator er_iter = expranks.begin();
+	while(er_iter->score > motif.get_expr_cutoff()) {
+		expn++;
+		++er_iter;
+	}
+	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
+	for(seqcut = sr_iter->score; sr_iter->score >= separams.minprob[phase] && sr_iter != seqranks.end(); ++sr_iter) {
+		if(seqcut > sr_iter->score) {
+			assert(isect <= expn);
+			assert(isect <= seqn);
+			po = prob_overlap(expn, seqn, isect, ngenes);
+			// cerr << "\t\t\t" << motif.get_expr_cutoff() << '\t' << seqcut << '\t' << expn << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
+			if(po < best_po) {
+				best_seqcut = seqcut;
+				best_po = po;
+			}
+		}
+		seqn++;
+		if(expscores[sr_iter->id] > motif.get_expr_cutoff())
+			isect++;
+		seqcut = sr_iter->score;
+	}
+	// cerr << "\t\t\tSetting sequence cutoff to " << best_seqcut << "(minimum " << separams.minprob[phase] << ")\n";
+	motif.set_seq_cutoff(best_seqcut);
+}
+
+
 void SEModel::set_expr_cutoff() {
 	int expn = 0, seqn = 0, isect = 0;
 	float exprcut, best_exprcut = 0.0;
@@ -796,36 +841,6 @@ void SEModel::set_expr_cutoff() {
 	}
 	// cerr << "\t\t\tSetting expression cutoff to " << best_exprcut << '\n';
 	motif.set_expr_cutoff(best_exprcut);
-}
-
-void SEModel::set_seq_cutoff() {
-	int expn = 0, seqn = 0, isect = 0;
-	float seqcut, best_seqcut = 0.0;
-	double po, best_po = 1;
-	vector<struct idscore>::const_iterator er_iter = expranks.begin();
-	while(er_iter->score > motif.get_expr_cutoff()) {
-		expn++;
-		++er_iter;
-	}
-	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
-	for(seqcut = sr_iter->score; sr_iter->score >= 0.1 && sr_iter != seqranks.end(); ++sr_iter) {
-		if(seqcut > sr_iter->score) {
-			assert(isect <= expn);
-			assert(isect <= seqn);
-			po = prob_overlap(expn, seqn, isect, ngenes);
-			// cerr << "\t\t\t" << motif.get_expr_cutoff() << '\t' << seqcut << '\t' << expn << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
-			if(po < best_po) {
-				best_seqcut = seqcut;
-				best_po = po;
-			}
-		}
-		seqn++;
-		if(expscores[sr_iter->id] > motif.get_expr_cutoff())
-			isect++;
-		seqcut = sr_iter->score;
-	}
-	// cerr << "\t\t\tSetting sequence cutoff to " << best_seqcut << '\n';
-	motif.set_seq_cutoff(best_seqcut);
 }
 
 void SEModel::print_possible(ostream& out) {

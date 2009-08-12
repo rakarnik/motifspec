@@ -19,6 +19,7 @@ struct SEParams{
   int npass;
   int minpass;
   int nruns;
+	float minprob[4];
   bool fragment;
   int seed;
   double select;
@@ -74,7 +75,7 @@ class SEModel {
 
 	double score_site(const int c, const int p, const bool s);
 	void set_cutoffs();
-	void set_seq_cutoff();
+	void set_seq_cutoff(const int phase);
 	void set_expr_cutoff();
 	void print_possible(ostream& out);
 	
@@ -128,8 +129,8 @@ class SEModel {
 	
 	/* Algorithm steps */
 	void seed_random_site();
-  void single_pass(const double minprob = 0.0, bool greedy = false);
-	void single_pass_select(const double minprob = 0.0, bool greedy = false);
+  void single_pass(const double seqcut = 0.0, bool greedy = false);
+	void single_pass_select(const double seqcut = 0.0, bool greedy = false);
 	void compute_seq_scores();
 	void compute_seq_scores_minimal();
 	void compute_expr_scores();
