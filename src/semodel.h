@@ -19,7 +19,7 @@ struct SEParams{
   int npass;
   int minpass;
   int nruns;
-	float minprob[4];
+	float minprob[3];
   bool fragment;
   int seed;
   double select;

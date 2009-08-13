@@ -61,9 +61,8 @@ void SEModel::set_final_params(){
 	separams.select = 5.0;
 	separams.minprob[0] = 0.01;
 	separams.minprob[1] = 0.01;
-	separams.minprob[2] = 0.1;
-	separams.minprob[3] = 0.2;
-	separams.minprob[4] = 0.6;
+	separams.minprob[2] = 0.2;
+	separams.minprob[3] = 0.6;
 }
 
 void SEModel::ace_initialize(){
@@ -639,7 +638,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 
 	int i, i_worse = 0;
 	phase = 1;
-	for(i = 1; i < 10000 && phase < 4; i++) {
+	for(i = 1; i < 10000 && phase < 3; i++) {
 		expand_search_around_mean(motif.get_expr_cutoff());
 		if(i_worse > 0)
 			single_pass_select(motif.get_seq_cutoff());
