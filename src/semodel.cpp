@@ -451,40 +451,40 @@ bool SEModel::column_sample(){
 			newwidth += (i - x - width + 1);
 		wtx[i].score /= bico(newwidth - 2, motif.ncols() - 2);
 	}
-	
-	// Sort columns by their score in wtx
-	sort(wtx.begin(), wtx.end(), isc);
-	
-	// Keep the top <ncol> columns
-	int ncols = motif.ncols();
-	int nseen = 0;
-	for(int i = 0; i < cs_span; ++i) {
-		if(wtx[i].id - x > cs_span - 1)
-			continue;
-		if(nseen < ncols) {
-			if(motif.has_col(wtx[i].id - x)) {        // column is ranked in top, and is already in motif
-				nseen++;
-			} else {
-				motif.add_col(wtx[i].id - x);           // column is ranked in top, and is not in motif
-				if(wtx[i].id - x < 0)                   // if column was to the left of the current columns, adjust the remaining columns
-					for(int j = i + 1; j < cs_span; ++j)
-						wtx[j].id -= wtx[i].id - x;
-				changed = true;
-				nseen++;
+
+	// Find best column not in motif and worst column in motif
+	int worst_col = 0;
+	int best_col = 0;
+	best_wt = -DBL_MAX;
+	double worst_wt = DBL_MAX;
+	for(int i = 0; i < cs_span; i++) {
+		if(motif.has_col(wtx[i].id - x)) {
+			if(wtx[i].score < worst_wt)	{
+				worst_col = wtx[i].id;
+				worst_wt = wtx[i].score;
 			}
 		} else {
-			if(motif.has_col(wtx[i].id - x)) {        // column is not ranked in top, and is in motif
-				if(wtx[i].id - x == 0)                  // we will remove the first column, adjust remaining columns
-					for(int j = i + 1; j < cs_span; ++j)
-						wtx[j].id -= motif.column(1);
-				motif.remove_col(wtx[i].id - x);
-				changed = true;
+			if(wtx[i].score > best_wt) {
+				best_col = wtx[i].id;
+				best_wt = wtx[i].score;
 			}
 		}
 	}
-	
-	if(motif.ncols() != ncols) {                 // number of columns should not change
-		cerr << "\t\t\t\t\tERROR: column sampling started with " << ncols << ", ended with " << motif.ncols() << '\n';
+
+	// Check if best column not in motif is better than worst in motif
+	// If so, switch
+	int ncols_old = motif.ncols();
+	if(wtx[best_col].score > wtx[worst_col].score) {
+		motif.add_col(best_col - x);
+		if(best_col - x < 0)
+			motif.remove_col(worst_col - best_col - x);
+		else
+			motif.remove_col(worst_col - x);
+		changed = true;
+	}
+
+	if(motif.ncols() != ncols_old) {                 // number of columns should not change
+		cerr << "\t\t\t\t\tERROR: column sampling started with " << ncols_old << ", ended with " << motif.ncols() << '\n';
 		abort();
 	}
 	
@@ -644,13 +644,14 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 			single_pass_select(motif.get_seq_cutoff());
 		else
 			single_pass(motif.get_seq_cutoff());
-		column_sample();
+		for(int m = 0; m < 3; m++) {
+			if(! column_sample()) break;
+		}
 		compute_seq_scores_minimal();
 		compute_expr_scores();
 		motif.set_spec(spec_score());
 		motif.set_map(map_score());
 		print_status(cerr, i, phase);
-		column_sample();
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting...\n";
 			return TOO_MANY_SITES;
