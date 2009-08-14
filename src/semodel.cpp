@@ -477,7 +477,7 @@ bool SEModel::column_sample(){
 	if(wtx[best_col].score > wtx[worst_col].score) {
 		motif.add_col(best_col - x);
 		if(best_col - x < 0)
-			motif.remove_col(worst_col - best_col - x);
+			motif.remove_col(worst_col - best_col);
 		else
 			motif.remove_col(worst_col - x);
 		changed = true;
