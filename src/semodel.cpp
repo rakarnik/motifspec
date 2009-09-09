@@ -410,6 +410,7 @@ void SEModel::compute_expr_scores() {
 }
 
 bool SEModel::column_sample(){
+	int ncols_old = motif.ncols();
 	bool changed = false;
 	int *freq = new int[4];
 	int width = motif.get_width();
@@ -418,22 +419,20 @@ bool SEModel::column_sample(){
 	max_left = max_right = (motif.get_max_width() - width)/2;
   motif.columns_open(max_left, max_right);
 	int cs_span = max_left + max_right + width;
-  vector<struct idscore> wtx(cs_span);
+  vector<double> wtx(cs_span);
 	int x = max_left;
   //wtx[x + c] will refer to the weight of pos c in the usual numbering
 	double wt;
 	double best_wt = -DBL_MAX;
 	for(int i = 0; i < cs_span; i++) {
-		wtx[i].id = 1000;
-		wtx[i].score = -DBL_MAX;
+		wtx[i] = -DBL_MAX;
 		if(motif.column_freq(i - x, freq)){
       wt = 0.0;
       for(int j = 0;j < 4; j++){
 				wt += gammaln(freq[j] + separams.pseudo[j]);
 				wt -= (double)freq[j] * log(separams.backfreq[j]);
       }
-			wtx[i].id = i;
-			wtx[i].score = wt;
+			wtx[i] = wt;
 			if(wt > best_wt) best_wt = wt;
     }
   }
@@ -442,49 +441,46 @@ bool SEModel::column_sample(){
 	double scale = 0.0;
   if(best_wt > 100.0) scale = best_wt - 100.0; //keep exp from overflowing
 	for(int i = 0; i < cs_span; i++){
-		wtx[i].score -= scale;
-		wtx[i].score = exp(wtx[i].score);
+		wtx[i]  -= scale;
+		wtx[i] = exp(wtx[i]);
 		int newwidth = width;
 		if(i < x)
 			newwidth += (x - i);
 		else if(i > (x + width - 1))
 			newwidth += (i - x - width + 1);
-		wtx[i].score /= bico(newwidth - 2, motif.ncols() - 2);
+		wtx[i] /= bico(newwidth - 2, motif.ncols() - 2);
 	}
-
-	// Find best column not in motif and worst column in motif
-	int worst_col = 0;
-	int best_col = 0;
-	best_wt = -DBL_MAX;
+	
+	// Find worst column in the current set, best column outside current set
+	best_wt = - DBL_MAX;
 	double worst_wt = DBL_MAX;
+	int best_col, worst_col;
 	for(int i = 0; i < cs_span; i++) {
-		if(motif.has_col(wtx[i].id - x)) {
-			if(wtx[i].score < worst_wt)	{
-				worst_col = wtx[i].id;
-				worst_wt = wtx[i].score;
+		if(motif.has_col(i - x)) { 
+			if(wtx[i] < worst_wt) {
+				worst_col = i - x;
+				worst_wt = wtx[i];
 			}
-		} else {
-			if(wtx[i].score > best_wt) {
-				best_col = wtx[i].id;
-				best_wt = wtx[i].score;
-			}
+		} else if(wtx[i] > best_wt) {
+			best_col = i - x;
+			best_wt = wtx[i];
 		}
 	}
-
-	// Check if best column not in motif is better than worst in motif
-	// If so, switch
-	int ncols_old = motif.ncols();
-	if(wtx[best_col].score > wtx[worst_col].score) {
-		motif.add_col(best_col - x);
-		if(best_col - x < 0)
-			motif.remove_col(worst_col - best_col);
-		else
-			motif.remove_col(worst_col - x);
+	
+	// Swap if best column outside set is better than worst column inside set
+	if(best_wt > worst_wt) {
+		motif.add_col(best_col);
+		select_sites.add_col(best_col);
+		if(best_col < 0)
+			worst_col -= best_col;
+		motif.remove_col(worst_col);
+		select_sites.remove_col(worst_col);
 		changed = true;
 	}
-
+	
 	if(motif.ncols() != ncols_old) {                 // number of columns should not change
-		cerr << "\t\t\t\t\tERROR: column sampling started with " << ncols_old << ", ended with " << motif.ncols() << '\n';
+		cerr << "\t\t\t\t\tERROR: column sampling started with " << ncols_old 
+		             << ", ended with " << motif.ncols() << '\n';
 		abort();
 	}
 	
@@ -608,6 +604,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	motif.set_iter(iter);
 	int phase = 0;
 	
+	/*
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
@@ -615,6 +612,8 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
 		return BAD_SEED;
 	}
+	*/
+	motif.add_site(172, 207, 1);
 	
 	clear_all_possible();
 	motif.set_expr_cutoff(0.8);
@@ -644,14 +643,14 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 			single_pass_select(motif.get_seq_cutoff());
 		else
 			single_pass(motif.get_seq_cutoff());
-		for(int m = 0; m < 3; m++) {
+		for(int j = 0; j < 3; j++)
 			if(! column_sample()) break;
-		}
 		compute_seq_scores_minimal();
 		compute_expr_scores();
 		motif.set_spec(spec_score());
 		motif.set_map(map_score());
 		print_status(cerr, i, phase);
+		column_sample();
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting...\n";
 			return TOO_MANY_SITES;
