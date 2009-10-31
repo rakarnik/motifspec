@@ -1,9 +1,10 @@
 #include "bgmodel.h"
 
-BGModel::BGModel(const Seqset& s) :
+BGModel::BGModel(const Seqset& s, const int ord) :
 seqset(s),
 total_seq_len(0),
 gc_genome(0),
+order(ord),
 gc(seqset.num_seqs()),
 model0(4),
 model1(16),
@@ -31,13 +32,25 @@ cbgscores(seqset.num_seqs()) {
   }
 	gc_genome /= total_seq_len;
 	
-	train_background_5();
-	train_background_4();
-	train_background_3();
-	train_background_2();
-	train_background_1();
-	train_background_0();
-	calc_bg_scores_5();
+	train_background[0] = &BGModel::train_background_0;
+	train_background[1] = &BGModel::train_background_1;
+	train_background[2] = &BGModel::train_background_2;
+	train_background[3] = &BGModel::train_background_3;
+	train_background[4] = &BGModel::train_background_4;
+	train_background[5] = &BGModel::train_background_5;
+	
+	calc_bg_scores[0] = &BGModel::calc_bg_scores_0;
+	calc_bg_scores[1] = &BGModel::calc_bg_scores_1;
+	calc_bg_scores[2] = &BGModel::calc_bg_scores_2;
+	calc_bg_scores[3] = &BGModel::calc_bg_scores_3;
+	calc_bg_scores[4] = &BGModel::calc_bg_scores_4;
+	calc_bg_scores[5] = &BGModel::calc_bg_scores_5;
+	
+	for(int i = 0; i < order; i++) {
+		(*this.*train_background[i])();
+	}
+	
+	(*this.*calc_bg_scores[order])();
 }
 
 void BGModel::train_background_5() {

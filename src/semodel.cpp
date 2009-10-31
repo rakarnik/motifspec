@@ -1,11 +1,11 @@
 #include "semodel.h"
 
-SEModel::SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& names, const int nc, const double sim_cut):
+SEModel::SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& names, const int nc, const int order, const double sim_cut):
 nameset(names),
 ngenes(names.size()),
 possible(ngenes),
 seqset(seqs),
-bgmodel(seqset),
+bgmodel(seqset, order),
 motif(seqset, nc),
 select_sites(seqset, nc),
 archive(seqset, sim_cut),
@@ -604,7 +604,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	motif.set_iter(iter);
 	int phase = 0;
 	
-	/*
 	for(int g = 0; g < ngenes; g++)
 		add_possible(g);
 	seed_random_site();
@@ -612,8 +611,6 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
 		return BAD_SEED;
 	}
-	*/
-	motif.add_site(172, 207, 1);
 	
 	clear_all_possible();
 	motif.set_expr_cutoff(0.8);

@@ -11,6 +11,7 @@ bool archive;                              // archive mode
 int ngenes;                                // number of genes
 int npoints;                               // number of data points
 int ncol;                                  // number of columns
+int order;                                 // order of background model
 vector<vector <float> > expr;              // the expression data
 
 string outfile;

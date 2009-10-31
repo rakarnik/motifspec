@@ -7,6 +7,7 @@
 class BGModel {
 	const Seqset& seqset;
 	int total_seq_len;
+	int order;
 	float gc_genome;
 	vector<float> gc;
 	vector<float> model0;
@@ -17,9 +18,11 @@ class BGModel {
 	vector<float> model5;
 	vector<vector <float> > wbgscores;
 	vector<vector <float> > cbgscores;
+	void (BGModel::*train_background[6])();
+	void (BGModel::*calc_bg_scores[6])();
 
 public:
-	BGModel(const Seqset& s);
+	BGModel(const Seqset& s, const int ord = 3);
 	float tot_seq_len() const { return total_seq_len; }           // Return total length of all sequences
 	float gcgenome() const { return gc_genome; }                  // Return overall GC content
 	float gccontent(const int i) const { return gc[i]; }          // Return GC content of a specified sequence
