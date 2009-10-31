@@ -3,8 +3,8 @@
 BGModel::BGModel(const Seqset& s, const int ord) :
 seqset(s),
 total_seq_len(0),
-gc_genome(0),
 order(ord),
+gc_genome(0),
 gc(seqset.num_seqs()),
 model0(4),
 model1(16),
