@@ -657,7 +657,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 			phase++;
 			best_motif.set_seq_cutoff(separams.minprob[phase]);
 			motif = best_motif;
-			select_sites.clear_sites();
+			select_sites = best_motif;
 			compute_seq_scores_minimal();
 			compute_expr_scores();
 			set_seq_cutoff(phase);
@@ -685,7 +685,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 				phase++;
 				best_motif.set_seq_cutoff(separams.minprob[phase]);
 				motif = best_motif;
-				select_sites.clear_sites();
+				select_sites = best_motif;
 				compute_seq_scores_minimal();
 				compute_expr_scores();
 				set_seq_cutoff(phase);
