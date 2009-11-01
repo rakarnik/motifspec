@@ -454,7 +454,7 @@ bool SEModel::column_sample(){
 	// Find worst column in the current set, best column outside current set
 	best_wt = - DBL_MAX;
 	double worst_wt = DBL_MAX;
-	int best_col, worst_col;
+	int best_col = 0, worst_col = 0;
 	for(int i = 0; i < cs_span; i++) {
 		if(motif.has_col(i - x)) { 
 			if(wtx[i] < worst_wt) {
