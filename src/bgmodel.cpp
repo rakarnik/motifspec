@@ -46,7 +46,7 @@ cbgscores(seqset.num_seqs()) {
 	calc_bg_scores[4] = &BGModel::calc_bg_scores_4;
 	calc_bg_scores[5] = &BGModel::calc_bg_scores_5;
 	
-	for(int i = 0; i < order; i++) {
+	for(int i = 0; i <= order; i++) {
 		(*this.*train_background[i])();
 	}
 	
