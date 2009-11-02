@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 				}
 			}
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << "\n";
-			se.search_for_motif(worker, j);
+			se.search_for_motif(worker, j, outfile);
 		}
 	}
 	return 0;
@@ -180,7 +180,7 @@ int read_motifs(SEModel& se) {
 			extension = filename.substr(pos, len - pos);
 		else
 			extension = "";
-		if(extension.compare(".mot") == 0) {
+		if(filename.find(outfile) == 0 && extension.compare(".mot") == 0) {
 			cerr << "Reading from file " << filename << endl;
 			// check motif against archive, then move to "mots" directory
 			string newname("mots/");

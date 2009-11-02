@@ -607,7 +607,7 @@ void SEModel::expand_search_around_mean() {
 		if(get_corr_with_mean(expr[g]) >= motif.get_expr_cutoff()) add_possible(g);
 }
 
-int SEModel::search_for_motif(const int worker, const int iter) {
+int SEModel::search_for_motif(const int worker, const int iter, const string outfile) {
 	motif.clear_sites();
 	select_sites.clear_sites();
 	motif.set_iter(iter);
@@ -726,8 +726,8 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	
 	archive.consider_motif(motif);
 	char tmpfilename[30], motfilename[30];
-	sprintf(tmpfilename, "%d.%d.mot.tmp", worker, iter);
-	sprintf(motfilename, "%d.%d.mot", worker, iter);
+	sprintf(tmpfilename, "%s.%d.%d.mot.tmp", outfile.c_str(), worker, iter);
+	sprintf(motfilename, "%s.%d.%d.mot", outfile.c_str(), worker, iter);
 	ofstream motout(tmpfilename);
 	motif.write(motout);
 	motout.close();

@@ -145,7 +145,7 @@ class SEModel {
 	bool column_sample();
 	void adjust_search_space();
   void expand_search_around_mean();
-	int search_for_motif(const int worker, const int iter);
+	int search_for_motif(const int worker, const int iter, const string outfile);
 	bool consider_motif(const char* filename);
 	
 	/* Output */
