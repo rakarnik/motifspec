@@ -123,6 +123,8 @@ int main(int argc, char *argv[]) {
 								* se.get_params().oversample;
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
+		string lockstr(outfile);
+		lockstr.append(".lock");
 		for(int j = 1; j <= nruns; j++) {
 			if(j % 300 == 0) {
 				struct flock fl;
@@ -132,7 +134,7 @@ int main(int argc, char *argv[]) {
 				fl.l_start  = 0;
 				fl.l_len    = 0;
 				fl.l_pid    = getpid();
-				fd = open("arch.lock", O_RDONLY);
+				fd = open(lockstr.c_str(), O_RDONLY);
 				if(fd == -1) {
 					if(errno != ENOENT)
 						cerr << "\t\tUnable to read lock file, error was " << strerror(errno) << "\n";
@@ -204,8 +206,10 @@ int read_motifs(SEModel& se) {
 void output(SEModel& se) {
 	string tmpstr(outfile);
 	string outstr(outfile);
+	string lockstr(outfile);
 	tmpstr.append(".tmp.ace");
 	outstr.append(".adj.ace");
+	lockstr.append(".lock");
 	ofstream tmp(tmpstr.c_str(), ios::trunc);
 	print_ace(tmp, se);
 	tmp.close();
@@ -216,7 +220,7 @@ void output(SEModel& se) {
 	fl.l_start  = 0;
 	fl.l_len    = 0;
 	fl.l_pid    = getpid();
-	fd = open("arch.lock", O_WRONLY | O_CREAT, 0644);
+	fd = open(lockstr.c_str(), O_WRONLY | O_CREAT, 0644);
 	while(fcntl(fd, F_SETLK, &fl) == -1) {
 		cerr << "Waiting for lock release on archive file...\n";
 		sleep(10);
