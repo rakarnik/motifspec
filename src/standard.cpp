@@ -74,6 +74,20 @@ void get_expr(istream& exprfile, vector<vector <float> >& expr, vector<string>& 
 	}
 }
 
+void get_list(const char* filename, vector<string>& listset) {
+	ifstream listfile(filename);
+	if(! listfile){
+	  cerr<<"No such file "<< filename<<'\n';
+	  exit(0);
+	}
+	string line;
+	while(getline(listfile, line)) {
+		if(line != "") {
+			listset.push_back(line);
+		}
+	}
+}
+
 void get_cluster(const char* filename, const int num, vector<string>& nameset) {
 	ifstream clusfile(filename);
 	if(! clusfile){
