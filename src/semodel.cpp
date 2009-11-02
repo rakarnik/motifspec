@@ -786,6 +786,13 @@ void SEModel::full_output(char *name){
 }
 
 void SEModel::set_seq_cutoff(const int phase) {
+	if(npoints > 0)
+		set_seq_cutoff_expr(phase);
+	else
+		set_seq_cutoff_subset(phase);
+}
+
+void SEModel::set_seq_cutoff_expr(const int phase) {
 	int expn = 0, seqn = 0, isect = 0;
 	float seqcut, best_seqcut = separams.minprob[phase];
 	double po, best_po = 1;
@@ -815,6 +822,30 @@ void SEModel::set_seq_cutoff(const int phase) {
 	motif.set_seq_cutoff(best_seqcut);
 }
 
+void SEModel::set_seq_cutoff_subset(const int phase) {
+	int seqn = 0, isect = 0;
+	float seqcut, best_seqcut = separams.minprob[phase];
+	double po, best_po = 1;
+	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
+	for(seqcut = sr_iter->score; sr_iter->score >= separams.minprob[phase] && sr_iter != seqranks.end(); ++sr_iter) {
+		if(seqcut > sr_iter->score) {
+			assert(isect <= npossible);
+			assert(isect <= seqn);
+			po = prob_overlap(npossible, seqn, isect, ngenes);
+			// cerr << "\t\t\t" << motif.get_expr_cutoff() << '\t' << seqcut << '\t' << expn << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
+			if(po < best_po) {
+				best_seqcut = seqcut;
+				best_po = po;
+			}
+		}
+		seqn++;
+		if(is_possible(sr_iter->id))
+			isect++;
+		seqcut = sr_iter->score;
+	}
+	// cerr << "\t\t\tSetting sequence cutoff to " << best_seqcut << "(minimum " << separams.minprob[phase] << ")\n";
+	motif.set_seq_cutoff(best_seqcut);
+}
 
 void SEModel::set_expr_cutoff() {
 	int expn = 0, seqn = 0, isect = 0;
