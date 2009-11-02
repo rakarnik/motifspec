@@ -1,6 +1,6 @@
 #include "semodel.h"
 
-SEModel::SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& names, const int nc, const int order, const double sim_cut):
+SEModel::SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& sub, const vector<string>& names, const int npts, const int nc, const int order, const double sim_cut):
 nameset(names),
 ngenes(names.size()),
 possible(ngenes),
@@ -10,7 +10,8 @@ motif(seqset, nc),
 select_sites(seqset, nc),
 archive(seqset, sim_cut),
 expr(exprtab),
-npoints(expr[0].size()),
+subset(sub),
+npoints(npts),
 mean(npoints),
 seqscores(ngenes),
 bestpos(ngenes),
@@ -18,7 +19,6 @@ seqranks(ngenes),
 expscores(ngenes),
 expranks(ngenes) {
 	npossible = 0;
-	clear_all_possible();
 	verbose = false;
 	
 	set_default_params();
@@ -26,7 +26,8 @@ expranks(ngenes) {
   sim_cutoff = sim_cut;
   freq_matrix = new int[4 * motif.ncols()];
   score_matrix = new double[4 * motif.ncols()];
-
+	
+	reset_possible();
 }
 
 SEModel::~SEModel(){
@@ -138,7 +139,7 @@ void SEModel::genes(int* genes) const {
 }
 
 void SEModel::seed_random_site() {
-	if(npossible < 1) return;
+	assert(npossible > 0);
 	
 	motif.clear_sites();
 	int chosen_possible, chosen_seq, chosen_posit;
@@ -155,6 +156,7 @@ void SEModel::seed_random_site() {
 		if(is_possible(g)) chosen_possible--;
 	}
 	chosen_seq = g;
+	cerr << "Chose sequence " << g << '\n';
 	
 	/* Now choose a site */
 	int width = motif.get_width();
@@ -550,11 +552,10 @@ double SEModel::spec_score() {
 	isect = seqn = expn = 0;
 	for(int g = 0; g < ngenes; g++) {
 		if(seqscores[g] >= motif.get_seq_cutoff()) seqn++;
-		if(expscores[g] >= motif.get_expr_cutoff()) expn++;
-		if(seqscores[g] >= motif.get_seq_cutoff() && expscores[g] >= motif.get_expr_cutoff()) isect++;
+		if(seqscores[g] >= motif.get_seq_cutoff() && is_possible(g)) isect++;
 	}
 	
-	double spec = prob_overlap(expn, seqn, isect, ngenes);
+	double spec = prob_overlap(npossible, seqn, isect, ngenes);
 	spec = (spec > 0.99)? 0 : -log10(spec);
 	return spec;
 }
@@ -591,11 +592,19 @@ float SEModel::get_corr_with_mean(const vector<float>& pattern) const {
 	return corr(mean, pattern);
 }
 
-void SEModel::expand_search_around_mean(const double cutoff) {
+void SEModel::adjust_search_space() {
+	if(subset.size() == 0) {
+		expand_search_around_mean();
+	} else {
+		reset_possible();
+	}
+}
+
+void SEModel::expand_search_around_mean() {
 	calc_mean();
 	clear_all_possible();
 	for(int g = 0; g < ngenes; g++)
-		if(get_corr_with_mean(expr[g]) >= cutoff) add_possible(g);
+		if(get_corr_with_mean(expr[g]) >= motif.get_expr_cutoff()) add_possible(g);
 }
 
 int SEModel::search_for_motif(const int worker, const int iter) {
@@ -604,25 +613,22 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	motif.set_iter(iter);
 	int phase = 0;
 	
-	for(int g = 0; g < ngenes; g++)
-		add_possible(g);
+	reset_possible();
 	seed_random_site();
 	if(size() < 1) {
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
 		return BAD_SEED;
 	}
 	
-	clear_all_possible();
 	motif.set_expr_cutoff(0.8);
 	while(possible_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
 		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
-		expand_search_around_mean(motif.get_expr_cutoff());
+		adjust_search_space();
 	}
 	if(possible_size() < 2) {
 		cerr << "\t\t\tBad search start -- no genes within " << separams.mincorr << '\n';
 		return BAD_SEARCH_SPACE;
 	}
-	expand_search_around_mean(motif.get_expr_cutoff());
 	
 	compute_seq_scores();
 	compute_expr_scores();
@@ -635,7 +641,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 	int i, i_worse = 0;
 	phase = 1;
 	for(i = 1; i < 10000 && phase < 3; i++) {
-		expand_search_around_mean(motif.get_expr_cutoff());
+		adjust_search_space();
 		if(i_worse > 0)
 			single_pass_select(motif.get_seq_cutoff());
 		else
@@ -718,6 +724,7 @@ int SEModel::search_for_motif(const int worker, const int iter) {
 		return TOO_SIMILAR;
 	}
 	
+	archive.consider_motif(motif);
 	char tmpfilename[30], motfilename[30];
 	sprintf(tmpfilename, "%d.%d.mot.tmp", worker, iter);
 	sprintf(motfilename, "%d.%d.mot", worker, iter);
@@ -837,6 +844,17 @@ void SEModel::set_expr_cutoff() {
 	}
 	// cerr << "\t\t\tSetting expression cutoff to " << best_exprcut << '\n';
 	motif.set_expr_cutoff(best_exprcut);
+}
+
+void SEModel::reset_possible() {
+	if(subset.size() > 0) {
+		for(int i = 0; i < ngenes; i++)
+				if(binary_search(subset.begin(), subset.end(), nameset[i]))
+					add_possible(i);
+	} else {
+		for(int i = 0; i < ngenes; i++)
+				possible[i] = 1;
+	}
 }
 
 void SEModel::print_possible(ostream& out) {

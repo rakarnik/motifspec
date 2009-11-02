@@ -58,6 +58,9 @@ class SEModel {
 	int npoints;
 	vector<float> mean;
 	
+	/* Subset */
+	const vector<string>& subset;
+	
 	struct idscore {
 		int id;
 		double score;
@@ -88,7 +91,9 @@ class SEModel {
 	static const int TOO_MANY_SITES = 5;
 
 	/* General */
-	SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& names, const int nc = 10, const int order = 3, const double sim_cut = 0.8);
+	SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& sub,
+	        const vector<string>& names, const int npts, const int nc = 10, const int order = 3,
+					const double sim_cut = 0.8);
   ~SEModel();
 	void modify_params(int argc, char *argv[]);
   double get_best_motif(int i=0);
@@ -104,6 +109,7 @@ class SEModel {
 	void add_possible(const int gene);                            // Add gene as a potential member
 	void remove_possible(const int gene);                         // Remove gene as a potential member
 	void clear_all_possible();                                    // Remove all genes as potential members
+	void reset_possible();                                        // Adjust potential membership back to initial conditions
 	bool is_possible(const int gene) const;									      // Return whether this gene is a potential member
 	int possible_size() const;															      // Return number of potential members
 	int total_positions() const;														      // Return total number of possible positions
@@ -135,7 +141,8 @@ class SEModel {
 	void compute_seq_scores_minimal();
 	void compute_expr_scores();
 	bool column_sample();
-  void expand_search_around_mean(const double corr_cutoff);
+	void adjust_search_space();
+  void expand_search_around_mean();
 	int search_for_motif(const int worker, const int iter);
 	bool consider_motif(const char* filename);
 	

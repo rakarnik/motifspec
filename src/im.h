@@ -5,16 +5,21 @@
 #include "semodel.h"
 #include "standard.h"
 
+// Search types
+#define UNDEFINED 0
+#define EXPRESSION 1
+#define SUBSET 2
+
 int worker;                                // worker ID if worker, -1 if archive
 bool archive;                              // archive mode
 
 int ngenes;                                // number of genes
-int npoints;                               // number of data points
+int npoints;                               // number of expression data points
+int nsubset;                               // number of sequences in search subset
 int ncol;                                  // number of columns
 int order;                                 // order of background model
 vector<vector <float> > expr;              // the expression data
-
-string outfile;
+string outfile;                            // name of output file
 
 int read_motifs(SEModel& se);
 void output(SEModel& se);
