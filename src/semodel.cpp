@@ -156,7 +156,6 @@ void SEModel::seed_random_site() {
 		if(is_possible(g)) chosen_possible--;
 	}
 	chosen_seq = g;
-	cerr << "Chose sequence " << g << '\n';
 	
 	/* Now choose a site */
 	int width = motif.get_width();
