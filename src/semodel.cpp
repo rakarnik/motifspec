@@ -883,7 +883,7 @@ void SEModel::reset_possible() {
 					add_possible(i);
 	} else {
 		for(int i = 0; i < ngenes; i++)
-				possible[i] = 1;
+				add_possible(i);
 	}
 }
 
