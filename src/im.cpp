@@ -109,6 +109,7 @@ int main(int argc, char *argv[]) {
 			se.get_archive().read(archin);
 			cerr << "done.\n";
 		}
+		outfile.append(".");
 		while(true) {
 			int found = read_motifs(se);
 			if(found > 0) output(se);
@@ -126,7 +127,7 @@ int main(int argc, char *argv[]) {
 		string lockstr(outfile);
 		lockstr.append(".lock");
 		for(int j = 1; j <= nruns; j++) {
-			if(j % 300 == 0) {
+			if(j % 300 == 0 || search_type == SUBSET) {
 				struct flock fl;
 				int fd;
 				fl.l_type   = F_RDLCK;
@@ -174,6 +175,7 @@ int read_motifs(SEModel& se) {
 	unsigned int len = 0;
 	unsigned long pos = 0;
 	workdir = opendir(".");
+
 	while((dirp = readdir(workdir))) {
 		filename = string(dirp->d_name);
 		len = filename.length();
