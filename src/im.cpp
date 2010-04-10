@@ -109,7 +109,6 @@ int main(int argc, char *argv[]) {
 			se.get_archive().read(archin);
 			cerr << "done.\n";
 		}
-		outfile.append(".");
 		while(true) {
 			int found = read_motifs(se);
 			if(found > 0) output(se);
@@ -170,6 +169,8 @@ int read_motifs(SEModel& se) {
 	struct dirent* dirp;
 	string filename;
 	string extension;
+	string match(outfile);
+	match.append(".");
 	int nfound = 0;
 	int nmot = 0;
 	unsigned int len = 0;
@@ -184,7 +185,7 @@ int read_motifs(SEModel& se) {
 			extension = filename.substr(pos, len - pos);
 		else
 			extension = "";
-		if(filename.find(outfile) == 0 && extension.compare(".mot") == 0) {
+		if(filename.find(match) == 0 && extension.compare(".mot") == 0) {
 			cerr << "Reading from file " << filename << endl;
 			// check motif against archive, then move to "mots" directory
 			string newname("mots/");
