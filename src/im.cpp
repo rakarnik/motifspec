@@ -101,7 +101,8 @@ int main(int argc, char *argv[]) {
 	
 	if(archive) {
 		cerr << "Running in archive mode...\n";
-		string archinstr(outfile);
+		string archinstr(outfile
+		);
 		archinstr.append(".adj.ace");
 		ifstream archin(archinstr.c_str());
 		if(archin) {
