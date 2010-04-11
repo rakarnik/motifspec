@@ -50,8 +50,6 @@ class SEModel {
 	Motif select_sites;
   ArchiveSites archive;
 	int members;
-  int* freq_matrix;
-  double* score_matrix;
   
   /* Expression model */
 	vector<vector <float> >& expr;
@@ -76,7 +74,7 @@ class SEModel {
 	vector<double> expscores;
 	vector<struct idscore> expranks;
 
-	double score_site(const int c, const int p, const bool s);
+	double score_site(double* score_matrix, const int c, const int p, const bool s);
 	void set_cutoffs();
 	void set_seq_cutoff(const int phase);
 	void set_seq_cutoff_expr(const int phase);
@@ -124,7 +122,7 @@ class SEModel {
 	
 	/* Sequence model*/
 	Seqset& get_seqset() { return seqset; }                       // Return the set of sequences
-	void calc_matrix();                                           // Calculate the PWM for the current set of sites
+	void calc_matrix(double* score_matrix);                       // Calculate the PWM for the current set of sites
 	double matrix_score();                                        // Calculate the score for the current matrix
 	double entropy_score();																	      // Calculate the entropy score for the current matrix
 	double map_score();                                           // Calculate the MAP score
@@ -142,7 +140,7 @@ class SEModel {
 	void compute_seq_scores();
 	void compute_seq_scores_minimal();
 	void compute_expr_scores();
-	bool column_sample();
+	bool column_sample(const bool add, const bool remove);
 	void adjust_search_space();
   void expand_search_around_mean();
 	int search_for_motif(const int worker, const int iter, const string outfile);

@@ -6,6 +6,7 @@
 
 class Motif {
 	const Seqset& seqset;                    // set of sequences that this motif refers to
+	int init_nc;                             // initial number of columns in this motif
 	int width;															 // width of the motif (including non-informative columns)
   int npseudo;                             // pseudocount
   int num_seqs;                            // total number of sequences in this set

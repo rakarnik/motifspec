@@ -20,19 +20,12 @@ expscores(ngenes),
 expranks(ngenes) {
 	npossible = 0;
 	verbose = false;
-	
 	set_default_params();
-  
   sim_cutoff = sim_cut;
-  freq_matrix = new int[4 * motif.ncols()];
-  score_matrix = new double[4 * motif.ncols()];
-	
 	reset_possible();
 }
 
 SEModel::~SEModel(){
-	delete [] freq_matrix;
-  delete [] score_matrix;
 }
 
 void SEModel::set_default_params(){
@@ -174,11 +167,11 @@ void SEModel::seed_random_site() {
   }
 }
 
-void SEModel::calc_matrix() {
+void SEModel::calc_matrix(double* score_matrix) {
   motif.calc_score_matrix(score_matrix, separams.pseudo);
 }
 
-double SEModel::score_site(const int c, const int p, const bool s) {
+double SEModel::score_site(double* score_matrix, const int c, const int p, const bool s) {
 	const vector<vector<int> >& ss_seq = seqset.seq();
 	const vector<vector<float> >& wbgscores = bgmodel.get_wbgscores();
 	const vector<vector<float> >& cbgscores = bgmodel.get_cbgscores();
@@ -214,7 +207,8 @@ void SEModel::single_pass(const double seqcut, bool greedy) {
 	double ap = (separams.weight * possible_size()
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
-  calc_matrix();
+	double* score_matrix = new double[4 * motif.ncols()];
+  calc_matrix(score_matrix);
 	motif.remove_all_sites();
 	select_sites.remove_all_sites();
   //will only update once per pass
@@ -226,8 +220,8 @@ void SEModel::single_pass(const double seqcut, bool greedy) {
 	for(int g = 0; g < seqset.num_seqs(); g++){
 		if (! is_possible(g)) continue;
 		for(int j = 0; j < seqset.len_seq(g) - width; j++){
-			Lw = score_site(g, j, 1);
-      Lc = score_site(g, j, 0);
+			Lw = score_site(score_matrix, g, j, 1);
+      Lc = score_site(score_matrix, g, j, 0);
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
       Pc = Lc * ap/(1.0 - ap + Lc * ap);
       F = Pw + Pc - Pw * Pc;//probability of either
@@ -270,13 +264,15 @@ void SEModel::single_pass(const double seqcut, bool greedy) {
 			}
     }
   }
+	delete [] score_matrix;
 }
 
 void SEModel::single_pass_select(const double seqcut, bool greedy) {
 	double ap = (separams.weight * possible_size()
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
-  calc_matrix();
+  double* score_matrix = new double[4 * motif.ncols()];
+	calc_matrix(score_matrix);
 	motif.remove_all_sites();
 	
   double Lw, Lc, Pw, Pc, F;
@@ -289,8 +285,8 @@ void SEModel::single_pass_select(const double seqcut, bool greedy) {
 		j = select_sites.posit(i);
 		if (! is_possible(g)) continue;
 		if(j < 0 || j + width > seqset.len_seq(g)) continue;
-		Lw = score_site(g, j, 1);
-		Lc = score_site(g, j, 0);
+		Lw = score_site(score_matrix, g, j, 1);
+		Lc = score_site(score_matrix, g, j, 0);
 		Pw = Lw * ap/(1.0 - ap + Lw * ap);
 		Pc = Lc * ap/(1.0 - ap + Lc * ap);
 		F = Pw + Pc - Pw * Pc;//probability of either
@@ -330,13 +326,15 @@ void SEModel::single_pass_select(const double seqcut, bool greedy) {
 			}
 		}
   }
+	delete [] score_matrix;
 }
 
 void SEModel::compute_seq_scores() {
 	double ap = (separams.weight * possible_size()
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
-  calc_matrix();
+	double* score_matrix = new double[4 * motif.ncols()];
+  calc_matrix(score_matrix);
   double Lw, Lc, Pw, Pc, F, bestF;
 	seqranks.clear();
 	int width = motif.get_width();
@@ -346,8 +344,8 @@ void SEModel::compute_seq_scores() {
 		bestpos[g] = -1;
 		len = seqset.len_seq(g);
 		for(int j = 0; j < len - width; j++) {
-			Lw = score_site(g, j, 1);
-			Lc = score_site(g, j, 0);
+			Lw = score_site(score_matrix, g, j, 1);
+			Lc = score_site(score_matrix, g, j, 0);
       Pw = Lw * ap/(1.0 - ap + Lw * ap);
       Pc = Lc * ap/(1.0 - ap + Lc * ap);
       F = Pw + Pc - Pw * Pc;
@@ -362,6 +360,7 @@ void SEModel::compute_seq_scores() {
 		ids.score = bestF;
 		seqranks.push_back(ids);
   }
+	delete [] score_matrix;
 	sort(seqranks.begin(), seqranks.end(), isc);
 }
 
@@ -369,7 +368,8 @@ void SEModel::compute_seq_scores_minimal() {
 	double ap = (separams.weight * possible_size()
 							+ (1 - separams.weight) * motif.number())
 							/(2.0 * motif.positions_available(possible));
-  calc_matrix();
+	double* score_matrix = new double[4 * motif.ncols()];
+  calc_matrix(score_matrix);
 	int width = motif.get_width();
   double Lw, Lc, Pw, Pc, F;
 	seqranks.clear();
@@ -380,8 +380,8 @@ void SEModel::compute_seq_scores_minimal() {
 			bestpos[g] = -1;
 			F = 0;
 		} else {
-			Lw = score_site(g, bestpos[g], 1);
-			Lc = score_site(g, bestpos[g], 0);
+			Lw = score_site(score_matrix, g, bestpos[g], 1);
+			Lc = score_site(score_matrix, g, bestpos[g], 0);
 			Pw = Lw * ap/(1.0 - ap + Lw * ap);
 			Pc = Lc * ap/(1.0 - ap + Lc * ap);
 			F = Pw + Pc - Pw * Pc;
@@ -392,6 +392,7 @@ void SEModel::compute_seq_scores_minimal() {
 		ids.score = F;
 		seqranks.push_back(ids);
   }
+	delete [] score_matrix;
 	sort(seqranks.begin(), seqranks.end(), isc);
 	if(seqranks[0].score <= 0.85)
 		compute_seq_scores();
@@ -410,10 +411,9 @@ void SEModel::compute_expr_scores() {
 	sort(expranks.begin(), expranks.end(), isc);
 }
 
-bool SEModel::column_sample(){
-	int ncols_old = motif.ncols();
+bool SEModel::column_sample(const bool add, const bool remove){
 	bool changed = false;
-	int *freq = new int[4];
+	int freq[4];
 	int width = motif.get_width();
 	// Compute scores for current and surrounding columns
   int max_left, max_right;
@@ -470,19 +470,18 @@ bool SEModel::column_sample(){
 	
 	// Swap if best column outside set is better than worst column inside set
 	if(best_wt > worst_wt) {
-		motif.add_col(best_col);
-		select_sites.add_col(best_col);
-		if(best_col < 0)
-			worst_col -= best_col;
-		motif.remove_col(worst_col);
-		select_sites.remove_col(worst_col);
-		changed = true;
-	}
-	
-	if(motif.ncols() != ncols_old) {                 // number of columns should not change
-		cerr << "\t\t\t\t\tERROR: column sampling started with " << ncols_old 
-		             << ", ended with " << motif.ncols() << '\n';
-		abort();
+		if(add) {
+			motif.add_col(best_col);
+			select_sites.add_col(best_col);
+			if(best_col < 0)
+				worst_col -= best_col;
+			changed = true;
+		}
+		if(remove) {
+			motif.remove_col(worst_col);
+			select_sites.remove_col(worst_col);
+			changed = true;
+		}
 	}
 	
 	return changed;
@@ -490,6 +489,7 @@ bool SEModel::column_sample(){
 
 double SEModel::matrix_score() {
 	double ms = 0.0;
+	int* freq_matrix = new int[4 * motif.ncols()];
 	motif.calc_freq_matrix(freq_matrix);
   int nc = motif.ncols();
 	int w = motif.get_width();
@@ -500,6 +500,7 @@ double SEModel::matrix_score() {
       sc[j] += freq_matrix[i + j];
     }
   }
+	delete [] freq_matrix;
 	ms -= nc * gammaln((double) motif.number() + separams.npseudo);
 	for (int j = 0; j < 4; j++)
 		ms -= sc[j] * log(separams.backfreq[j]);
@@ -519,6 +520,7 @@ double SEModel::matrix_score() {
 
 double SEModel::entropy_score() {
 	double es = 0.0;
+	int* freq_matrix = new int[4 * motif.ncols()];
 	motif.calc_freq_matrix(freq_matrix);
 	int nc = motif.ncols();
 	double f;
@@ -638,6 +640,7 @@ int SEModel::search_for_motif(const int worker, const int iter, const string out
 	Motif best_motif = motif;
 
 	int i, i_worse = 0;
+	double r = 0.0;
 	phase = 1;
 	for(i = 1; i < 10000 && phase < 3; i++) {
 		adjust_search_space();
@@ -646,13 +649,18 @@ int SEModel::search_for_motif(const int worker, const int iter, const string out
 		else
 			single_pass(motif.get_seq_cutoff());
 		for(int j = 0; j < 3; j++)
-			if(! column_sample()) break;
+			if(! column_sample(true, true)) break;
 		compute_seq_scores_minimal();
 		compute_expr_scores();
 		motif.set_spec(spec_score());
 		motif.set_map(map_score());
 		print_status(cerr, i, phase);
-		column_sample();
+		r = ran_dbl.rnum();
+		if(r > 0.5) {
+			column_sample(true, false);
+		} else {
+			column_sample(false, true);
+		}
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting...\n";
 			return TOO_MANY_SITES;

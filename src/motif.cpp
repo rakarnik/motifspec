@@ -6,10 +6,11 @@ seqset(Seqset()) {
 
 Motif::Motif(const Seqset& s, int nc, int np) :
 seqset(s),
+init_nc(nc),
 npseudo(np),
 num_seqs(s.num_seqs()),
-max_width(3 * nc),
-columns(nc),
+max_width(3 * init_nc),
+columns(init_nc),
 num_seqs_with_sites(0),
 has_sites(num_seqs)
 {
@@ -65,6 +66,7 @@ Motif& Motif::operator= (const Motif& m) {
 
 void Motif::clear_sites() {
 	vector<Site>().swap(sitelist);
+	vector<int>(init_nc).swap(columns);
 	vector<int>::iterator col_iter = columns.begin();
 	for(; col_iter != columns.end(); ++col_iter) {
 		*col_iter = distance(columns.begin(), col_iter);
@@ -263,7 +265,10 @@ void Motif::orient() {
 		freq[i] /= number();
 	
   double flip = 1.5 * freq[2] + 1.0 * freq[0] - 1.0 * freq[3] - 1.5 * freq[1];
-  if(flip < 0.0) flip_sites();
+  if(flip < 0.0) {
+		cerr << "\t\t\t\tFlipping motif...\n";
+		flip_sites();
+	}
 	delete [] freq_matrix;
   delete [] freq;
 }
