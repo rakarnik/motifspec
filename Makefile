@@ -11,7 +11,7 @@
 #
 
 CC = /usr/bin/g++
-CC_OPTIONS = -O3 -Wall -Wextra
+CC_OPTIONS = -O3 -Wall -Wextra -DNDEBUG
 CC_DEBUG_OPTIONS = -O0 -g -pg -Wall -Wextra
 LNK_OPTIONS =
 LNK_DEBUG_OPTIONS = -pg
@@ -52,7 +52,7 @@ im : \
 		bin/seqset.o\
 		bin/site.o\
 		bin/standard.o\
-		-o im
+		-o bin/im
 
 im-debug : \
 		debug/archivesites.o\
@@ -76,10 +76,10 @@ im-debug : \
 		debug/seqset.o\
 		debug/site.o\
 		debug/standard.o\
-		-o im-debug
+		-o debug/im-debug
 
 clean : 
-	rm -f bin/*.o debug/*.o im im-debug
+	rm -f bin/*.o debug/*.o bin/im debug/im-debug
 
 bin/archivesites.o : src/archivesites.h src/archivesites.cpp
 	$(CC) $(CC_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o bin/archivesites.o
