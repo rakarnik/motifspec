@@ -177,7 +177,7 @@ double SEModel::score_site(double* score_matrix, const int c, const int p, const
 	const vector<vector<float> >& cbgscores = bgmodel.get_cbgscores();
 	double L = 0.0;
 	int width = motif.get_width();
-	int matpos, seq;
+	int matpos;
 	vector<int>::iterator col_iter = motif.first_column();
 	vector<int>::iterator last_col = motif.last_column();
 	if(s) {
@@ -194,7 +194,6 @@ double SEModel::score_site(double* score_matrix, const int c, const int p, const
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + width - 1 - *col_iter >= 0);
 			assert(p + width - 1 - *col_iter < seqset.len_seq(c));
-			seq = ss_seq[c][p + width - 1 - *col_iter];
 			L += score_matrix[matpos + 3 - ss_seq[c][p + width - 1 - *col_iter]];
 			L -= cbgscores[c][p + width - 1 - *col_iter];
 			matpos += 4;
