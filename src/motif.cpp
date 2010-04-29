@@ -258,7 +258,7 @@ void Motif::orient() {
 	
   calc_freq_matrix(freq_matrix);
   for(int i = 0; i < 4 * ncols(); i += 4) {
-    for(int j = 1; j < 4; j++)
+    for(int j = 0; j < 4; j++)
       freq[j] += freq_matrix[i + j];
   }
 	for(int i = 0; i < 4; i++)
@@ -362,7 +362,7 @@ string Motif::consensus() const {
 	vector<Site>::const_iterator siteit = sitelist.begin();
 	int c, p;
 	bool s;
-	for(; siteit != sitelist.end(); ++siteit){
+	for(; siteit != sitelist.end(); ++siteit) {
 		c = siteit->chrom();
     p = siteit->posit();
     s = siteit->strand();
