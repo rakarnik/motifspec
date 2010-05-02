@@ -54,9 +54,9 @@ void SEModel::set_final_params(){
   separams.nruns = motif.positions_available() / separams.expect / motif.ncols() / separams.undersample * separams.oversample;
 	separams.select = 5.0;
 	separams.minprob[0] = 0.01;
-	separams.minprob[1] = 0.01;
-	separams.minprob[2] = 0.2;
-	separams.minprob[3] = 0.6;
+	separams.minprob[1] = 0.05;
+	separams.minprob[2] = 0.3;
+	separams.minprob[3] = 0.8;
 }
 
 void SEModel::ace_initialize(){
