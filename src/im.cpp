@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 		string lockstr(outfile);
 		lockstr.append(".lock");
 		for(int j = 1; j <= nruns; j++) {
-			if(j % 300 == 0 || search_type == SUBSET) {
+			if(j % 50 == 0 || search_type == SUBSET) {
 				struct flock fl;
 				int fd;
 				fl.l_type   = F_RDLCK;
