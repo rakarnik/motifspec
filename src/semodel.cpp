@@ -6,9 +6,9 @@ ngenes(names.size()),
 possible(ngenes),
 seqset(seqs),
 bgmodel(seqset, order),
-motif(seqset, nc),
-select_sites(seqset, nc),
-archive(seqset, sim_cut),
+motif(seqset, nc, separams.pseudo),
+select_sites(seqset, nc, separams.pseudo),
+archive(seqset, sim_cut, separams.pseudo),
 expr(exprtab),
 npoints(npts),
 mean(npoints),
@@ -21,7 +21,6 @@ expranks(ngenes) {
 	npossible = 0;
 	verbose = false;
 	set_default_params();
-  sim_cutoff = sim_cut;
 	reset_possible();
 }
 
@@ -50,7 +49,7 @@ void SEModel::set_final_params(){
   for(int i = 0; i < 4; i++) {
 		separams.pseudo[i] = separams.npseudo * separams.backfreq[i];
   }
-  separams.maxlen = 3 * motif.get_width();
+	separams.maxlen = 3 * motif.get_width();
   separams.nruns = motif.positions_available() / separams.expect / motif.ncols() / separams.undersample * separams.oversample;
 	separams.select = 5.0;
 	separams.minprob[0] = 0.01;
@@ -172,34 +171,7 @@ void SEModel::calc_matrix(double* score_matrix) {
 }
 
 double SEModel::score_site(double* score_matrix, const int c, const int p, const bool s) {
-	const vector<vector<int> >& ss_seq = seqset.seq();
-	const vector<vector<float> >& wbgscores = bgmodel.get_wbgscores();
-	const vector<vector<float> >& cbgscores = bgmodel.get_cbgscores();
-	double L = 0.0;
-	int width = motif.get_width();
-	int matpos;
-	vector<int>::iterator col_iter = motif.first_column();
-	vector<int>::iterator last_col = motif.last_column();
-	if(s) {
-		matpos = 0;
-		for(; col_iter != last_col; ++col_iter) {
-			assert(p + *col_iter >= 0);
-			assert(p + *col_iter < seqset.len_seq(c));
-			L += score_matrix[matpos + ss_seq[c][p + *col_iter]];
-			L -= wbgscores[c][p + *col_iter];
-			matpos += 4;
-		}
-	} else {
-		matpos = 0;
-		for(; col_iter != last_col; ++col_iter) {
-			assert(p + width - 1 - *col_iter >= 0);
-			assert(p + width - 1 - *col_iter < seqset.len_seq(c));
-			L += score_matrix[matpos + 3 - ss_seq[c][p + width - 1 - *col_iter]];
-			L -= cbgscores[c][p + width - 1 - *col_iter];
-			matpos += 4;
-		}
-	}
-	return exp(L);
+	return exp(motif.score_site(score_matrix, c, p, s) - bgmodel.score_site(motif, c, p, s));
 }
 
 void SEModel::single_pass(const double seqcut, bool greedy) {
