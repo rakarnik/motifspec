@@ -13,7 +13,8 @@ model3(256),
 model4(1024),
 model5(4096),
 wbgscores(seqset.num_seqs()),
-cbgscores(seqset.num_seqs()) {
+cbgscores(seqset.num_seqs()),
+cumulscores(seqset.num_seqs()) {
 	const vector<vector <int> > ss_seq = seqset.seq();
 	int ss_num_seqs = seqset.num_seqs();
 	
@@ -51,6 +52,41 @@ cbgscores(seqset.num_seqs()) {
 	}
 	
 	(*this.*calc_bg_scores[order])();
+	
+	float last_cumul_score = 0.0;
+	for(int i = 0; i < ss_num_seqs; i++) {
+		len = seqset.len_seq(i);
+		cumulscores[i].push_back(last_cumul_score);
+		for(int j = 0; j < len; j++)
+			cumulscores[i].push_back(cumulscores[i][j-1] - wbgscores[i][j] - cbgscores[i][j]);
+		last_cumul_score = cumulscores[i][len - 1];
+	}
+}
+
+double BGModel::score_site(Motif& motif, const int c, const int p, const bool s) {
+	double L = 0.0;
+	int width = motif.get_width();
+	int matpos;
+	vector<int>::iterator col_iter = motif.first_column();
+	vector<int>::iterator last_col = motif.last_column();
+	if(s) {
+		matpos = 0;
+		for(; col_iter != last_col; ++col_iter) {
+			assert(p + *col_iter >= 0);
+			assert(p + *col_iter < seqset.len_seq(c));
+			L += wbgscores[c][p + *col_iter];
+			matpos += 4;
+		}
+	} else {
+		matpos = 0;
+		for(; col_iter != last_col; ++col_iter) {
+			assert(p + width - 1 - *col_iter >= 0);
+			assert(p + width - 1 - *col_iter < seqset.len_seq(c));
+			L += cbgscores[c][p + width - 1 - *col_iter];
+			matpos += 4;
+		}
+	}
+	return L;
 }
 
 void BGModel::train_background_5() {

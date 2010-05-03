@@ -3,6 +3,7 @@
 
 #include "standard.h"
 #include "seqset.h"
+#include "motif.h"
 
 class BGModel {
 	const Seqset& seqset;
@@ -18,16 +19,10 @@ class BGModel {
 	vector<float> model5;
 	vector<vector <float> > wbgscores;
 	vector<vector <float> > cbgscores;
+	vector<vector <float> > cumulscores;
 	void (BGModel::*train_background[6])();
 	void (BGModel::*calc_bg_scores[6])();
 
-public:
-	BGModel(const Seqset& s, const int ord = 3);
-	float tot_seq_len() const { return total_seq_len; }           // Return total length of all sequences
-	float gcgenome() const { return gc_genome; }                  // Return overall GC content
-	float gccontent(const int i) const { return gc[i]; }          // Return GC content of a specified sequence
-	vector<vector <float> > const& get_wbgscores() const { return wbgscores; }
-	vector<vector <float> > const& get_cbgscores() const { return cbgscores; }
 	void train_background_5();                                     // Train 5th order background model
 	void train_background_4();                                     // Train 4th order background model
 	void train_background_3();                                     // Train 3rd order background model
@@ -40,6 +35,14 @@ public:
 	void calc_bg_scores_2();                                       // Calculate scores using 2nd order background model
 	void calc_bg_scores_1();                                       // Calculate scores using 1st order background model
 	void calc_bg_scores_0();                                       // Calculate scores using 0th order background model
+
+public:
+	BGModel(const Seqset& s, const int ord = 3);
+	float tot_seq_len() const { return total_seq_len; }           // Return total length of all sequences
+	float gcgenome() const { return gc_genome; }                  // Return overall GC content
+	float gccontent(const int i) const { return gc[i]; }          // Return GC content of a specified sequence
+	double score_site(Motif& motif, const int c, const int p, const bool s);
+	vector<vector <float> > const& get_cumulscores() const { return cumulscores; }
 };
 
 
