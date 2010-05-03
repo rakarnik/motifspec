@@ -40,7 +40,6 @@ class SEModel {
 	
 	/* Sequence model */
 	SEParams separams;
-  double sim_cutoff;
   bool verbose;
   Random<int> ran_int;
   Random<double> ran_dbl;
