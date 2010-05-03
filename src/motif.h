@@ -7,8 +7,8 @@
 class Motif {
 	const Seqset& seqset;                    // set of sequences that this motif refers to
 	int init_nc;                             // initial number of columns in this motif
+	double* pseudo;                          // pseudocounts to use for score calculations
 	int width;															 // width of the motif (including non-informative columns)
-  int npseudo;                             // pseudocount
   int num_seqs;                            // total number of sequences in this set
   int max_width;                           // maximum width of this motif
   vector<Site> sitelist;                   // list of sites that comprise this motif
@@ -25,7 +25,7 @@ class Motif {
 
 public:
 	Motif();
-  Motif(const Seqset& v, int nc = 10, int np = 1);
+  Motif(const Seqset& v, int nc, double* p);
   Motif(const Motif& m);
 	Motif& operator= (const Motif& m);
   int number() const { return sitelist.size(); }
@@ -54,9 +54,11 @@ public:
   void add_site(const int c, const int p, const bool s);
   void clear_sites();
 	void remove_all_sites();
-  void calc_freq_matrix(int *fm);
+  void calc_freq_matrix(int *fm) const;
   void freq_matrix_extended(double *fm) const;
-	void calc_score_matrix(double *sm, double* pseudo);
+	void calc_score_matrix(double *sm, double* pseudo) const;
+	double score_site(double* score_matrix, const int c, const int p, const bool s) const;
+	double compare(const Motif& other);
   int column(const int i) const { return columns[i]; };
 	vector<int>::iterator first_column() { return columns.begin(); };
 	vector<int>::iterator last_column() { return columns.end(); };
