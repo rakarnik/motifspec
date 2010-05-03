@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 		string lockstr(outfile);
 		lockstr.append(".lock");
 		for(int j = 1; j <= nruns; j++) {
-			if(j % 50 == 0 || search_type == SUBSET) {
+			if(j == 1 || j % 50 == 0 || search_type == SUBSET) {
 				struct flock fl;
 				int fd;
 				fl.l_type   = F_RDLCK;
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
 					}
 					ifstream archin(archinstr.c_str());
 					if(archin) {
-						cerr << "\t\tRefreshing archive from " << archinstr << "... ";
+						cerr << "\t\tRefreshing archive from " << archinstr << "...";
 						se.get_archive().clear();
 						se.get_archive().read(archin);
 						archin.close();
