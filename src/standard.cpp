@@ -215,34 +215,31 @@ double  lnbico(int N, int k) {
 	return lnfact(N) - lnfact(k) - lnfact(N-k);
 }
 
-float corr(const vector<float>& expr1, const vector<float>& expr2, const int jindex) {
+float corr(const vector<float>& expr1, const vector<float>& expr2) {
 	int i;
-	float u1, u2;
-	float s1, s2;
-	float c;
-	u1 = u2 = s1 = s2 = c = 0.0;
-	int num = expr1.size();
-	for (i = 0; i < num; i++) {
-		if(i != jindex) {
-			u1 += expr1[i];
-			u2 += expr2[i];
-			s1 += expr1[i] * expr1[i];
-			s2 += expr2[i] * expr2[i];
-		}
+	float u1, u2, u11, u22, u12, s1, s2, c;
+	u1 = u2 = u11 = u22 = u12 = s1 = s2 = c = 0.0;
+	int n = expr1.size();
+	for (i = 0; i < n; i++) {
+		u1 += expr1[i];
+		u2 += expr2[i];
+		u11 += expr1[i] * expr1[i];
+		u22 += expr2[i] * expr2[i];
+		u12 += expr1[i] * expr2[i];
 	}
-	u1 /= num;
-	u2 /= num;
-	for (i = 0; i < num; i++) {
-		if(i != jindex)
-			c += (expr1[i] - u1) * (expr2[i] - u2);
+	u1 /= n;
+	u2 /= n;
+	u11 /= n;
+	u22 /= n;
+	u12 /= n;
+	if(u11 > u1 * u1) {
+		s1 = sqrt(u11 - u1 * u1);
 	}
-	s1 = s1/num - u1 * u1;
-	s2 = s2/num - u2 * u2;
+	if(u22 > u2 * u2) {
+		s2 = sqrt(u22 - u2 * u2);
+	}
 	if (s1 > 0 && s2 > 0) {
-		c /= sqrt(s1 * s2);
-		c /= num;
-	} else {
-		c = 0;
+		c = (u12 - u1 * u2)/(s1*s2);
 	}
 	return c;
 }
