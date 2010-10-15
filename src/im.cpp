@@ -230,6 +230,7 @@ void output(SEModel& se) {
 		sleep(10);
 	}
 	rename(tmpstr.c_str(), outstr.c_str());
+	cerr << "Archive output completed.\n";
 	fl.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &fl);
 	close(fd);
