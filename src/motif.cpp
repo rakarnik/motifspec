@@ -641,7 +641,7 @@ double Motif::compare(const Motif& other) {
 		mean_sc = 0.0;
 		j = 0;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
-			sc = -other.score_site(sm, c, i, s);
+			sc = -other.score_site(other_sm, c, i, s);
 			if(sc > max_sc) max_sc = sc;
 			mean_sc += sc;
 			j++;
@@ -650,6 +650,7 @@ double Motif::compare(const Motif& other) {
 		other_scores.push_back(max_sc);
 		other_means.push_back(mean_sc);
 	}
+
 	delete [] sm;
 	delete [] other_sm;
 	
