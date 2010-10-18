@@ -569,10 +569,13 @@ bool Motif::check_sites() {
 
 double Motif::compare(const Motif& other) {
 	vector<float> scores;
+	vector<float> means;
 	vector<float> other_scores;
-	int c, p, window_size = 10;
+	vector<float> other_means;
+	int c, p, window_size = 5;
 	bool s;
-	float sc, max_sc;
+	float sc, max_sc, mean_sc;
+	int j;
 	
 	// Set up score matrices
 	double* sm = new double[4 * ncols()];
@@ -586,20 +589,32 @@ double Motif::compare(const Motif& other) {
 		c = site_iter->chrom();
 		p = site_iter->posit();
 		s = site_iter->strand();
-		
-		max_sc = - INT_MAX;
+
+		max_sc = -INT_MAX;
+		mean_sc = 0.0;
+		j = 0;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
-			sc = score_site(sm, c, i, s);
+			sc = -score_site(sm, c, i, s);
 			if(sc > max_sc) max_sc = sc;
+			mean_sc += sc;
+			j++;
 		}
+		mean_sc /= j;
 		scores.push_back(max_sc);
+		means.push_back(mean_sc);
 		
-		max_sc = - INT_MAX;
+		max_sc = -INT_MAX;
+		mean_sc = 0.0;
+		j = 0;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
-			sc = other.score_site(other_sm, c, i, s);
+			sc = -other.score_site(other_sm, c, i, s);
 			if(sc > max_sc) max_sc = sc;
+			mean_sc += sc;
+			j++;
 		}
+		mean_sc /= j;
 		other_scores.push_back(max_sc);
+		other_means.push_back(mean_sc);
 	}
 	
 	// Score sites for the other motif with both PWMs
@@ -609,22 +624,34 @@ double Motif::compare(const Motif& other) {
 		p = other_site_iter->posit();
 		s = other_site_iter->strand();
 		
-		max_sc = - INT_MAX;
+		max_sc = -INT_MAX;
+		mean_sc = 0.0;
+		j = 0;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
-			sc = score_site(sm, c, i, s);
+			sc = -score_site(sm, c, i, s);
 			if(sc > max_sc) max_sc = sc;
+			mean_sc += sc;
+			j++;
 		}
+		mean_sc /= j;
 		scores.push_back(max_sc);
+		means.push_back(mean_sc);
 		
-		max_sc = - INT_MAX;
+		max_sc = -INT_MAX;
+		mean_sc = 0.0;
+		j = 0;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
-			sc = other.score_site(sm, c, i, s);
+			sc = -other.score_site(sm, c, i, s);
 			if(sc > max_sc) max_sc = sc;
+			mean_sc += sc;
+			j++;
 		}
+		mean_sc /= j;
 		other_scores.push_back(max_sc);
+		other_means.push_back(mean_sc);
 	}
 	delete [] sm;
 	delete [] other_sm;
 	
-	return corr(scores, other_scores);
+	return corr(means, other_means);
 }
