@@ -572,11 +572,12 @@ double Motif::compare(const Motif& other) {
 	vector<float> means;
 	vector<float> other_scores;
 	vector<float> other_means;
-	int c, p, window_size = 5;
+	int c, p, window_size;
+	int olap = 2; // overlap required between motifs
 	bool s;
 	float sc, max_sc, mean_sc;
 	int j;
-	
+
 	// Set up score matrices
 	double* sm = new double[4 * ncols()];
 	calc_score_matrix(sm, pseudo);
@@ -593,6 +594,7 @@ double Motif::compare(const Motif& other) {
 		max_sc = -INT_MAX;
 		mean_sc = 0.0;
 		j = 0;
+		window_size = other.width - olap;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
 			sc = -score_site(sm, c, i, s);
 			if(sc > max_sc) max_sc = sc;
@@ -606,6 +608,7 @@ double Motif::compare(const Motif& other) {
 		max_sc = -INT_MAX;
 		mean_sc = 0.0;
 		j = 0;
+		window_size = width - olap;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
 			sc = -other.score_site(other_sm, c, i, s);
 			if(sc > max_sc) max_sc = sc;
@@ -627,6 +630,7 @@ double Motif::compare(const Motif& other) {
 		max_sc = -INT_MAX;
 		mean_sc = 0.0;
 		j = 0;
+		window_size = other.width - olap;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
 			sc = -score_site(sm, c, i, s);
 			if(sc > max_sc) max_sc = sc;
@@ -640,6 +644,7 @@ double Motif::compare(const Motif& other) {
 		max_sc = -INT_MAX;
 		mean_sc = 0.0;
 		j = 0;
+		window_size = width - olap;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
 			sc = -other.score_site(other_sm, c, i, s);
 			if(sc > max_sc) max_sc = sc;
