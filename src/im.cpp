@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 		exit(0);
 	}
 	if(! GetArg2(argc, argv, "-o", outfile)) {
-		cerr << "Please specify sequence file\n\n";
+		cerr << "Please specify output file\n\n";
 		print_usage(cout);
 		exit(0);
 	}
