@@ -21,7 +21,7 @@ has_sites(num_seqs)
 	width = ((int) columns.back()) + 1;
 	seq_cutoff = 0.00001;
 	expr_cutoff = 0.70;
-	iter = 0;
+	iter = "0";
 	dejavu = 0;
 	spec = 0.0;
 }
@@ -532,7 +532,7 @@ void Motif::read(istream& motin) {
 	// Read iteration found
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
-	set_iter(atoi(strtok(NULL, "\0")));
+	set_iter(strtok(NULL, "\0"));
 	
 	// Read dejavu
 	motin.getline(line, 200);

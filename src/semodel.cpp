@@ -582,7 +582,9 @@ void SEModel::expand_search_around_mean() {
 int SEModel::search_for_motif(const int worker, const int iter, const string outfile) {
 	motif.clear_sites();
 	select_sites.clear_sites();
-	motif.set_iter(iter);
+	stringstream iterstr;
+	iterstr << worker << '.' << iter;
+	motif.set_iter(iterstr.str());
 	int phase = 0;
 	
 	reset_possible();

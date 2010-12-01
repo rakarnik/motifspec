@@ -18,7 +18,7 @@ class Motif {
   
 	double mapsc;
 	double spec;
-	int iter;
+	string iter;
 	int dejavu;
 	double seq_cutoff;
 	double expr_cutoff;
@@ -35,8 +35,8 @@ public:
   int posit(int i) const { return sitelist[i].posit(); }
   bool strand(int i) const { return sitelist[i].strand(); }
   int get_max_width() const { return max_width; }
-	int get_iter() const { return iter; }
-	void set_iter(const int it) { iter = it; }
+	string get_iter() const { return iter; }
+	void set_iter(const string it) { iter = it; }
 	int get_dejavu() { return dejavu; }
 	void set_dejavu(const int d) { dejavu = d; }
 	void inc_dejavu() { dejavu++; }
