@@ -659,5 +659,5 @@ double Motif::compare(const Motif& other) {
 	delete [] sm;
 	delete [] other_sm;
 	
-	return corr(means, other_means);
+	return corr(scores, other_scores);
 }
