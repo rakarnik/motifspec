@@ -247,7 +247,7 @@ float corr(const vector<float>& expr1, const vector<float>& expr2) {
 double	lnfact(int n)
 /* static variables are guaranteed to be initialized to zero */
 {
-	static double lnft[7000];
+	static double lnft[30000];
 
 	if (n <= 1) return 0.0;
 	if (n <= 50) return lnft[n] ? lnft[n] : (lnft[n] = gammaln(n + 1.0));
