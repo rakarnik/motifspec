@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 	
 	cerr << "Setting up SEModel... ";
 	if(! GetArg2(argc, argv, "-numcols", ncol)) ncol = 10;
-	if(! GetArg2(argc, argv, "-order", order)) order = 3;
+	if(! GetArg2(argc, argv, "-order", order)) order = 0;
 	SEModel se(seqs, expr, subset, nameset1, npoints, ncol, order);
 	se.modify_params(argc, argv);
 	se.set_final_params();
