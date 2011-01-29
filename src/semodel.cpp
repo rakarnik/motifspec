@@ -617,10 +617,10 @@ int SEModel::search_for_motif(const int worker, const int iter, const string out
 	phase = 1;
 	for(i = 1; i < 10000 && phase < 3; i++) {
 		adjust_search_space();
-		if(i_worse > 0)
-			single_pass_select(motif.get_seq_cutoff());
-		else
+		if(i_worse == 0)
 			single_pass(motif.get_seq_cutoff());
+		else
+			single_pass_select(motif.get_seq_cutoff());
 		for(int j = 0; j < 3; j++)
 			if(! column_sample(true, true)) break;
 		compute_seq_scores_minimal();
