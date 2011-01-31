@@ -595,6 +595,7 @@ int SEModel::search_for_motif(const int worker, const int iter, const string out
 	}
 	
 	motif.set_expr_cutoff(0.8);
+	adjust_search_space();
 	while(possible_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
 		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
 		adjust_search_space();
