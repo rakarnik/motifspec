@@ -92,7 +92,7 @@ class SEModel {
 	/* General */
 	SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& sub,
 	        const vector<string>& names, const int npts, const int nc = 10, const int order = 3,
-					const double sim_cut = 0.6);
+					const double sim_cut = 0.5);
   ~SEModel();
 	void modify_params(int argc, char *argv[]);
   double get_best_motif(int i=0);
