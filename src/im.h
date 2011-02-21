@@ -18,6 +18,7 @@ int npoints;                               // number of expression data points
 int nsubset;                               // number of sequences in search subset
 int ncol;                                  // number of columns
 int order;                                 // order of background model
+double simcut;                             // similarity cutoff for motifs
 vector<vector <float> > expr;              // the expression data
 string outfile;                            // name of output file
 

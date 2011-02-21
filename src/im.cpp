@@ -93,7 +93,8 @@ int main(int argc, char *argv[]) {
 	cerr << "Setting up SEModel... ";
 	if(! GetArg2(argc, argv, "-numcols", ncol)) ncol = 10;
 	if(! GetArg2(argc, argv, "-order", order)) order = 0;
-	SEModel se(seqs, expr, subset, nameset1, npoints, ncol, order);
+	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.6;
+	SEModel se(seqs, expr, subset, nameset1, npoints, ncol, order, simcut);
 	se.modify_params(argc, argv);
 	se.set_final_params();
 	se.ace_initialize();
@@ -264,6 +265,7 @@ void print_usage(ostream& fout) {
   fout << "Options:\n";
 	fout << " -numcols    \tnumber of columns to align (10)\n";
 	fout << " -order      \torder of the background model (3, can be 0 to 5)\n";
+	fout << " -simcut     \tsimilarity cutoff for motifs (0.6)\n"; 
   fout << " -expect     \tnumber of sites expected in model (10)\n";
   fout << " -minpass    \tminimum number of non-improved passes in phase 1 (200)\n";
   fout << " -seed       \tset seed for random number generator (time)\n";
