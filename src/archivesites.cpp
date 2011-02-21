@@ -41,16 +41,19 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 
 	// There are no better motifs similar to this one, so we add
 	// Step 1: Delete similar motifs with lower scores
+	int delcount = 0;
 	while(iter != archive.end()) {
 		assert(m.get_spec() > iter->get_spec());
 		cmp = iter->compare(m);
 		if(cmp > arch_sim_cutoff) {
 			iter = archive.erase(iter);
+			delcount++;
 		} else {
 			++iter;
 		}
 		motnum++;
 	}
+	cerr << delcount << " similar motifs were deleted\n";
 
 	
 	// Step 2: Add the new motif at the correct position by score
