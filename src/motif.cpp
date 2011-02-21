@@ -591,12 +591,12 @@ double Motif::compare(const Motif& other) {
 		p = site_iter->posit();
 		s = site_iter->strand();
 
-		max_sc = -INT_MAX;
+		max_sc = -DBL_MAX;
 		mean_sc = 0.0;
 		j = 0;
-		window_size = other.width - olap;
+		window_size = width - olap;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
-			sc = -score_site(sm, c, i, s);
+			sc = score_site(sm, c, i, s)/ncols();
 			if(sc > max_sc) max_sc = sc;
 			mean_sc += sc;
 			j++;
@@ -605,12 +605,12 @@ double Motif::compare(const Motif& other) {
 		scores.push_back(max_sc);
 		means.push_back(mean_sc);
 		
-		max_sc = -INT_MAX;
+		max_sc = -DBL_MAX;
 		mean_sc = 0.0;
 		j = 0;
-		window_size = width - olap;
+		window_size = other.width - olap;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
-			sc = -other.score_site(other_sm, c, i, s);
+			sc = other.score_site(other_sm, c, i, s)/other.ncols();
 			if(sc > max_sc) max_sc = sc;
 			mean_sc += sc;
 			j++;
@@ -627,12 +627,12 @@ double Motif::compare(const Motif& other) {
 		p = other_site_iter->posit();
 		s = other_site_iter->strand();
 		
-		max_sc = -INT_MAX;
+		max_sc = -DBL_MAX;
 		mean_sc = 0.0;
 		j = 0;
-		window_size = other.width - olap;
+		window_size = width - olap;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
-			sc = -score_site(sm, c, i, s);
+			sc = score_site(sm, c, i, s)/ncols();
 			if(sc > max_sc) max_sc = sc;
 			mean_sc += sc;
 			j++;
@@ -641,12 +641,12 @@ double Motif::compare(const Motif& other) {
 		scores.push_back(max_sc);
 		means.push_back(mean_sc);
 		
-		max_sc = -INT_MAX;
+		max_sc = -DBL_MAX;
 		mean_sc = 0.0;
 		j = 0;
-		window_size = width - olap;
+		window_size = other.width - olap;
 		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
-			sc = -other.score_site(other_sm, c, i, s);
+			sc = other.score_site(other_sm, c, i, s)/other.ncols();
 			if(sc > max_sc) max_sc = sc;
 			mean_sc += sc;
 			j++;
@@ -655,7 +655,7 @@ double Motif::compare(const Motif& other) {
 		other_scores.push_back(max_sc);
 		other_means.push_back(mean_sc);
 	}
-
+	
 	delete [] sm;
 	delete [] other_sm;
 	
