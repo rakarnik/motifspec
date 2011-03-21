@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 		print_usage(cout);
 		exit(0);
 	}
-	
+
 	// Decide mode of running
 	archive = false;
 	if(! GetArg2(argc, argv, "-worker", worker)) {
@@ -57,10 +57,16 @@ int main(int argc, char *argv[]) {
 		get_expr(exprfile.c_str(), expr, nameset2);
 		cerr << "done.\n";
 		npoints = expr[0].size();
+		nsubset = 0;
 	} else if(search_type == SUBSET) {
 		cerr << "Reading subset of sequences to search from '" << subsetfile << "... ";
 		get_list(subsetfile.c_str(), subset);
 		cerr << "done.\n";
+		npoints = 0;
+		for(int i = 0; i < ngenes; i++) {
+			vector<float> row(0);
+			expr.push_back(row);
+		}
 		nsubset = subset.size();
 		sort(subset.begin(), subset.end());
 	}
@@ -93,7 +99,7 @@ int main(int argc, char *argv[]) {
 	cerr << "Setting up SEModel... ";
 	if(! GetArg2(argc, argv, "-numcols", ncol)) ncol = 10;
 	if(! GetArg2(argc, argv, "-order", order)) order = 0;
-	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.5;
+	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.8;
 	SEModel se(seqs, expr, subset, nameset1, npoints, ncol, order, simcut);
 	se.modify_params(argc, argv);
 	se.set_final_params();
