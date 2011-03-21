@@ -568,96 +568,38 @@ bool Motif::check_sites() {
 }
 
 double Motif::compare(const Motif& other) {
-	vector<float> scores;
-	vector<float> means;
-	vector<float> other_scores;
-	vector<float> other_means;
-	int c, p, window_size;
-	int olap = 2; // overlap required between motifs
-	bool s;
-	float sc, max_sc, mean_sc;
-	int j;
+	int cols = 6;
 
-	// Set up score matrices
-	double* sm = new double[4 * ncols()];
-	calc_score_matrix(sm, pseudo);
-	double* other_sm = new double[4 * other.ncols()];
-	other.calc_score_matrix(other_sm, pseudo);
-
-	// Score sites for this motif with both PWMs
-	vector<Site>::iterator site_iter = sitelist.begin();
-	for(; site_iter != sitelist.end(); ++site_iter) {
-		c = site_iter->chrom();
-		p = site_iter->posit();
-		s = site_iter->strand();
-
-		max_sc = -DBL_MAX;
-		mean_sc = 0.0;
-		j = 0;
-		window_size = width - olap;
-		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
-			sc = score_site(sm, c, i, s)/ncols();
-			if(sc > max_sc) max_sc = sc;
-			mean_sc += sc;
-			j++;
-		}
-		mean_sc /= j;
-		scores.push_back(max_sc);
-		means.push_back(mean_sc);
-		
-		max_sc = -DBL_MAX;
-		mean_sc = 0.0;
-		j = 0;
-		window_size = other.width - olap;
-		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
-			sc = other.score_site(other_sm, c, i, s)/other.ncols();
-			if(sc > max_sc) max_sc = sc;
-			mean_sc += sc;
-			j++;
-		}
-		mean_sc /= j;
-		other_scores.push_back(max_sc);
-		other_means.push_back(mean_sc);
+	int* fm = new int[4 * ncols()];
+	calc_freq_matrix(fm);
+	vector<float> fmf(4 * ncols());
+	int tot = number();
+	for(int i = 0; i < 4 * ncols(); i++) {
+		fmf[i] = (float) fm[i]/tot;
 	}
-	
-	// Score sites for the other motif with both PWMs
-	vector<Site>::const_iterator other_site_iter = other.sitelist.begin();
-	for(; other_site_iter != other.sitelist.end(); ++other_site_iter) {
-		c = other_site_iter->chrom();
-		p = other_site_iter->posit();
-		s = other_site_iter->strand();
-		
-		max_sc = -DBL_MAX;
-		mean_sc = 0.0;
-		j = 0;
-		window_size = width - olap;
-		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
-			sc = score_site(sm, c, i, s)/ncols();
-			if(sc > max_sc) max_sc = sc;
-			mean_sc += sc;
-			j++;
-		}
-		mean_sc /= j;
-		scores.push_back(max_sc);
-		means.push_back(mean_sc);
-		
-		max_sc = -DBL_MAX;
-		mean_sc = 0.0;
-		j = 0;
-		window_size = other.width - olap;
-		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
-			sc = other.score_site(other_sm, c, i, s)/other.ncols();
-			if(sc > max_sc) max_sc = sc;
-			mean_sc += sc;
-			j++;
-		}
-		mean_sc /= j;
-		other_scores.push_back(max_sc);
-		other_means.push_back(mean_sc);
+	delete [] fm;
+
+	int* other_fm = new int[4 * other.ncols()];
+	other.calc_freq_matrix(other_fm);
+	vector<float> other_fmf(4 * other.ncols());
+	int other_tot = other.number();
+	for(int i = 0; i < 4 * other.ncols(); i++) {
+		other_fmf[i] = (float) other_fm[i]/other_tot;
 	}
+	delete [] other_fm;
 	
-	delete [] sm;
-	delete [] other_sm;
-	
-	return corr(scores, other_scores);
+	double bestc = -1.1;
+	double c = 0.0;
+	for(int i = cols; i < min(ncols(), other.ncols()); i++) {
+		for(int j = 0; j < 4 * (ncols() - i); j += 4) {
+			for(int k = 0; k < 4 * (other.ncols() - i); k += 4) {
+				c = corr(fmf, other_fmf, j, k, 4 * i);
+				if(c > bestc) {
+					bestc = c;
+				}
+			}
+		}
+	}
+
+	return bestc;
 }

@@ -15,6 +15,8 @@ class Motif {
   vector<int> columns;                     // columns in this motif
 	int num_seqs_with_sites;                 // number of sequences with sites
 	vector<int> has_sites;                   // number of sites in each sequence
+	int above_seqc;													 // number of sequences above sequence threshold
+	int possible;                            // number of sequences above expression threshold
   
 	double mapsc;
 	double spec;
@@ -51,6 +53,12 @@ public:
 	bool is_open_site(const int c, const int p);
 	int seqs_with_sites() const { return num_seqs_with_sites; }
 	bool seq_has_site(const int c) const { return (has_sites[c] != 0); }
+	void set_above_seqc(const int sc) { above_seqc = sc; }
+	int get_above_seqc() const { return above_seqc; }
+	void set_possible(const int p) { possible = p; }
+	void inc_possible() { possible++; }
+	void dec_possible() { possible--; }
+	int get_possible() const { return possible; }
   void add_site(const int c, const int p, const bool s);
   void clear_sites();
 	void remove_all_sites();
