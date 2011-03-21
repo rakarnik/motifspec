@@ -18,7 +18,7 @@ class ArchiveSites{
   ArchiveSites(Seqset& seq, double sim_cut, double* pseudo);
 	int nmots() const { return archive.size(); }
   bool check_motif(const Motif& m);               // Returns true if no better motif, false otherwise
-  bool consider_motif(const Motif& m);            // Returns true if motif was added, false otherwise
+  bool consider_motif(const Motif& m);									// Returns true if motif was added, false otherwise
   Motif* return_best(const int i=0);
 	void clear();
 	void read(istream& archin);

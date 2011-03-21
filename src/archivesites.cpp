@@ -32,21 +32,25 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	vector<Motif>::iterator iter = archive.begin();
 	for(; iter != archive.end() && m.get_spec() <= iter->get_spec(); ++iter) {
 		cmp = iter->compare(m);
+		// cerr << "Comparing with motif " << motnum << ", score was " << cmp << "\n";
 		if(cmp > arch_sim_cutoff) {
 			iter->inc_dejavu();
 			return false;
 		}
 		motnum++;
 	}
+	
+	Motif m1(m);
 
 	// There are no better motifs similar to this one, so we add
 	// Step 1: Delete similar motifs with lower scores
 	int delcount = 0;
 	while(iter != archive.end()) {
 		assert(m.get_spec() > iter->get_spec());
-		cmp = iter->compare(m);
+		cmp = iter->compare(m1);
 		if(cmp > arch_sim_cutoff) {
-			iter = archive.erase(iter);
+	 		iter = archive.erase(iter);
+			m1.inc_dejavu();
 			delcount++;
 		} else {
 			++iter;
@@ -58,8 +62,8 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	
 	// Step 2: Add the new motif at the correct position by score
 	for(iter = archive.begin(); iter != archive.end(); ++iter)
-		if(iter->get_spec() < m.get_spec()) break;
-	archive.insert(iter, m);
+		if(iter->get_spec() < m1.get_spec()) break;
+	archive.insert(iter, m1);
 	return true;
 }
 
