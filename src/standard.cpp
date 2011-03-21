@@ -216,22 +216,28 @@ double  lnbico(int N, int k) {
 }
 
 float corr(const vector<float>& expr1, const vector<float>& expr2) {
-	int i;
+	return corr(expr1, expr2, 0, 0, min(expr1.size(), expr2.size()));
+}
+
+float corr(const vector<float>& expr1, const vector<float>& expr2, const unsigned int start1, const unsigned int start2, const unsigned int length) {
+	if(length == 0) return 0.0;
 	float u1, u2, u11, u22, u12, s1, s2, c;
 	u1 = u2 = u11 = u22 = u12 = s1 = s2 = c = 0.0;
-	int n = expr1.size();
-	for (i = 0; i < n; i++) {
+	assert(start1 + length - 1 <= expr1.size());
+	assert(start2 + length - 2 <= expr2.size());
+	unsigned int i, j;
+	for (i = start1, j = start2; i < start1 + length && j < start2 + length; i++, j++) {
 		u1 += expr1[i];
-		u2 += expr2[i];
+		u2 += expr2[j];
 		u11 += expr1[i] * expr1[i];
-		u22 += expr2[i] * expr2[i];
-		u12 += expr1[i] * expr2[i];
+		u22 += expr2[j] * expr2[j];
+		u12 += expr1[i] * expr2[j];
 	}
-	u1 /= n;
-	u2 /= n;
-	u11 /= n;
-	u22 /= n;
-	u12 /= n;
+	u1 /= length;
+	u2 /= length;
+	u11 /= length;
+	u22 /= length;
+	u12 /= length;
 	if(u11 > u1 * u1) {
 		s1 = sqrt(u11 - u1 * u1);
 	}

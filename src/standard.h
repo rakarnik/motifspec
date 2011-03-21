@@ -53,6 +53,7 @@ double lnfact(int n);
 double bico(int N, int k);
 double lnbico(int N, int k);
 float corr(const vector<float>& expr1, const vector<float>& expr2);
+float corr(const vector<float>& expr1, const vector<float>& expr2, const unsigned int start1, const unsigned int start2, const unsigned int length);
 double find_cutoff(double sum, double sumsq, int num, int num_sdevs_below);
 int number_motifs(const char* file);
 int number_lines_beg(const char* file, string k);
