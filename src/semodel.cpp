@@ -18,7 +18,6 @@ bestpos(ngenes),
 seqranks(ngenes),
 expscores(ngenes),
 expranks(ngenes) {
-	npossible = 0;
 	verbose = false;
 	set_default_params();
 	reset_possible();
@@ -52,10 +51,10 @@ void SEModel::set_final_params(){
 	separams.maxlen = 3 * motif.get_width();
   separams.nruns = motif.positions_available() / separams.expect / motif.ncols() / separams.undersample * separams.oversample;
 	separams.select = 5.0;
-	separams.minprob[0] = 0.0001;
-	separams.minprob[1] = 0.005;
+	separams.minprob[0] = 0.000001;
+	separams.minprob[1] = 0.001;
 	separams.minprob[2] = 0.01;
-	separams.minprob[3] = 0.5;
+	separams.minprob[3] = 0.1;
 }
 
 void SEModel::ace_initialize(){
@@ -69,14 +68,14 @@ void SEModel::ace_initialize(){
 void SEModel::add_possible(const int gene) {
 	if (! possible[gene]) {
 		possible[gene] = true;
-		npossible++;
+		motif.inc_possible();
 	}
 }
 
 void SEModel::remove_possible(const int gene) {
 	if (possible[gene]) {
 		possible[gene] = false;
-		npossible--;
+		motif.dec_possible();
 	}
 }
 
@@ -84,7 +83,7 @@ void SEModel::clear_all_possible() {
 	for(int g = 0; g < ngenes; g++) {
 		possible[g] = false;
 	}
-	npossible = 0;
+	motif.set_possible(0);
 }
 
 bool SEModel::is_possible(const int gene) const {
@@ -92,7 +91,7 @@ bool SEModel::is_possible(const int gene) const {
 }
 
 int SEModel::possible_size() const {
-	return npossible;
+	return motif.get_possible();
 }
 
 int SEModel::total_positions() const {
@@ -131,7 +130,7 @@ void SEModel::genes(int* genes) const {
 }
 
 void SEModel::seed_random_site() {
-	assert(npossible > 0);
+	assert(motif.get_possible() > 0);
 	
 	motif.clear_sites();
 	int chosen_possible, chosen_seq, chosen_posit;
@@ -458,6 +457,12 @@ bool SEModel::column_sample(const bool add, const bool remove){
 	return changed;
 }
 
+double SEModel::score() {
+	double w = 0.5;
+	double sc = spec_score() * w + matrix_score() * (1 - w);
+	return sc;
+}
+
 double SEModel::matrix_score() {
 	double ms = 0.0;
 	int* freq_matrix = new int[4 * motif.ncols()];
@@ -489,34 +494,16 @@ double SEModel::matrix_score() {
 	return ms;
 }
 
-double SEModel::entropy_score() {
-	double es = 0.0;
-	int* freq_matrix = new int[4 * motif.ncols()];
-	motif.calc_freq_matrix(freq_matrix);
-	int nc = motif.ncols();
-	double f;
-	for(int i = 0; i < 4 * nc; i += 4) {
-    for(int j = 1; j <= 4; j++) {
-			f = (double) freq_matrix[i + j] + separams.pseudo[j];
-			es += f * log(1/f);
-    }
-  }
-	// Normalize for number of columns
-	es /= nc;
-	return es;
-}
-
-double SEModel::map_score() {
-  double ms = 0.0;
+double SEModel::over_score() {
+  double os = 0.0;
   double map_N = motif.positions_available(possible);  
   double w = separams.weight/(1.0-separams.weight);
   double map_alpha = (double) separams.expect * w;
   double map_beta = map_N * w - map_alpha;
   double map_success = (double)motif.number();
-  ms += ( gammaln(map_success+map_alpha)+gammaln(map_N-map_success+map_beta) );
-  ms -= ( gammaln(map_alpha)+gammaln(map_N + map_beta) );
-	ms += matrix_score();
-	return ms;
+  os += ( gammaln(map_success+map_alpha)+gammaln(map_N-map_success+map_beta) );
+  os -= ( gammaln(map_alpha)+gammaln(map_N + map_beta) );
+	return os;
 }
 
 double SEModel::spec_score() {
@@ -527,8 +514,9 @@ double SEModel::spec_score() {
 		if(seqscores[g] >= motif.get_seq_cutoff() && is_possible(g)) isect++;
 	}
 	
-	double spec = prob_overlap(npossible, seqn, isect, ngenes);
-	spec = (spec > 0.99)? 0 : -log10(spec);
+	motif.set_above_seqc(seqn);
+	double spec = prob_overlap(motif.get_possible(), seqn, isect, ngenes);
+	spec = (spec > 0.99)? 0 : -log2(spec);
 	return spec;
 }
 
@@ -608,8 +596,7 @@ int SEModel::search_for_motif(const int worker, const int iter, const string out
 	compute_seq_scores();
 	compute_expr_scores();
 	set_seq_cutoff(phase);
-	motif.set_map(map_score());
-	motif.set_spec(spec_score());
+	motif.set_score(score());
 	print_status(cerr, 0, phase);
 	Motif best_motif = motif;
 
@@ -626,8 +613,7 @@ int SEModel::search_for_motif(const int worker, const int iter, const string out
 			if(! column_sample(true, true)) break;
 		compute_seq_scores_minimal();
 		compute_expr_scores();
-		motif.set_spec(spec_score());
-		motif.set_map(map_score());
+		motif.set_score(score());
 		print_status(cerr, i, phase);
 		r = ran_dbl.rnum();
 		if(r > 0.5) {
@@ -653,7 +639,7 @@ int SEModel::search_for_motif(const int worker, const int iter, const string out
 			i_worse = 0;
 			continue;
 		}
-		if(motif.get_spec() > best_motif.get_spec()) {
+		if(motif.get_score() > best_motif.get_score()) {
 			if(! archive.check_motif(motif)) {
 				cerr << "\t\t\tToo similar! Restarting...\n";
 				return TOO_SIMILAR;
@@ -688,8 +674,7 @@ int SEModel::search_for_motif(const int worker, const int iter, const string out
 	motif.orient();
 	compute_seq_scores();
 	compute_expr_scores();
-	motif.set_spec(spec_score());
-	motif.set_map(map_score());
+	motif.set_score(score());
 	print_status(cerr, i, phase);
 	
 	if(size() < separams.minsize) {
@@ -727,24 +712,23 @@ bool SEModel::consider_motif(const char* filename) {
 }
 
 void SEModel::print_status(ostream& out, const int i, const int phase) {
-	out << "\t\t\t"; 
 	out << setw(5) << i;
 	out << setw(3) << phase;
 	int prec = cerr.precision(2);
 	out << setw(5) << setprecision(2) << motif.get_expr_cutoff();
 	out << setw(10) << setprecision(4) << motif.get_seq_cutoff();
 	cerr.precision(prec);
-	out << setw(5) << motif_size();
-	out << setw(5) << size();
-	out << setw(5) << possible_size();
+	out << setw(5) << motif.seqs_with_sites();
+	out << setw(5) << motif.get_above_seqc();
+	out << setw(5) << motif.get_possible();
 	if(size() > 0) {
 		out << setw(40) << motif.consensus();
-		out << setw(15) << motif.get_spec();
-		out << setw(15) << motif.get_map();
+		out << setw(15) << matrix_score();
+		out << setw(15) << spec_score();
+		out << setw(15) << over_score();
+		out << setw(15) << score();
 	} else {
-		out << setw(40) << "-----------";
-		out << setw(15) << "---";
-		out << setw(15) << "---";
+		out << setw(60) << "---------------------------------------";
 	}
 	out << '\n';
 }
@@ -753,7 +737,7 @@ void SEModel::full_output(ostream &fout){
   Motif* s;
 	for(int j = 0; j < archive.nmots(); j++){
     s = archive.return_best(j);
-    if(s->get_spec() > 1){
+    if(s->get_score() > 1){
 			fout << "Motif " << j + 1 << '\n';
 			s->write(fout);
 		}
@@ -810,9 +794,9 @@ void SEModel::set_seq_cutoff_subset(const int phase) {
 	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
 	for(seqcut = sr_iter->score; sr_iter->score >= separams.minprob[phase] && sr_iter != seqranks.end(); ++sr_iter) {
 		if(seqcut > sr_iter->score) {
-			assert(isect <= npossible);
+			assert(isect <= motif.get_possible());
 			assert(isect <= seqn);
-			po = prob_overlap(npossible, seqn, isect, ngenes);
+			po = prob_overlap(motif.get_possible(), seqn, isect, ngenes);
 			// cerr << "\t\t\t" << motif.get_expr_cutoff() << '\t' << seqcut << '\t' << expn << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
 			if(po < best_po) {
 				best_seqcut = seqcut;

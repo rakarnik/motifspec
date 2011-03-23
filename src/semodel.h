@@ -36,7 +36,6 @@ class SEModel {
 	vector<string> nameset;
 	int ngenes;
 	vector<bool> possible;
-	int npossible;
 	
 	/* Sequence model */
 	SEParams separams;
@@ -122,9 +121,9 @@ class SEModel {
 	/* Sequence model*/
 	Seqset& get_seqset() { return seqset; }                       // Return the set of sequences
 	void calc_matrix(double* score_matrix);                       // Calculate the PWM for the current set of sites
-	double matrix_score();                                        // Calculate the score for the current matrix
-	double entropy_score();																	      // Calculate the entropy score for the current matrix
-	double map_score();                                           // Calculate the MAP score
+	double score();                                               // Calculate the score of the current model
+	double matrix_score();                                        // Calculate the entropy score for the current matrix
+	double over_score();                                          // Calculate the overrepresentation score
 	double spec_score();                                          // Calculate the specificity score
 	
 	/* Expression model */

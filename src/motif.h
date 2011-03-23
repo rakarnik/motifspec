@@ -15,15 +15,14 @@ class Motif {
   vector<int> columns;                     // columns in this motif
 	int num_seqs_with_sites;                 // number of sequences with sites
 	vector<int> has_sites;                   // number of sites in each sequence
+	
+	double score;                            // score of this motif
 	int above_seqc;													 // number of sequences above sequence threshold
 	int possible;                            // number of sequences above expression threshold
-  
-	double mapsc;
-	double spec;
-	string iter;
-	int dejavu;
-	double seq_cutoff;
-	double expr_cutoff;
+	double seq_cutoff;                       // sequence cutoff for this motif
+	double expr_cutoff;                      // expression cutoff for this motif
+	string iter;                             // iteration in which this motif was found
+	int dejavu;                              // number of times this motif was seen
 
 public:
 	Motif();
@@ -46,10 +45,8 @@ public:
 	void set_seq_cutoff(const double cutoff) { seq_cutoff = cutoff; }
 	double get_expr_cutoff() const { return expr_cutoff; }
 	void set_expr_cutoff(const double cutoff) { expr_cutoff = cutoff; }
-	double get_map() const { return mapsc; }
-	void set_map(const double sc) { mapsc = sc; }
-  double get_spec() const { return spec; }
-	void set_spec(const double s) { spec = s; }
+	double get_score() const { return score; }
+	void set_score(const double sc) { score = sc; }
 	bool is_open_site(const int c, const int p);
 	int seqs_with_sites() const { return num_seqs_with_sites; }
 	bool seq_has_site(const int c) const { return (has_sites[c] != 0); }
