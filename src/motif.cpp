@@ -12,17 +12,17 @@ num_seqs(s.num_seqs()),
 max_width(3 * init_nc),
 columns(init_nc),
 num_seqs_with_sites(0),
-has_sites(num_seqs)
+has_sites(num_seqs),
+seq_cutoff(0.00001),
+expr_cutoff(0.70),
+dejavu(0)
 {
 	vector<int>::iterator col_iter = columns.begin();
 	for(; col_iter != columns.end(); ++col_iter) {
 		*col_iter = distance(columns.begin(), col_iter);
 	}
 	width = ((int) columns.back()) + 1;
-	seq_cutoff = 0.00001;
-	expr_cutoff = 0.70;
 	iter = "0";
-	dejavu = 0;
 }
 
 Motif::Motif(const Motif& m) :
@@ -38,10 +38,10 @@ has_sites(m.has_sites),
 score(m.score),
 above_seqc(m.above_seqc),
 possible(m.possible),
-iter(m.iter),
-dejavu(m.dejavu),
 seq_cutoff(m.seq_cutoff),
-expr_cutoff(m.expr_cutoff)
+expr_cutoff(m.expr_cutoff),
+iter(m.iter),
+dejavu(m.dejavu)
 {
   *this = m;
 }
@@ -519,12 +519,12 @@ void Motif::read(istream& motin) {
 	// Read number of sequences above sequence threshold
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
-	set_above_seqc(atof(strtok(NULL, "\0")));
+	set_above_seqc(atoi(strtok(NULL, "\0")));
 	
 	// Read number of sequences above expression threshold
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
-	set_possible(atof(strtok(NULL, "\0")));
+	set_possible(atoi(strtok(NULL, "\0")));
 	
 	// Read sequence cutoff
 	motin.getline(line, 200);
