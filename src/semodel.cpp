@@ -458,7 +458,7 @@ bool SEModel::column_sample(const bool add, const bool remove){
 }
 
 double SEModel::score() {
-	double w = 0.5;
+	double w = 1.0;
 	double sc = spec_score() * w + matrix_score() * (1 - w);
 	return sc;
 }
