@@ -56,9 +56,10 @@ cumulscores(seqset.num_seqs()) {
 	float last_cumul_score = 0.0;
 	for(int i = 0; i < ss_num_seqs; i++) {
 		len = seqset.len_seq(i);
-		cumulscores[i].push_back(last_cumul_score);
-		for(int j = 0; j < len; j++)
+		cumulscores[i].push_back(last_cumul_score - wbgscores[i][0] - cbgscores[i][0]);
+		for(int j = 1; j < len; j++)
 			cumulscores[i].push_back(cumulscores[i][j-1] - wbgscores[i][j] - cbgscores[i][j]);
+		assert(cumulscores[i].size() == (unsigned int) len);
 		last_cumul_score = cumulscores[i][len - 1];
 	}
 }
