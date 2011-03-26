@@ -24,6 +24,10 @@ titles beginning with '>' and ending with '\n'.*/
 		}
 	}
 	if(! name.empty()) {
+		if(seq.size() < 1) {
+			cerr << "Invalid sequence for '" << name << "'!\n";
+			exit(1);
+		}
 		nameset.push_back(name);
 		string seqn = seq;
 		seqset.push_back(seqn);
