@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 		npoints = expr[0].size();
 		nsubset = 0;
 	} else if(search_type == SUBSET) {
-		cerr << "Reading subset of sequences to search from '" << subsetfile << "... ";
+		cerr << "Reading subset of sequences to search from '" << subsetfile << "'... ";
 		get_list(subsetfile.c_str(), subset);
 		cerr << "done.\n";
 		npoints = 0;
