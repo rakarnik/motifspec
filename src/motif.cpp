@@ -13,6 +13,8 @@ max_width(3 * init_nc),
 columns(init_nc),
 num_seqs_with_sites(0),
 has_sites(num_seqs),
+above_seqc(0),
+possible(0),
 seq_cutoff(0.00001),
 expr_cutoff(0.70),
 dejavu(0)
