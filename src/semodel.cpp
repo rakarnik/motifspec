@@ -20,6 +20,9 @@ expscores(ngenes),
 expranks(ngenes) {
 	verbose = false;
 	set_default_params();
+	vector<bool>::iterator poss_iter = possible.begin();
+	for(; poss_iter != possible.end(); ++poss_iter)
+		*poss_iter = false;
 	reset_possible();
 }
 
