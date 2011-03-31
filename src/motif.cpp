@@ -13,6 +13,7 @@ max_width(3 * init_nc),
 columns(init_nc),
 num_seqs_with_sites(0),
 has_sites(num_seqs),
+motif_score(0.0),
 above_seqc(0),
 possible(0),
 seq_cutoff(0.00001),
@@ -37,7 +38,7 @@ max_width(m.max_width),
 columns(m.columns),
 num_seqs_with_sites(m.num_seqs_with_sites),
 has_sites(m.has_sites),
-score(m.score),
+motif_score(m.motif_score),
 above_seqc(m.above_seqc),
 possible(m.possible),
 seq_cutoff(m.seq_cutoff),
@@ -58,7 +59,7 @@ Motif& Motif::operator= (const Motif& m) {
 		has_sites.assign(m.has_sites.begin(), m.has_sites.end());
     columns.assign(m.columns.begin(), m.columns.end());
 		width = ((int) columns.back()) + 1;
-		score = m.score;
+		motif_score = m.motif_score;
 		above_seqc = m.above_seqc;
 		possible = m.possible;
 		seq_cutoff = m.seq_cutoff;
@@ -79,7 +80,7 @@ void Motif::clear_sites() {
 	width = ((int) columns.back()) + 1;
   num_seqs_with_sites = 0;
 	has_sites.assign(num_seqs, false);
-	score = 0.0;
+	motif_score = 0.0;
 }
 
 void Motif::remove_all_sites() {
@@ -471,11 +472,12 @@ void Motif::write(ostream& motout) const {
 	}
   motout << endl;
 	
-	motout << "Score: " << score << "\n";
+	motout << "Score: " << motif_score << "\n";
 	motout << "Sequences above sequence threshold: " << above_seqc << "\n";
 	motout << "Size of search space: " << possible << "\n";
 	motout << "Sequence cutoff: " << seq_cutoff << "\n";
 	motout << "Expression cutoff: " << expr_cutoff << "\n";
+	motout << "Score cutoff: " << score_cutoff << "\n";
 	motout << "Iteration found: " << iter << "\n";
 	motout << "Dejavu: " << dejavu << endl << "\n";
 }
@@ -516,7 +518,7 @@ void Motif::read(istream& motin) {
 	// Read score
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
-	set_score(atof(strtok(NULL, "\0")));
+	set_motif_score(atof(strtok(NULL, "\0")));
 	
 	// Read number of sequences above sequence threshold
 	motin.getline(line, 200);
@@ -537,6 +539,11 @@ void Motif::read(istream& motin) {
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
 	set_expr_cutoff(atof(strtok(NULL, "\0")));
+	
+	// Read score cutoff
+	motin.getline(line, 200);
+	heading = strtok(line, ":");
+	set_score_cutoff(atof(strtok(NULL, "\0")));
 	
 	// Read iteration found
 	motin.getline(line, 200);

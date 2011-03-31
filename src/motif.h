@@ -16,11 +16,12 @@ class Motif {
 	int num_seqs_with_sites;                 // number of sequences with sites
 	vector<int> has_sites;                   // number of sites in each sequence
 	
-	double score;                            // score of this motif
+	double motif_score;                      // score of this motif
 	int above_seqc;													 // number of sequences above sequence threshold
 	int possible;                            // number of sequences above expression threshold
 	double seq_cutoff;                       // sequence cutoff for this motif
 	double expr_cutoff;                      // expression cutoff for this motif
+	double score_cutoff;                     // score cutoff for this motif
 	string iter;                             // iteration in which this motif was found
 	int dejavu;                              // number of times this motif was seen
 
@@ -36,27 +37,29 @@ public:
   int posit(int i) const { return sitelist[i].posit(); }
   bool strand(int i) const { return sitelist[i].strand(); }
   int get_max_width() const { return max_width; }
-	string get_iter() const { return iter; }
-	void set_iter(const string it) { iter = it; }
-	int get_dejavu() { return dejavu; }
-	void set_dejavu(const int d) { dejavu = d; }
-	void inc_dejavu() { dejavu++; }
-	double get_seq_cutoff() const { return seq_cutoff; }
-	void set_seq_cutoff(const double cutoff) { seq_cutoff = cutoff; }
-	double get_expr_cutoff() const { return expr_cutoff; }
-	void set_expr_cutoff(const double cutoff) { expr_cutoff = cutoff; }
-	double get_score() const { return score; }
-	void set_score(const double sc) { score = sc; }
 	bool is_open_site(const int c, const int p);
 	int seqs_with_sites() const { return num_seqs_with_sites; }
 	bool seq_has_site(const int c) const { return (has_sites[c] != 0); }
+	double get_motif_score() const { return motif_score; }
+	void set_motif_score(const double sc) { motif_score = sc; }
 	void set_above_seqc(const int sc) { above_seqc = sc; }
 	int get_above_seqc() const { return above_seqc; }
 	void set_possible(const int p) { possible = p; }
 	void inc_possible() { possible++; }
 	void dec_possible() { possible--; }
 	int get_possible() const { return possible; }
-  void add_site(const int c, const int p, const bool s);
+ 	double get_seq_cutoff() const { return seq_cutoff; }
+	void set_seq_cutoff(const double cutoff) { seq_cutoff = cutoff; }
+	double get_expr_cutoff() const { return expr_cutoff; }
+	void set_expr_cutoff(const double cutoff) { expr_cutoff = cutoff; }
+	double get_score_cutoff() const { return score_cutoff; }
+	void set_score_cutoff(const double cutoff) { score_cutoff = cutoff; }
+	string get_iter() const { return iter; }
+	void set_iter(const string it) { iter = it; }
+	int get_dejavu() { return dejavu; }
+	void set_dejavu(const int d) { dejavu = d; }
+	void inc_dejavu() { dejavu++; }
+	void add_site(const int c, const int p, const bool s);
   void clear_sites();
 	void remove_all_sites();
   void calc_freq_matrix(int *fm) const;
