@@ -92,6 +92,27 @@ void get_list(const char* filename, vector<string>& listset) {
 	}
 }
 
+void get_scores(const char* filename, vector<float>& sc, vector<string>& nameset){
+	ifstream scfile(filename);
+	if(! scfile){
+	  cerr << "No such file '" << filename << "'\n";
+	  exit(0);
+	}
+	return get_scores(scfile, sc, nameset);
+}
+
+void get_scores(istream& scfile, vector<float>& sc, vector<string>& nameset) {
+	string line;
+	vector<string> fields;
+	vector<string>::iterator val_iter;
+	while(getline(scfile, line)) {
+		fields = split(line, '\t');
+		assert(fields.size() >= 2);
+		nameset.push_back(fields[0]);
+		sc.push_back(atof(fields[1].c_str()));
+	}
+}
+
 void get_cluster(const char* filename, const int num, vector<string>& nameset) {
 	ifstream clusfile(filename);
 	if(! clusfile){

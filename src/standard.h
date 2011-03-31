@@ -30,6 +30,8 @@ void get_fasta_fast(istream &test,vector<string>& seqset, vector<string>& namese
 void get_expr(const char* filename, vector<vector <float> >& expr, vector<string>& nameset);
 void get_expr(istream &is, vector<vector <float> >& expr, vector<string>& nameset);
 void get_list(const char* filename, vector<string>& listset);
+void get_scores(const char* filename, vector<float>& sc, vector<string>& nameset);
+void get_scores(istream& scfile, vector<float>& sc, vector<string>& nameset);
 void get_cluster(const char* filename, const int num, vector<string>& nameset);
 void get_cluster(istream &is, const int num, vector<string>& nameset);
 bool GetArg2(int argc, char *argv[], const char *c, int &cval);
