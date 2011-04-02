@@ -1,11 +1,3 @@
-###################################################
-#
-# Makefile for im
-# Creator [Xcode -> Makefile Ver: Feb 14 2007 09:18:41]
-# Created: [Tue Aug 21 16:03:42 2007]
-#
-###################################################
-
 #
 # Macros
 #
@@ -33,10 +25,8 @@ all: im im-debug
 im : \
 		bin/archivesites.o\
 		bin/bgmodel.o\
-		bin/compareace.o\
 		bin/im.o\
 		bin/motif.o\
-		bin/myheap.o\
 		bin/semodel.o\
 		bin/seqset.o\
 		bin/site.o\
@@ -44,10 +34,8 @@ im : \
 	$(CC) $(LNK_OPTIONS) \
 		bin/archivesites.o\
 		bin/bgmodel.o\
-		bin/compareace.o\
 		bin/im.o\
 		bin/motif.o\
-		bin/myheap.o\
 		bin/semodel.o\
 		bin/seqset.o\
 		bin/site.o\
@@ -57,10 +45,8 @@ im : \
 im-debug : \
 		debug/archivesites.o\
 		debug/bgmodel.o\
-		debug/compareace.o\
 		debug/im.o\
 		debug/motif.o\
-		debug/myheap.o\
 		debug/semodel.o\
 		debug/seqset.o\
 		debug/site.o\
@@ -68,10 +54,8 @@ im-debug : \
 	$(CC) $(LNK_DEBUG_OPTIONS) \
 		debug/archivesites.o\
 		debug/bgmodel.o\
-		debug/compareace.o\
 		debug/im.o\
 		debug/motif.o\
-		debug/myheap.o\
 		debug/semodel.o\
 		debug/seqset.o\
 		debug/site.o\
@@ -87,17 +71,11 @@ bin/archivesites.o : src/archivesites.h src/archivesites.cpp
 bin/bgmodel.o : src/bgmodel.h src/bgmodel.cpp
 	$(CC) $(CC_OPTIONS) src/bgmodel.cpp -c $(INCLUDE) -o bin/bgmodel.o
 
-bin/compareace.o : src/compareace.h src/compareace.cpp
-	$(CC) $(CC_OPTIONS) src/compareace.cpp -c $(INCLUDE) -o bin/compareace.o
-
 bin/im.o : src/im.h src/im.cpp
 	$(CC) $(CC_OPTIONS) src/im.cpp -c $(INCLUDE) -o bin/im.o
 
 bin/motif.o : src/motif.h src/motif.cpp
 	$(CC) $(CC_OPTIONS) src/motif.cpp -c $(INCLUDE) -o bin/motif.o
-
-bin/myheap.o : src/myheap.cpp
-	$(CC) $(CC_OPTIONS) src/myheap.cpp -c $(INCLUDE) -o bin/myheap.o
 
 bin/seqset.o : src/seqset.h src/seqset.cpp
 	$(CC) $(CC_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o bin/seqset.o
@@ -117,17 +95,11 @@ debug/archivesites.o : src/archivesites.h src/archivesites.cpp
 debug/bgmodel.o : src/bgmodel.h src/bgmodel.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/bgmodel.cpp -c $(INCLUDE) -o debug/bgmodel.o
 
-debug/compareace.o : src/compareace.h src/compareace.cpp
-	$(CC) $(CC_DEBUG_OPTIONS) src/compareace.cpp -c $(INCLUDE) -o debug/compareace.o
-
 debug/im.o : src/im.h src/im.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/im.cpp -c $(INCLUDE) -o debug/im.o
 
 debug/motif.o : src/motif.h src/motif.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/motif.cpp -c $(INCLUDE) -o debug/motif.o
-
-debug/myheap.o : src/myheap.cpp
-	$(CC) $(CC_DEBUG_OPTIONS) src/myheap.cpp -c $(INCLUDE) -o debug/myheap.o
 
 debug/seqset.o : src/seqset.h src/seqset.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o debug/seqset.o
