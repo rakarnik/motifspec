@@ -57,7 +57,6 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 		}
 		motnum++;
 	}
-	cerr << delcount << " similar motifs were deleted\n";
 
 	
 	// Step 2: Add the new motif at the correct position by score
