@@ -8,6 +8,12 @@
 #include "archivesites.h"
 #include "myheap.h"
 
+// Search types
+#define UNDEFINED 0
+#define EXPRESSION 1
+#define SUBSET 2
+#define SCORE 3
+
 struct SEParams{
   int expect;						           // number of expected sites
   double weight;				           // fractional weight on priors
@@ -33,6 +39,7 @@ struct SEParams{
 /* Integrated model */
 class SEModel {
 	/* Common */
+	int search_type;
 	vector<string> nameset;
 	int ngenes;
 	vector<bool> possible;
@@ -56,6 +63,10 @@ class SEModel {
 	
 	/* Subset */
 	const vector<string>& subset;
+
+	/* Score */
+	vector<float>& scores;
+  vector<float> cumul_scores;
 	
 	struct idscore {
 		int id;
@@ -71,13 +82,16 @@ class SEModel {
 	vector<struct idscore> seqranks;
 	vector<double> expscores;
 	vector<struct idscore> expranks;
+	vector<struct idscore> scranks;
 
 	double score_site(double* score_matrix, const int c, const int p, const bool s);
 	void set_cutoffs();
 	void set_seq_cutoff(const int phase);
 	void set_seq_cutoff_expr(const int phase);
 	void set_seq_cutoff_subset(const int phase);
+	void set_seq_cutoff_score(const int phase);
 	void set_expr_cutoff();
+	void set_score_cutoff();
 	void print_possible(ostream& out);
 	
  public:
@@ -89,10 +103,9 @@ class SEModel {
 	static const int TOO_MANY_SITES = 5;
 
 	/* General */
-	SEModel(const vector<string>& seqs, vector<vector <float> >& exprtab, const vector<string>& sub,
-	        const vector<string>& names, const int npts, const int nc, const int order,
-					const double sim_cut);
-  ~SEModel();
+	SEModel(const int s_type, const vector<string>& names, const vector<string>& seqs,
+					vector<vector <float> >& exprtab, const vector<string>& sub, vector<float>& sctab,
+					const int npts, const int nc, const int order, const double sim_cut);
 	void modify_params(int argc, char *argv[]);
   double get_best_motif(int i=0);
   void output_params(ostream &fout);
@@ -133,6 +146,7 @@ class SEModel {
 	
 	/* Algorithm steps */
 	void seed_random_site();
+  void seed_high_scoring_site();
   void single_pass(const double seqcut = 0.0, bool greedy = false);
 	void single_pass_select(const double seqcut = 0.0, bool greedy = false);
 	void compute_seq_scores();
@@ -140,8 +154,10 @@ class SEModel {
 	void compute_expr_scores();
 	bool column_sample(const bool add, const bool remove);
 	void adjust_search_space();
-  void expand_search_around_mean();
 	int search_for_motif(const int worker, const int iter, const string outfile);
+  int search_for_motif_expr(const int worker, const int iter, const string outfile);
+  int search_for_motif_subset(const int worker, const int iter, const string outfile);
+  int search_for_motif_score(const int worker, const int iter, const string outfile);
 	bool consider_motif(const char* filename);
 	
 	/* Output */

@@ -5,11 +5,6 @@
 #include "semodel.h"
 #include "standard.h"
 
-// Search types
-#define UNDEFINED 0
-#define EXPRESSION 1
-#define SUBSET 2
-
 int worker;                                // worker ID if worker, -1 if archive
 bool archive;                              // archive mode
 
@@ -19,7 +14,6 @@ int nsubset;                               // number of sequences in search subs
 int ncol;                                  // number of columns
 int order;                                 // order of background model
 double simcut;                             // similarity cutoff for motifs
-vector<vector <float> > expr;              // the expression data
 string outfile;                            // name of output file
 
 int read_motifs(SEModel& se);

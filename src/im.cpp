@@ -11,6 +11,8 @@ int main(int argc, char *argv[]) {
 	string seqfile;                       // file with sequences
 	string exprfile;                      // file with expression data
 	string subsetfile;                    // file with subset of sequence names to search
+  string scorefile;                     // file with scores
+    
 	if(! GetArg2(argc, argv, "-s", seqfile)) {
 		cerr << "Please specify sequence file\n\n";
 		print_usage(cout);
@@ -23,14 +25,17 @@ int main(int argc, char *argv[]) {
 	}
 	
 	int search_type = UNDEFINED;
-	if(GetArg2(argc, argv, "-e", exprfile)) {
+	if(GetArg2(argc, argv, "-ex", exprfile)) {
 		search_type = EXPRESSION;
 	}
-	if(GetArg2(argc, argv, "-u", subsetfile)) {
+	if(GetArg2(argc, argv, "-su", subsetfile)) {
 		search_type = SUBSET;
 	}
+	if(GetArg2(argc, argv, "-sc", scorefile)) {
+		search_type = SCORE;
+	}
 	if(search_type == UNDEFINED) {
-		cerr << "Please specify either an expression data file or a file with a subset of sequence names\n\n";
+		cerr << "Please specify either an expression data file, a file with a subset of sequence names, or a file with sequence scores.\n\n";
 		print_usage(cout);
 		exit(0);
 	}
@@ -44,13 +49,15 @@ int main(int argc, char *argv[]) {
 	
 	// Read parameters
 	vector<string> seqs, nameset1;
-  cerr << "Reading sequence data from '" << seqfile << "'... ";
+    cerr << "Reading sequence data from '" << seqfile << "'... ";
 	get_fasta_fast(seqfile.c_str(), seqs, nameset1);
 	cerr << "done.\n";
 	ngenes = nameset1.size();
 	
+	vector<vector <float> > expr;
 	vector<string> nameset2;
 	vector<string> subset;
+	vector<float> scores;
 	npoints = 0;
 	if(search_type == EXPRESSION) {
 		cerr << "Reading expression data from '" << exprfile << "'... ";
@@ -69,38 +76,54 @@ int main(int argc, char *argv[]) {
 		}
 		nsubset = subset.size();
 		sort(subset.begin(), subset.end());
+	} else if(search_type == SCORE) {
+		cerr << "Reading sequence scores from '" << scorefile << "'... ";
+		get_scores(scorefile.c_str(), scores, nameset2);
+		cerr << "done.\n";
+		npoints = 1;
+		nsubset = 0;
 	}
-	
-	if(search_type == EXPRESSION) {
+
+	if(search_type == EXPRESSION || search_type == SCORE) {
 		if(nameset1.size() != nameset2.size()) {
-			cerr << "Inconsistent sizes for sequence and expression datasets\n";
+			if(search_type == EXPRESSION) {
+				cerr << "Inconsistent sizes for sequence and expression datasets\n";
+			} else {
+				cerr << "Inconsistent sizes for sequence and score datasets\n";
+			}
 			exit(0);
 		}
-	
+
 		bool match = true;
 		for (int i = 0; i < ngenes; i++) {
 			match = match && (nameset1[i] == nameset2[i]);
 			if (nameset1[i] != nameset2[i]) {
-				cerr << "Row " << i << ": Sequence: '" << nameset1[i] << "'  " << "Expression: '" << nameset2[i] << "'\n";
+				cerr << "Row " << i << ": Sequence: '" << nameset1[i] << "'  " << "Data: '" << nameset2[i] << "'\n";
 			}
 		}
 		if(! match) {
-			cerr << "Inconsistent gene names for sequence and expression datasets\n";
+			if(search_type == EXPRESSION) {
+				cerr << "Inconsistent sequence names for sequence and expression datasets\n";
+			} else {
+				cerr << "Inconsistent sequence names for sequence and score datasets\n";
+			}
 			exit(0);
 		}
 	}
-	
+
 	if(search_type == EXPRESSION) {
 		cerr << "Successfully read input files -- dataset size is " << ngenes << " sequences X " << npoints << " timepoints\n";
 	} else if(search_type == SUBSET) {
 		cerr << "Successfully read input files -- dataset size is " << ngenes << " sequences, with " << nsubset << " to be searched\n";
+	} else if(search_type == SCORE) {
+		cerr << "Successfully read input files -- dataset size is " << ngenes << " scored sequences\n";
 	}
-	
+
 	cerr << "Setting up SEModel... ";
 	if(! GetArg2(argc, argv, "-numcols", ncol)) ncol = 10;
 	if(! GetArg2(argc, argv, "-order", order)) order = 0;
 	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.8;
-	SEModel se(seqs, expr, subset, nameset1, npoints, ncol, order, simcut);
+	SEModel se(search_type, nameset1, seqs, expr, subset, scores, npoints, ncol, order, simcut);
 	se.modify_params(argc, argv);
 	se.set_final_params();
 	se.ace_initialize();
@@ -264,10 +287,11 @@ void print_ace(ostream& out, SEModel& se) {
 }
 
 void print_usage(ostream& fout) {
-	fout << "Usage: im -s seqfile [-e exprfile | -u subsetfile] -o outputfile (options)\n";
+  fout << "Usage: im -s seqfile [-ex exprfile | -su subsetfile | -sc scorefile] -o outputfile (options)\n";
   fout << " Seqfile must be in FASTA format.\n";
 	fout << " Exprfile must be in tab-delimited format.\n";
 	fout << " Subsetfile has one sequence name per line.\n";
+  fout << " Scorefile is tab-delimited, with one sequence name and score per line.";
   fout << "Options:\n";
 	fout << " -numcols    \tnumber of columns to align (10)\n";
 	fout << " -order      \torder of the background model (3, can be 0 to 5)\n";
