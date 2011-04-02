@@ -6,7 +6,6 @@
 #include "seqset.h"
 #include "bgmodel.h"
 #include "archivesites.h"
-#include "myheap.h"
 
 // Search types
 #define UNDEFINED 0
