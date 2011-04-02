@@ -525,7 +525,7 @@ void Motif::read(istream& motin) {
 	heading = strtok(line, ":");
 	set_above_seqc(atoi(strtok(NULL, "\0")));
 	
-	// Read number of sequences above expression threshold
+	// Read size of search space
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
 	set_possible(atoi(strtok(NULL, "\0")));
