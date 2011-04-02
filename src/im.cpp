@@ -277,12 +277,6 @@ void print_full_ace(ostream& out, SEModel& se) {
 }
 
 void print_ace(ostream& out, SEModel& se) {
-	out << "Parameter values:\n";
-  se.output_params(out);
-  out << "\nInput sequences:\n";
-  for(unsigned int x = 0; x < se.names().size(); x++)
-		out << "#" << x << '\t' << se.names()[x] << endl;
-  out << endl;
 	se.full_output(out);
 }
 
