@@ -18,6 +18,7 @@ above_seqc(0),
 possible(0),
 seq_cutoff(0.00001),
 expr_cutoff(0.70),
+score_cutoff(2.3),
 dejavu(0)
 {
 	vector<int>::iterator col_iter = columns.begin();
@@ -43,6 +44,7 @@ above_seqc(m.above_seqc),
 possible(m.possible),
 seq_cutoff(m.seq_cutoff),
 expr_cutoff(m.expr_cutoff),
+score_cutoff(m.score_cutoff),
 iter(m.iter),
 dejavu(m.dejavu)
 {
@@ -64,6 +66,7 @@ Motif& Motif::operator= (const Motif& m) {
 		possible = m.possible;
 		seq_cutoff = m.seq_cutoff;
 		expr_cutoff = m.expr_cutoff;
+		score_cutoff = m.score_cutoff;
 		iter = m.iter;
 		dejavu = m.dejavu;
   }
