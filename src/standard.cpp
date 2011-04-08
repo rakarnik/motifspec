@@ -232,14 +232,6 @@ string reverse_comp(const string &forward){
 	return rev;
 }
 
-double  bico(int N, int k) {
-	return floor(0.5 + exp(lnfact(N) - lnfact(k) - lnfact(N-k)));
-}
-
-double  lnbico(int N, int k) {
-	return lnfact(N) - lnfact(k) - lnfact(N-k);
-}
-
 float corr(const vector<float>& expr1, const vector<float>& expr2) {
 	return corr(expr1, expr2, 0, 0, min(expr1.size(), expr2.size()));
 }
@@ -273,6 +265,32 @@ float corr(const vector<float>& expr1, const vector<float>& expr2, const unsigne
 		c = (u12 - u1 * u2)/(s1*s2);
 	}
 	return c;
+}
+
+double prob_overlap(int x, int y, int i, int t) {
+  assert(i <= x);
+	assert(i <= y);
+	assert(x <= t);
+	assert(y <= t);
+	
+	if(i == 0) {
+		return 1;
+	} else {
+		double lnterm, sum = 0.0;
+		for(int j = i; j <= x && j <= y; j++){
+			lnterm = lnbico(x, j) + lnbico(t - x, y - j) - lnbico(t, y);
+			sum += exp(lnterm);
+		}
+		return sum;
+	}
+}
+
+double  bico(int N, int k) {
+	return floor(0.5 + exp(lnfact(N) - lnfact(k) - lnfact(N-k)));
+}
+
+double  lnbico(int N, int k) {
+	return lnfact(N) - lnfact(k) - lnfact(N-k);
 }
 
 double	lnfact(int n)
@@ -541,23 +559,7 @@ int number_lines_beg(const char* file, string k){
   return x;
 }
 
-double prob_overlap(int x, int y, int i, int t) {
-  assert(i <= x);
-	assert(i <= y);
-	assert(x <= t);
-	assert(y <= t);
-	
-	if(i == 0) {
-		return 1;
-	} else {
-		double lnterm, sum = 0.0;
-		for(int j = i; j <= x && j <= y; j++){
-			lnterm = lnbico(x, j) + lnbico(t - x, y - j) - lnbico(t, y);
-			sum += exp(lnterm);
-		}
-		return sum;
-	}
-}
+
 
 string ace_consensus(const char* file, int mot_num){
   ifstream fin(file);
