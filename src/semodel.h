@@ -65,7 +65,9 @@ class SEModel {
 
 	/* Score */
 	vector<float>& scores;
-  vector<float> cumul_scores;
+  float mean_sc;
+	float stdev_sc;
+	vector<float> cumul_scores;
 	
 	struct idscore {
 		int id;
@@ -115,12 +117,13 @@ class SEModel {
 	vector<string> names() const { return nameset; };
 	ArchiveSites& get_archive() { return archive; };
 	
-	/* Manage membership */
-	void add_possible(const int gene);                            // Add gene as a potential member
-	void remove_possible(const int gene);                         // Remove gene as a potential member
-	void clear_all_possible();                                    // Remove all genes as potential members
-	void reset_possible();                                        // Adjust potential membership back to initial conditions
-	bool is_possible(const int gene) const;									      // Return whether this gene is a potential member
+	/* Manage search space */
+	void add_to_search_space(const int gene);                     // Add gene to search space
+	void remove_from_search_space(const int gene);                // Remove gene from search space
+	void clear_search_space();                                    // Remove all genes from search space
+	void reset_search_space();                                    // Set search space back to initial conditions
+	void adjust_search_space();                                   // Set search space according to current cutoffs
+	bool is_in_search_space(const int gene) const;					      // Return whether this gene is a potential member
 	int possible_size() const;															      // Return number of potential members
 	int total_positions() const;														      // Return total number of possible positions
 	int possible_positions() const;													      // Return number of potential positions
@@ -141,18 +144,19 @@ class SEModel {
 	/* Expression model */
 	void calc_mean();                                             // Calculate the mean for this model
 	vector<float>& get_mean() { return mean; };                   // Get the mean for this model
-	float get_corr_with_mean(const vector<float>& pattern) const; // Calculate the correlation between the model mean and 'pattern
 	
 	/* Algorithm steps */
+	void update_seq_count();
+	void update_expr_count();
+	void update_score_count();
 	void seed_random_site();
   void seed_high_scoring_site();
-  void single_pass(const double seqcut = 0.0, bool greedy = false);
-	void single_pass_select(const double seqcut = 0.0, bool greedy = false);
+  void single_pass(bool greedy = false);
+	void single_pass_select(bool greedy = false);
 	void compute_seq_scores();
 	void compute_seq_scores_minimal();
 	void compute_expr_scores();
 	bool column_sample(const bool add, const bool remove);
-	void adjust_search_space();
 	int search_for_motif(const int worker, const int iter, const string outfile);
   int search_for_motif_expr(const int worker, const int iter, const string outfile);
   int search_for_motif_subset(const int worker, const int iter, const string outfile);
