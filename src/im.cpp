@@ -128,11 +128,10 @@ int main(int argc, char *argv[]) {
 	se.set_final_params();
 	se.ace_initialize();
 	cerr << "done.\n";
-	
+
 	if(archive) {
 		cerr << "Running in archive mode...\n";
-		string archinstr(outfile
-		);
+		string archinstr(outfile);
 		archinstr.append(".adj.ace");
 		ifstream archin(archinstr.c_str());
 		if(archin) {
@@ -147,11 +146,8 @@ int main(int argc, char *argv[]) {
 		}
 	} else {
 		cerr << "Running as worker " << worker << "...\n";
-		int nruns = se.possible_positions()
-								/ se.get_params().expect
-								/ ncol
-								/ se.get_params().undersample
-								* se.get_params().oversample;
+		int nruns = 10000;
+		cerr << "Restarts planned: " << nruns << '\n';
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
 		string lockstr(outfile);
