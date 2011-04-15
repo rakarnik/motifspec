@@ -1,6 +1,3 @@
-//Copyright 1998 President and Fellows of Harvard University
-//standard.cpp
-
 #include "standard.h"
 
 void get_fasta_fast(istream &test, vector<string>& seqset, vector<string>& nameset) {
@@ -267,30 +264,63 @@ float corr(const vector<float>& expr1, const vector<float>& expr2, const unsigne
 	return c;
 }
 
-double prob_overlap(int x, int y, int i, int t) {
-  assert(i <= x);
-	assert(i <= y);
-	assert(x <= t);
-	assert(y <= t);
-	
-	if(i == 0) {
-		return 1;
-	} else {
-		double lnterm, sum = 0.0;
-		for(int j = i; j <= x && j <= y; j++){
-			lnterm = lnbico(x, j) + lnbico(t - x, y - j) - lnbico(t, y);
-			sum += exp(lnterm);
-		}
-		return sum;
+double log_prob_overlap(int x, int s1, int s2, int n) {
+	assert(x <= s1);
+	assert(x <= s2);
+	assert(s1 <= n);
+	assert(s2 <= n);
+
+	if(x == 0)
+		return 0;
+
+	int m1 = min(s1, s2);
+	int m2 = min(s1, s2);
+	double ret = 0.0, lt;
+	for(int i = x; i <= m1; i++) {
+		lt = lnbico(m1, i) + lnbico(n - m1, m2 - i) - lnbico(n, m2);
+		if(! ret)
+			ret = lt;
+		else
+			ret = logsum(ret, lt); 
 	}
+	return ret;
 }
 
-double  bico(int N, int k) {
-	return floor(0.5 + exp(lnfact(N) - lnfact(k) - lnfact(N-k)));
+double prob_overlap(int x, int s1, int s2, int n) {
+  assert(x <= s1);
+	assert(x <= s2);
+	assert(s1 <= n);
+	assert(s2 <= n);
+
+	if(x == 0)
+		return 1;
+
+	int m1 = min(s1, s2);
+	int m2 = max(s1, s2);
+	double ret, lt;
+	if(x > m1 - x) {
+		ret = 0.0;
+		for(int i = x; i <= m1; i++) {
+			lt = lnbico(m1, i) + lnbico(n - m1, m2 - i) - lnbico(n, m2);
+			ret += lt;
+		}
+		return ret;
+	} else {
+		ret = 1.0;
+		for(int i = 0; i < x; i++) {
+			lt = lnbico(m1, i) + lnbico(n - m1, m2 - i) - lnbico(n, m2);
+			ret -= lt;
+		}
+	}
+	return ret;
 }
 
-double  lnbico(int N, int k) {
-	return lnfact(N) - lnfact(k) - lnfact(N-k);
+double  bico(int n, int k) {
+	return floor(0.5 + exp(lnfact(n) - lnfact(k) - lnfact(n-k)));
+}
+
+double  lnbico(int n, int k) {
+	return lnfact(n) - lnfact(k) - lnfact(n-k);
 }
 
 double	lnfact(int n)
@@ -320,6 +350,10 @@ double gammaln(double xx) {
 
 double stirlingln(int n) {
 	return (0.91984 + (n + 0.5) * log(n) - n);
+}
+
+double logsum(double x, double y) {
+	return x + log(1 + exp(y - x));
 }
 
 vector<string> split(string s, char c, bool skipall){
@@ -380,7 +414,6 @@ int convert_roman(string s){
 	return res;
 }
 
-
 int str_to_int(const string &s){
 	//assume no overflow
 	//assume that the input is only digits, everything else will be ignored
@@ -389,7 +422,6 @@ int str_to_int(const string &s){
 	return (int)ret;
 	//default behavior is truncation
 }
-
 
 double str_to_dbl(const string &s){
 	//assume no overflow
@@ -442,7 +474,6 @@ double str_to_dbl(const string &s){
 	ret*=pow(10.0,(double)xp);
 	return ret;
 }
-
 
 string random_dna(int len){
 	static bool seeded=false;
@@ -523,7 +554,6 @@ double find_cutoff(double sum, double sumsq, int num, int num_sdevs_below){
 	return avg-num_sdevs_below*sd;
 }
 
-
 int number_motifs(const char* file){
   ifstream fin(file);
   string s;
@@ -558,8 +588,6 @@ int number_lines_beg(const char* file, string k){
   fin.close();
   return x;
 }
-
-
 
 string ace_consensus(const char* file, int mot_num){
   ifstream fin(file);
