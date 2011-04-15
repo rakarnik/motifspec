@@ -18,7 +18,8 @@ class Motif {
 	
 	double motif_score;                      // score of this motif
 	int above_seqc;													 // number of sequences above sequence threshold
-	int possible;                            // number of sequences above expression threshold
+	int possible;                            // number of sequences in search space
+  int above_cutoffs;                       // number of sequences above both cutoffs
 	double seq_cutoff;                       // sequence cutoff for this motif
 	double expr_cutoff;                      // expression cutoff for this motif
 	double score_cutoff;                     // score cutoff for this motif
@@ -48,6 +49,8 @@ public:
 	void inc_possible() { possible++; }
 	void dec_possible() { possible--; }
 	int get_possible() const { return possible; }
+  void set_above_cutoffs(const int ac) { above_cutoffs = ac; }
+  int get_above_cutoffs() const { return above_cutoffs; }
  	double get_seq_cutoff() const { return seq_cutoff; }
 	void set_seq_cutoff(const double cutoff) { seq_cutoff = cutoff; }
 	double get_expr_cutoff() const { return expr_cutoff; }

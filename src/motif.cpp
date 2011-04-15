@@ -16,6 +16,7 @@ has_sites(num_seqs),
 motif_score(0.0),
 above_seqc(0),
 possible(0),
+above_cutoffs(0),
 seq_cutoff(0.00001),
 expr_cutoff(0.70),
 score_cutoff(2.3),
@@ -42,6 +43,7 @@ has_sites(m.has_sites),
 motif_score(m.motif_score),
 above_seqc(m.above_seqc),
 possible(m.possible),
+above_cutoffs(m.above_cutoffs),
 seq_cutoff(m.seq_cutoff),
 expr_cutoff(m.expr_cutoff),
 score_cutoff(m.score_cutoff),
@@ -64,6 +66,7 @@ Motif& Motif::operator= (const Motif& m) {
 		motif_score = m.motif_score;
 		above_seqc = m.above_seqc;
 		possible = m.possible;
+    above_cutoffs = m.above_cutoffs;
 		seq_cutoff = m.seq_cutoff;
 		expr_cutoff = m.expr_cutoff;
 		score_cutoff = m.score_cutoff;
