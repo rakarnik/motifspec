@@ -88,12 +88,9 @@ class SEModel {
 	double score_site(double* score_matrix, const int c, const int p, const bool s);
 	void set_cutoffs();
 	void set_seq_cutoff(const int phase);
-	void set_seq_cutoff_expr(const int phase);
-	void set_seq_cutoff_subset(const int phase);
-	void set_seq_cutoff_score(const int phase);
 	void set_expr_cutoff();
 	void set_score_cutoff();
-	void print_possible(ostream& out);
+  void print_possible(ostream& out);
 	
  public:
 	/* Return codes for search */

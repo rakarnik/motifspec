@@ -55,7 +55,7 @@ scranks(ngenes) {
 
 void SEModel::set_default_params(){
   separams.expect = 10;
-  separams.minpass = 50;
+  separams.minpass = 100;
   separams.seed = -1;
   separams.psfact = 0.1;
   separams.weight = 0.5; 
@@ -141,7 +141,7 @@ void SEModel::adjust_search_space() {
 }
 
 void SEModel::add_to_search_space(const int gene) {
-	assert(motif.get_possible() < ngenes);
+  assert(motif.get_possible() < ngenes);
 	assert(! possible[gene]);
 	possible[gene] = true;
 	motif.inc_possible();
@@ -206,11 +206,12 @@ void SEModel::genes(int* genes) const {
 }
 
 void SEModel::update_seq_count() {
-	int seqn = 0, isect = 0;
+  int seqn = 0, isect = 0;
 	vector<struct idscore>::iterator ids = seqranks.begin();
 	for(; ids != seqranks.end() && ids->score >= motif.get_seq_cutoff(); ++ids) {
     seqn++;
-    if(expscores[ids->id] >= motif.get_expr_cutoff())
+    if((search_type == EXPRESSION && expscores[ids->id] >= motif.get_expr_cutoff())
+       || (search_type == SCORE && scores[ids->id] >= motif.get_score_cutoff()))
       isect++;
   }
   assert(isect <= seqn);
@@ -481,8 +482,8 @@ void SEModel::compute_seq_scores_minimal() {
 	sort(seqranks.begin(), seqranks.end(), isc);
 	if(seqranks[0].score <= 0.85)
 		compute_seq_scores();
-	else
-		update_seq_count();
+  else
+    update_seq_count();
 }
 
 void SEModel::compute_expr_scores() {
@@ -926,21 +927,18 @@ int SEModel::search_for_motif_score(const int worker, const int iter, const stri
 	motif.set_iter(iterstr.str());
 	int phase = 0;
 	
-	/*
 	reset_search_space();
-	seed_high_scoring_site();
+	seed_random_site();
 	if(size() < 1) {
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
 		return BAD_SEED;
 	}
-	*/
-	motif.add_site(6180,44,1);
 	
-  motif.set_score_cutoff(2.3);
-	adjust_search_space();
-	compute_seq_scores();
+  compute_seq_scores();
 	set_seq_cutoff(phase);
   set_score_cutoff();
+  adjust_search_space();
+  update_seq_count();
 	motif.set_motif_score(score());
 	print_status(cerr, 0, phase);
 	Motif best_motif = motif;
@@ -1063,7 +1061,7 @@ void SEModel::print_status(ostream& out, const int i, const int phase) {
 		out << setw(10) << "N/A";
 	else if(search_type == SCORE)
 		out << setw(10) << motif.get_score_cutoff();
-	out << setw(7) << motif.seqs_with_sites();
+	out << setw(7) << motif.get_above_cutoffs();
 	out << setw(7) << motif.get_above_seqc();
 	out << setw(7) << motif.get_possible();
 	if(size() > 0) {
@@ -1094,72 +1092,8 @@ void SEModel::full_output(char *name){
 }
 
 void SEModel::set_seq_cutoff(const int phase) {
-	if(search_type == EXPRESSION)
-		set_seq_cutoff_expr(phase);
-	else if(search_type == SUBSET)
-		set_seq_cutoff_subset(phase);
-	else if(search_type == SCORE)
-		set_seq_cutoff_score(phase);
-	else {
-		cerr << "Invalid search type!\n";
-		exit(1);
-	}
-	update_seq_count();
-}
-
-void SEModel::set_seq_cutoff_expr(const int phase) {
 	int seqn = 0, isect = 0;
 	float seqcut, best_seqcut = separams.minprob[phase];
-	double po, best_po = DBL_MAX;
-	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
-	for(seqcut = sr_iter->score; sr_iter->score >= separams.minprob[phase] && sr_iter != seqranks.end(); ++sr_iter) {
-		if(seqcut > sr_iter->score) {
-			assert(isect <= motif.get_possible());
-			assert(isect <= seqn);
-			po = log_prob_overlap(isect, motif.get_possible(), seqn, ngenes);
-			// cerr << "\t\t\t" << motif.get_expr_cutoff() << '\t' << seqcut << '\t' << motif.get_possible() << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
-			if(po < best_po) {
-				best_seqcut = seqcut;
-				best_po = po;
-			}
-		}
-		seqn++;
-		if(expscores[sr_iter->id] > motif.get_expr_cutoff())
-			isect++;
-		seqcut = sr_iter->score;
-	}
-	// cerr << "\t\t\tSetting sequence cutoff to " << best_seqcut << "(minimum " << separams.minprob[phase] << ")\n";
-	motif.set_seq_cutoff(best_seqcut);
-}
-
-void SEModel::set_seq_cutoff_subset(const int phase) {
-	int seqn = 0, isect = 0;
-	float seqcut, best_seqcut = separams.minprob[phase];
-	double po, best_po = DBL_MAX;
-	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
-	for(seqcut = sr_iter->score; sr_iter->score >= separams.minprob[phase] && sr_iter != seqranks.end(); ++sr_iter) {
-		if(seqcut > sr_iter->score) {
-			assert(isect <= motif.get_possible());
-			assert(isect <= seqn);
-			po = log_prob_overlap(isect, motif.get_possible(), seqn, ngenes);
-			// cerr << "\t\t\t" << motif.get_expr_cutoff() << '\t' << seqcut << '\t' << motif.get_possible() << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
-			if(po < best_po) {
-				best_seqcut = seqcut;
-				best_po = po;
-			}
-		}
-		seqn++;
-		if(is_in_search_space(sr_iter->id))
-			isect++;
-		seqcut = sr_iter->score;
-	}
-	// cerr << "\t\t\tSetting sequence cutoff to " << best_seqcut << "(minimum " << separams.minprob[phase] << ")\n";
-	motif.set_seq_cutoff(best_seqcut);
-}
-
-void SEModel::set_seq_cutoff_score(const int phase) {
-	int seqn = 0, isect = 0;
-	float seqcut, best_seqcut = separams.minprob[phase], sccut = motif.get_score_cutoff();
 	double po, best_po = DBL_MAX;
 	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
 	for(seqcut = sr_iter->score; sr_iter->score >= separams.minprob[phase] && sr_iter != seqranks.end(); ++sr_iter) {
@@ -1174,11 +1108,11 @@ void SEModel::set_seq_cutoff_score(const int phase) {
 			}
 		}
 		seqn++;
-		if(scores[sr_iter->id] > sccut)
+		if(is_in_search_space(sr_iter->id))
 			isect++;
 		seqcut = sr_iter->score;
 	}
-	cerr << "\t\t\tSetting sequence cutoff to " << best_seqcut << "(minimum " << separams.minprob[phase] << ")\n";
+	// cerr << "\t\t\tSetting sequence cutoff to " << best_seqcut << "(minimum " << separams.minprob[phase] << ")\n";
 	motif.set_seq_cutoff(best_seqcut);
 }
 
@@ -1241,3 +1175,5 @@ void SEModel::print_possible(ostream& out) {
 	for(int g = 0; g < ngenes; g++)
 		if(is_in_search_space(g)) out << nameset[g] << endl;
 }
+
+
