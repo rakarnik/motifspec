@@ -274,7 +274,7 @@ double log_prob_overlap(int x, int s1, int s2, int n) {
 		return 0;
 
 	int m1 = min(s1, s2);
-	int m2 = min(s1, s2);
+	int m2 = max(s1, s2);
 	double ret = 0.0, lt;
 	for(int i = x; i <= m1; i++) {
 		lt = lnbico(m1, i) + lnbico(n - m1, m2 - i) - lnbico(n, m2);
