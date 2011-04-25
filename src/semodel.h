@@ -25,6 +25,7 @@ struct SEParams{
   int minpass;
   int nruns;
 	float minprob[3];
+	float minscore[3];
   bool fragment;
   int seed;
   double select;
@@ -89,7 +90,7 @@ class SEModel {
 	void set_cutoffs();
 	void set_seq_cutoff(const int phase);
 	void set_expr_cutoff();
-	void set_score_cutoff();
+	void set_score_cutoff(const int phase);
   void print_possible(ostream& out);
 	
  public:
