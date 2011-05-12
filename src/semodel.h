@@ -24,8 +24,8 @@ struct SEParams{
   int npass;
   int minpass;
   int nruns;
-	float minprob[3];
-	float minscore[3];
+	float minprob[4];
+	float minscore[4];
   bool fragment;
   int seed;
   double select;

@@ -935,14 +935,11 @@ int SEModel::search_for_motif_score(const int worker, const int iter, const stri
 	int phase = 0;
 
 	reset_search_space();
-	/*
-		 seed_random_site();
-		 if(size() < 1) {
-		 cerr << "\t\t\tSeeding failed -- restarting...\n";
-		 return BAD_SEED;
-		 }
-	 */
-	motif.add_site(63, 19, 0);
+	seed_random_site();
+	if(size() < 1) {
+		cerr << "\t\t\tSeeding failed -- restarting...\n";
+		return BAD_SEED;
+	}
 
 	compute_seq_scores();
 	set_seq_cutoff(phase);
@@ -1006,9 +1003,13 @@ int SEModel::search_for_motif_score(const int worker, const int iter, const stri
 				}
 				cerr << "\t\t\tReached bad move threshold, reloading best motif...\n";
 				phase++;
-				best_motif.set_seq_cutoff(separams.minprob[phase]);
 				motif = best_motif;
 				select_sites = best_motif;
+				if(phase < 3) {
+					compute_seq_scores_minimal();
+					set_seq_cutoff(phase);
+					set_score_cutoff(phase);
+				}
 			}
 		}
 	}

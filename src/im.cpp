@@ -2,7 +2,7 @@
 
 int main(int argc, char *argv[]) {
 	set_new_handler(alloc_error);
-	
+
 	if(argc < 6) {
     print_usage(cout);
     exit(0);
