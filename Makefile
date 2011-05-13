@@ -1,9 +1,8 @@
 #
 # Macros
 #
-
 CC = /usr/bin/g++
-CC_OPTIONS = -O3 -Wall -Wextra -DNDEBUG
+CC_OPTIONS = -O3 -Wall -Wextra
 CC_DEBUG_OPTIONS = -O0 -g -pg -Wall -Wextra
 LNK_OPTIONS =
 LNK_DEBUG_OPTIONS = -pg
@@ -11,18 +10,16 @@ LNK_DEBUG_OPTIONS = -pg
 #
 # INCLUDE directories for im
 #
-
 INCLUDE = -I.\
-		-Isrc
+					-Isrc
 
 
 #
 # Build im
 #
-
 all: im im-debug
 
-im : \
+im: \
 		bin/archivesites.o\
 		bin/bgmodel.o\
 		bin/im.o\
@@ -42,7 +39,7 @@ im : \
 		bin/standard.o\
 		-o bin/im
 
-im-debug : \
+im-debug: \
 		debug/archivesites.o\
 		debug/bgmodel.o\
 		debug/im.o\
@@ -62,53 +59,56 @@ im-debug : \
 		debug/standard.o\
 		-o debug/im-debug
 
-clean : 
+clean: 
 	rm -f bin/*.o debug/*.o bin/im debug/im-debug
 
-bin/archivesites.o : src/archivesites.h src/archivesites.cpp
+bin/archivesites.o: src/archivesites.h src/archivesites.cpp
 	$(CC) $(CC_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o bin/archivesites.o
 
-bin/bgmodel.o : src/bgmodel.h src/bgmodel.cpp
+bin/bgmodel.o: src/bgmodel.h src/bgmodel.cpp
 	$(CC) $(CC_OPTIONS) src/bgmodel.cpp -c $(INCLUDE) -o bin/bgmodel.o
 
-bin/im.o : src/im.h src/im.cpp
+bin/im.o: src/im.h src/im.cpp
 	$(CC) $(CC_OPTIONS) src/im.cpp -c $(INCLUDE) -o bin/im.o
 
-bin/motif.o : src/motif.h src/motif.cpp
+bin/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_OPTIONS) src/motif.cpp -c $(INCLUDE) -o bin/motif.o
 
-bin/seqset.o : src/seqset.h src/seqset.cpp
+bin/seqset.o: src/seqset.h src/seqset.cpp
 	$(CC) $(CC_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o bin/seqset.o
 
-bin/semodel.o : src/semodel.h src/semodel.cpp
+bin/semodel.o: src/semodel.h src/semodel.cpp
 	$(CC) $(CC_OPTIONS) src/semodel.cpp -c $(INCLUDE) -o bin/semodel.o
 
-bin/site.o : src/site.h src/site.cpp
+bin/site.o: src/site.h src/site.cpp
 	$(CC) $(CC_OPTIONS) src/site.cpp -c $(INCLUDE) -o bin/site.o
 
-bin/standard.o : src/standard.h src/standard.cpp
+bin/standard.o: src/standard.h src/standard.cpp
 	$(CC) $(CC_OPTIONS) src/standard.cpp -c $(INCLUDE) -o bin/standard.o
 
-debug/archivesites.o : src/archivesites.h src/archivesites.cpp
+debug/archivesites.o: src/archivesites.h src/archivesites.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o debug/archivesites.o
 
-debug/bgmodel.o : src/bgmodel.h src/bgmodel.cpp
+debug/bgmodel.o: src/bgmodel.h src/bgmodel.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/bgmodel.cpp -c $(INCLUDE) -o debug/bgmodel.o
 
-debug/im.o : src/im.h src/im.cpp
+debug/compareace.o: src/compareace.h src/compareace.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/compareace.cpp -c $(INCLUDE) -o debug/compareace.o
+
+debug/im.o: src/im.h src/im.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/im.cpp -c $(INCLUDE) -o debug/im.o
 
-debug/motif.o : src/motif.h src/motif.cpp
+debug/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/motif.cpp -c $(INCLUDE) -o debug/motif.o
 
-debug/seqset.o : src/seqset.h src/seqset.cpp
+debug/seqset.o: src/seqset.h src/seqset.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o debug/seqset.o
 
-debug/semodel.o : src/semodel.h src/semodel.cpp
+debug/semodel.o: src/semodel.h src/semodel.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/semodel.cpp -c $(INCLUDE) -o debug/semodel.o
 
-debug/site.o : src/site.h src/site.cpp
+debug/site.o: src/site.h src/site.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/site.cpp -c $(INCLUDE) -o debug/site.o
 
-debug/standard.o : src/standard.h src/standard.cpp
+debug/standard.o: src/standard.h src/standard.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/standard.cpp -c $(INCLUDE) -o debug/standard.o
