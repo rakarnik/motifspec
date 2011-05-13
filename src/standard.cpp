@@ -1,3 +1,6 @@
+//Copyright 1999 President and Fellows of Harvard University
+//standard.cpp
+
 #include "standard.h"
 
 void get_fasta_fast(istream &test, vector<string>& seqset, vector<string>& nameset) {
