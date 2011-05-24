@@ -51,6 +51,7 @@ scranks(ngenes) {
 		}
 		sort(scranks.begin(), scranks.end(), isc);
 	}
+	reset_search_space();
 }
 
 void SEModel::set_default_params(){
@@ -105,7 +106,6 @@ void SEModel::reset_search_space() {
 		for(int i = 0; i < ngenes; i++)
 			if(binary_search(subset.begin(), subset.end(), nameset[i]))
 				add_to_search_space(i);
-		assert((unsigned int) motif.get_possible() == subset.size());
 	} else if(search_type == SCORE) {
 		vector<struct idscore>::iterator scit = scranks.begin();
 		for(; scit != scranks.end() && scit->score > 2.3; ++scit)
@@ -215,6 +215,7 @@ void SEModel::update_seq_count() {
 	for(; ids != seqranks.end() && ids->score >= motif.get_seq_cutoff(); ++ids) {
 		seqn++;
 		if((search_type == EXPRESSION && expscores[ids->id] >= motif.get_expr_cutoff())
+				|| (search_type == SUBSET && is_in_search_space(ids->id))
 				|| (search_type == SCORE && scores[ids->id] >= motif.get_score_cutoff()))
 			isect++;
 	}
@@ -222,6 +223,7 @@ void SEModel::update_seq_count() {
 	assert(isect <= motif.get_possible());
 	motif.set_above_seqc(seqn);
 	motif.set_above_cutoffs(isect);
+
 }
 
 void SEModel::seed_random_site() {
