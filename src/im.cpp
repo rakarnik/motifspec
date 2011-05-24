@@ -146,7 +146,9 @@ int main(int argc, char *argv[]) {
 		}
 	} else {
 		cerr << "Running as worker " << worker << "...\n";
-		int nruns = 10000;
+		int nruns = se.possible_positions()/(se.get_params().expect * ncol);
+		nruns *= se.get_params().oversample;
+		nruns /= se.get_params().undersample;
 		cerr << "Restarts planned: " << nruns << '\n';
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
