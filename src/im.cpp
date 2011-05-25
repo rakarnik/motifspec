@@ -287,7 +287,7 @@ void print_usage(ostream& fout) {
   fout << "Options:\n";
 	fout << " -numcols    \tnumber of columns to align (10)\n";
 	fout << " -order      \torder of the background model (3, can be 0 to 5)\n";
-	fout << " -simcut     \tsimilarity cutoff for motifs (0.5)\n"; 
+	fout << " -simcut     \tsimilarity cutoff for motifs (0.8)\n"; 
   fout << " -expect     \tnumber of sites expected in model (10)\n";
   fout << " -minpass    \tminimum number of non-improved passes in phase 1 (200)\n";
   fout << " -seed       \tset seed for random number generator (time)\n";
