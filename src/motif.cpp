@@ -342,10 +342,10 @@ void Motif::columns_open(int &l, int &r){
   }
 }
 
-void Motif::freq_matrix_extended(double *fm) const{
+void Motif::freq_matrix_extended(vector<float>& fm) const {
   const vector<vector <int> >& seq = seqset.seq();
 	int i, col, j;
-  int fm_size = (width + 2 * ncols()) * 4;
+  int fm_size = fm.size();
   for(i = 0; i < fm_size; i++) fm[i] = 0.0;
   if(number() == 0) return;
   for(i = 0; i < number(); i++) {//i = site number
@@ -592,30 +592,20 @@ bool Motif::check_sites() {
 double Motif::compare(const Motif& other) {
 	int cols = 6;
 
-	int* fm = new int[4 * ncols()];
-	calc_freq_matrix(fm);
-	vector<float> fmf(4 * ncols());
-	int tot = number();
-	for(int i = 0; i < 4 * ncols(); i++) {
-		fmf[i] = (float) fm[i]/tot;
-	}
-	delete [] fm;
+	int fm_size = (width + 2 * ncols()) * 4;
+	vector<float> fm(fm_size);
+	freq_matrix_extended(fm);
 
-	int* other_fm = new int[4 * other.ncols()];
-	other.calc_freq_matrix(other_fm);
-	vector<float> other_fmf(4 * other.ncols());
-	int other_tot = other.number();
-	for(int i = 0; i < 4 * other.ncols(); i++) {
-		other_fmf[i] = (float) other_fm[i]/other_tot;
-	}
-	delete [] other_fm;
+	int other_fm_size = (other.get_width() + 2 * other.ncols()) * 4;
+	vector<float> other_fm(other_fm_size);
+	other.freq_matrix_extended(other_fm);
 	
 	double bestc = -1.1;
 	double c = 0.0;
 	for(int i = cols; i < min(ncols(), other.ncols()); i++) {
-		for(int j = 0; j < 4 * (ncols() - i); j += 4) {
-			for(int k = 0; k < 4 * (other.ncols() - i); k += 4) {
-				c = corr(fmf, other_fmf, j, k, 4 * i);
+		for(int j = 0; j < fm_size - 4 * i; j += 4) {
+			for(int k = 0; k < other_fm_size - 4 * i; k += 4) {
+				c = corr(fm, other_fm, j, k, 4 * i);
 				if(c > bestc) {
 					bestc = c;
 				}

@@ -66,7 +66,7 @@ public:
   void clear_sites();
 	void remove_all_sites();
   void calc_freq_matrix(int *fm) const;
-  void freq_matrix_extended(double *fm) const;
+  void freq_matrix_extended(vector<float>& fm) const;
 	void calc_score_matrix(double *sm, double* pseudo) const;
 	double score_site(double* score_matrix, const int c, const int p, const bool s) const;
 	double compare(const Motif& other);
