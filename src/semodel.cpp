@@ -943,7 +943,6 @@ int SEModel::search_for_motif_score(const int worker, const int iter, const stri
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
 		return BAD_SEED;
 	}
-	check_possible();
 
 	compute_seq_scores();
 	set_seq_cutoff(phase);
