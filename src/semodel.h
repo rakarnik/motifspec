@@ -91,7 +91,8 @@ class SEModel {
 	void set_seq_cutoff(const int phase);
 	void set_expr_cutoff();
 	void set_score_cutoff(const int phase);
-  void print_possible(ostream& out);
+	void check_possible() const;
+  void print_possible(ostream& out) const;
 	
  public:
 	/* Return codes for search */
