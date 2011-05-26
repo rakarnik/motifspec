@@ -108,7 +108,7 @@ void SEModel::reset_search_space() {
 				add_to_search_space(i);
 	} else if(search_type == SCORE) {
 		vector<struct idscore>::iterator scit = scranks.begin();
-		for(; scit != scranks.end() && scit->score > 2.3; ++scit)
+		for(; scit != scranks.end() && scit->score > motif.get_score_cutoff(); ++scit)
 			add_to_search_space(scit->id);
 	}
 	assert(motif.get_possible() <= ngenes);
@@ -936,12 +936,14 @@ int SEModel::search_for_motif_score(const int worker, const int iter, const stri
 	motif.set_iter(iterstr.str());
 	int phase = 0;
 
+	motif.set_score_cutoff(2.3);
 	reset_search_space();
 	seed_random_site();
 	if(size() < 1) {
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
 		return BAD_SEED;
 	}
+	check_possible();
 
 	compute_seq_scores();
 	set_seq_cutoff(phase);
@@ -965,11 +967,13 @@ int SEModel::search_for_motif_score(const int worker, const int iter, const stri
 		motif.set_motif_score(score());
 		print_status(cerr, i, phase);
 		r = ran_dbl.rnum();
+		/*
 		if(r > 0.5) {
 			column_sample(true, false);
 		} else {
 			column_sample(false, true);
 		}
+		*/
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting...\n";
 			return TOO_MANY_SITES;
@@ -1072,7 +1076,7 @@ void SEModel::print_status(ostream& out, const int i, const int phase) {
 	out << setw(7) << motif.get_above_seqc();
 	out << setw(7) << motif.get_possible();
 	if(size() > 0) {
-		out << setw(35) << motif.consensus();
+		out << setw(50) << motif.consensus();
 		out << setw(15) << setprecision(10) << motif.get_motif_score();
 	} else {
 		out << setw(50) << "---------------------------------------";
@@ -1176,7 +1180,16 @@ void SEModel::set_score_cutoff(const int phase) {
 	adjust_search_space();
 }
 
-void SEModel::print_possible(ostream& out) {
+void SEModel::check_possible() const {
+	int poss_cnt = 0;
+	vector<bool>::const_iterator poss_iter = possible.begin();
+	for(; poss_iter != possible.end(); ++poss_iter) {
+		if(*poss_iter) poss_cnt++;
+	}
+	assert(poss_cnt == motif.get_possible());
+}
+
+void SEModel::print_possible(ostream& out) const {
 	for(int g = 0; g < ngenes; g++)
 		if(is_in_search_space(g)) out << nameset[g] << endl;
 }
