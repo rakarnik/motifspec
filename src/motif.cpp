@@ -590,7 +590,7 @@ bool Motif::check_sites() {
 }
 
 double Motif::compare(const Motif& other) {
-	int cols = 6;
+	int cols = 5;
 
 	int fm_size = (width + 2 * ncols()) * 4;
 	vector<float> fm(fm_size);
@@ -602,7 +602,7 @@ double Motif::compare(const Motif& other) {
 	
 	double bestc = -1.1;
 	double c = 0.0;
-	for(int i = cols; i < min(ncols(), other.ncols()); i++) {
+	for(int i = cols; i <= min(ncols(), other.ncols()); i++) {
 		for(int j = 0; j < fm_size - 4 * i; j += 4) {
 			for(int k = 0; k < other_fm_size - 4 * i; k += 4) {
 				c = corr(fm, other_fm, j, k, 4 * i);
