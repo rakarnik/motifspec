@@ -64,28 +64,29 @@ class SEModel {
 	/* Subset */
 	const vector<string>& subset;
 
+	struct idscore {
+		int id;
+		double score;
+	};
+
+	struct iscomp {
+		bool operator() (struct idscore is1, struct idscore is2) { return (is1.score > is2.score); }
+	} isc;
+
 	/* Score */
 	vector<float>& scores;
   float mean_sc;
 	float stdev_sc;
 	vector<float> cumul_scores;
-	
-	struct idscore {
-		int id;
-		double score;
-	};
-	
-	struct iscomp {
-		bool operator() (struct idscore is1, struct idscore is2) { return (is1.score > is2.score); }
-	} isc;
-	
 	vector<double> seqscores;
+	double topL;
 	vector<int> bestpos;
+	vector<bool> beststrand;
 	vector<struct idscore> seqranks;
 	vector<double> expscores;
 	vector<struct idscore> expranks;
 	vector<struct idscore> scranks;
-
+	
 	double score_site(double* score_matrix, const int c, const int p, const bool s);
 	void set_cutoffs();
 	void set_seq_cutoff(const int phase);

@@ -29,7 +29,9 @@ mean_sc(0.0),
 stdev_sc(0.0),
 cumul_scores(ngenes),
 seqscores(ngenes),
+topL(-DBL_MAX),
 bestpos(ngenes),
+beststrand(ngenes),
 seqranks(ngenes),
 expscores(ngenes),
 expranks(ngenes),
@@ -79,10 +81,10 @@ void SEModel::set_final_params(){
 	separams.maxlen = 3 * motif.get_width();
 	separams.nruns = motif.positions_available() / separams.expect / motif.ncols() / separams.undersample * separams.oversample;
 	separams.select = 5.0;
-	separams.minprob[0] = 0.000001;
-	separams.minprob[1] = 0.001;
-	separams.minprob[2] = 0.01;
-	separams.minprob[3] = 0.1;
+	separams.minprob[0] = 0.0002;
+	separams.minprob[1] = 0.004;
+	separams.minprob[2] = 0.02;
+	separams.minprob[3] = 0.4;
 	separams.minscore[0] = 2.32;  // p ~ 0.01
 	separams.minscore[1] = 2.32;  // p ~ 0.01
 	separams.minscore[2] = 1.65;  // p ~ 0.05
@@ -111,6 +113,7 @@ void SEModel::reset_search_space() {
 		for(; scit != scranks.end() && scit->score > motif.get_score_cutoff(); ++scit)
 			add_to_search_space(scit->id);
 	}
+	assert(motif.get_possible() > 0);
 	assert(motif.get_possible() <= ngenes);
 }
 
@@ -305,6 +308,7 @@ void SEModel::single_pass(bool greedy) {
 	double ap = separams.weight * possible_size(); 
 	ap += (1 - separams.weight) * motif.number();
 	ap /= 2.0 * motif.positions_available(possible);
+	double seqcut = motif.get_seq_cutoff() * ap/(1.0 - ap + motif.get_seq_cutoff() * ap);
 	double* score_matrix = new double[4 * motif.ncols()];
 	calc_matrix(score_matrix);
 	motif.remove_all_sites();
@@ -324,8 +328,8 @@ void SEModel::single_pass(bool greedy) {
 			Pc = Lc * ap/(1.0 - ap + Lc * ap);
 			F = Pw + Pc - Pw * Pc;//probability of either
 			if(g == gadd && j < jadd + width) continue;
-			if(F > motif.get_seq_cutoff()/5.0) select_sites.add_site(g, j, true);
-			if(F < motif.get_seq_cutoff()) continue;
+			if(F > seqcut/5.0) select_sites.add_site(g, j, true);
+			if(F < seqcut) continue;
 			considered++;
 			Pw = F * Pw / (Pw + Pc);
 			Pc = F - Pw;
@@ -369,6 +373,7 @@ void SEModel::single_pass_select(bool greedy) {
 	double ap = separams.weight * possible_size(); 
 	ap += (1 - separams.weight) * motif.number();
 	ap /= 2.0 * motif.positions_available(possible);
+	double seqcut = motif.get_seq_cutoff() * ap/(1.0 - ap + motif.get_seq_cutoff() * ap);
 	double* score_matrix = new double[4 * motif.ncols()];
 	calc_matrix(score_matrix);
 	motif.remove_all_sites();
@@ -389,7 +394,7 @@ void SEModel::single_pass_select(bool greedy) {
 		Pc = Lc * ap/(1.0 - ap + Lc * ap);
 		F = Pw + Pc - Pw * Pc;//probability of either
 		if(g == gadd && j < jadd + width) continue;
-		if(F <= motif.get_seq_cutoff()) continue;
+		if(F <= seqcut) continue;
 		Pw = F * Pw / (Pw + Pc);
 		Pc = F - Pw;
 		if(greedy) {                   // Always add if above minprob
@@ -428,33 +433,33 @@ void SEModel::single_pass_select(bool greedy) {
 }
 
 void SEModel::compute_seq_scores() {
-	double ap = separams.weight * possible_size(); 
-	ap += (1 - separams.weight) * motif.number();
-	ap /= 2.0 * motif.positions_available(possible);
 	double* score_matrix = new double[4 * motif.ncols()];
 	calc_matrix(score_matrix);
-	double Lw, Lc, Pw, Pc, F, bestF;
+	double Lw, Lc, bestL;
 	seqranks.clear();
 	int width = motif.get_width();
 	int len;
 	for(int g = 0; g < ngenes; g++) {
-		bestF = 0.0;
+		bestL = -DBL_MAX;
 		bestpos[g] = -1;
 		len = seqset.len_seq(g);
 		for(int j = 0; j < len - width; j++) {
 			Lw = score_site(score_matrix, g, j, 1);
 			Lc = score_site(score_matrix, g, j, 0);
-			Pw = Lw * ap/(1.0 - ap + Lw * ap);
-			Pc = Lc * ap/(1.0 - ap + Lc * ap);
-			F = Pw + Pc - Pw * Pc;
-			if(F > bestF) {
-				bestF = F;
+			if(Lw > bestL) {
+				bestL = Lw;
 				bestpos[g] = j;
+				beststrand[g] = 1;
+			} else if(Lc > bestL) {
+				bestL = Lc;
+				bestpos[g] = j;
+				beststrand[g] = 1;
 			}
 		}
-		seqscores[g] = bestF;
+		seqscores[g] = bestL;
 		struct idscore ids = {g, seqscores[g]};
 		seqranks.push_back(ids);
+		if(topL < bestL) topL = bestL;
 	}
 	delete [] score_matrix;
 	sort(seqranks.begin(), seqranks.end(), isc);
@@ -462,34 +467,29 @@ void SEModel::compute_seq_scores() {
 }
 
 void SEModel::compute_seq_scores_minimal() {
-	double ap = separams.weight * possible_size(); 
-	ap += (1 - separams.weight) * motif.number();
-	ap /= 2.0 * motif.positions_available(possible);
 	double* score_matrix = new double[4 * motif.ncols()];
 	calc_matrix(score_matrix);
 	int width = motif.get_width();
-	double Lw, Lc, Pw, Pc, F;
+	double L, bestL;
+	bestL = -DBL_MAX;
 	seqranks.clear();
 	for(int g = 0; g < seqset.num_seqs(); g++) {
 		// Some best positions might have been invalidated by column sampling
 		// We mark these as invalid and don't score them
-		if(bestpos[g] < 0 || bestpos[g] + width > seqset.len_seq(g)) {
-			bestpos[g] = -1;
-			F = 0;
+		if(bestpos[g] >= 0 || bestpos[g] + width <= seqset.len_seq(g)) {
+			L = score_site(score_matrix, g, bestpos[g], beststrand[g]);
 		} else {
-			Lw = score_site(score_matrix, g, bestpos[g], 1);
-			Lc = score_site(score_matrix, g, bestpos[g], 0);
-			Pw = Lw * ap/(1.0 - ap + Lw * ap);
-			Pc = Lc * ap/(1.0 - ap + Lc * ap);
-			F = Pw + Pc - Pw * Pc;
+			bestpos[g] = -1;
+			L = -DBL_MAX;
 		}
-		seqscores[g] = F;
+		seqscores[g] = L;
 		struct idscore ids = {g, seqscores[g]};
 		seqranks.push_back(ids);
+		if(bestL <= L) bestL = L;
 	}
 	delete [] score_matrix;
 	sort(seqranks.begin(), seqranks.end(), isc);
-	if(seqranks[0].score <= 0.85)
+	if(bestL/topL <= 0.85)
 		compute_seq_scores();
 	else
 		update_seq_count();
