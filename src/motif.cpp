@@ -13,9 +13,10 @@ max_width(3 * init_nc),
 columns(init_nc),
 num_seqs_with_sites(0),
 has_sites(num_seqs),
+possible(num_seqs, false),
 motif_score(0.0),
 above_seqc(0),
-possible(0),
+ssp_size(0),
 above_cutoffs(0),
 seq_cutoff(0.00001),
 expr_cutoff(0.70),
@@ -40,9 +41,10 @@ max_width(m.max_width),
 columns(m.columns),
 num_seqs_with_sites(m.num_seqs_with_sites),
 has_sites(m.has_sites),
+possible(m.possible),
 motif_score(m.motif_score),
 above_seqc(m.above_seqc),
-possible(m.possible),
+ssp_size(m.ssp_size),
 above_cutoffs(m.above_cutoffs),
 seq_cutoff(m.seq_cutoff),
 expr_cutoff(m.expr_cutoff),
@@ -61,11 +63,12 @@ Motif& Motif::operator= (const Motif& m) {
 		sitelist.assign(m.sitelist.begin(), m.sitelist.end());
 		num_seqs_with_sites = m.num_seqs_with_sites;
 		has_sites.assign(m.has_sites.begin(), m.has_sites.end());
+		possible.assign(m.possible.begin(), m.possible.end());
     columns.assign(m.columns.begin(), m.columns.end());
 		width = ((int) columns.back()) + 1;
 		motif_score = m.motif_score;
 		above_seqc = m.above_seqc;
-		possible = m.possible;
+		ssp_size = m.ssp_size;
     above_cutoffs = m.above_cutoffs;
 		seq_cutoff = m.seq_cutoff;
 		expr_cutoff = m.expr_cutoff;
@@ -108,51 +111,34 @@ bool Motif::is_open_site(const int c, const int p){
   return true;
 }
 
+void Motif::clear_search_space() {
+	vector<bool> newp(num_seqs, false);
+	swap(possible, newp);
+	ssp_size = 0;
+}
+
+void Motif::add_to_search_space(const int g) {
+	assert(ssp_size < num_seqs);
+	assert(! possible[g]);
+	possible[g] = true;
+	ssp_size++;
+	assert(ssp_size <= num_seqs);
+}
+
+void Motif::remove_from_search_space(const int g) {
+	assert(ssp_size > 0);
+	assert(possible[g]);
+	possible[g] = false;
+	ssp_size--;
+	assert(ssp_size >= 0);
+}
+
 void Motif::add_site(const int c, const int p, const bool s){
 	assert(p >= 0 && p < seqset.len_seq(c));
 	Site st(c, p, s);
 	sitelist.push_back(st);
 	if(has_sites[c] == 0) num_seqs_with_sites++;
 	has_sites[c]++;
-}
-
-void Motif::calc_freq_matrix(int *fm) const {
-	const vector<vector <int> >& seq = seqset.seq();
-	for(int i = 0; i < 4 * ncols(); i++){
-		fm[i] = 0;
-  }
-	
-	int g, j, pos, matpos;
-	bool s;
-  vector<Site>::const_iterator site_iter;
-  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
-		g = site_iter->chrom();
-    j = site_iter->posit();
-    s = site_iter->strand();
-    if(s) {                              // forward strand
-      matpos = 0;
-			pos = 0;
-			vector<int>::const_iterator col_iter;
-			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
-				pos = j + *col_iter;
-				if(pos >= 0 && pos < seqset.len_seq(g)) {
-					fm[matpos + seq[g][pos]]++;
-				}
-				matpos += 4;
-      }
-    } else {                             // reverse strand
-      matpos = 0;
-      pos = 0;
-			vector<int>::const_iterator col_iter;
-			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
-				pos = j + width - 1 - *col_iter;
-				if(pos >= 0 && pos < seqset.len_seq(g)) {
-					fm[matpos + 3 - seq[g][pos]]++;
-				}
-				matpos += 4;
-      }
-    }
-  }
 }
 
 bool Motif::column_freq(const int col, int *ret){
@@ -310,20 +296,18 @@ void Motif::orient() {
   delete [] freq;
 }
 
-int Motif::positions_available() const {
+int Motif::total_positions() const {
   int ret = 0;
-  for(int i = 0; i < num_seqs; i++){
+  for(int i = 0; i < num_seqs; i++)
     ret += seqset.len_seq(i) - width + 1;
-  }
   return ret;
 }
 
-int Motif::positions_available(const vector<bool>& possible) const {
+int Motif::positions_in_search_space() const {
 	int ret = 0;
-	for(int i = 0; i < num_seqs; i++) {
+	for(int i = 0; i < num_seqs; i++)
 		if(possible[i])
 			ret += seqset.len_seq(i) - width + 1;
-	}
 	return ret;
 }
 
@@ -339,6 +323,45 @@ void Motif::columns_open(int &l, int &r){
 		len = seqset.len_seq(c);
 		l = min(p, l);
 		r = min(len - p - w, r);
+  }
+}
+
+void Motif::calc_freq_matrix(int *fm) const {
+	const vector<vector <int> >& seq = seqset.seq();
+	for(int i = 0; i < 4 * ncols(); i++){
+		fm[i] = 0;
+  }
+	
+	int g, j, pos, matpos;
+	bool s;
+  vector<Site>::const_iterator site_iter;
+  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
+		g = site_iter->chrom();
+    j = site_iter->posit();
+    s = site_iter->strand();
+    if(s) {                              // forward strand
+      matpos = 0;
+			pos = 0;
+			vector<int>::const_iterator col_iter;
+			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
+				pos = j + *col_iter;
+				if(pos >= 0 && pos < seqset.len_seq(g)) {
+					fm[matpos + seq[g][pos]]++;
+				}
+				matpos += 4;
+      }
+    } else {                             // reverse strand
+      matpos = 0;
+      pos = 0;
+			vector<int>::const_iterator col_iter;
+			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
+				pos = j + width - 1 - *col_iter;
+				if(pos >= 0 && pos < seqset.len_seq(g)) {
+					fm[matpos + 3 - seq[g][pos]]++;
+				}
+				matpos += 4;
+      }
+    }
   }
 }
 
@@ -480,7 +503,7 @@ void Motif::write(ostream& motout) const {
 	
 	motout << "Score: " << motif_score << "\n";
 	motout << "Sequences above sequence threshold: " << above_seqc << "\n";
-	motout << "Size of search space: " << possible << "\n";
+	motout << "Size of search space: " << ssp_size << "\n";
 	motout << "Sequence cutoff: " << seq_cutoff << "\n";
 	motout << "Expression cutoff: " << expr_cutoff << "\n";
 	motout << "Score cutoff: " << score_cutoff << "\n";
@@ -534,7 +557,7 @@ void Motif::read(istream& motin) {
 	// Read size of search space
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
-	set_possible(atoi(strtok(NULL, "\0")));
+	ssp_size = atoi(strtok(NULL, "\0"));
 	
 	// Read sequence cutoff
 	motin.getline(line, 200);
@@ -614,4 +637,13 @@ double Motif::compare(const Motif& other) {
 	}
 
 	return bestc;
+}
+
+void Motif::check_possible() {
+	int poss_cnt = 0;
+	vector<bool>::iterator poss_iter = possible.begin();
+	for(; poss_iter != possible.end(); ++poss_iter)
+		if(*poss_iter)
+			poss_cnt++;
+	assert(poss_cnt == ssp_size);
 }

@@ -14,7 +14,6 @@ const double sim_cut) :
 search_type(s_type),
 nameset(names),
 ngenes(names.size()),
-possible(ngenes),
 seqset(seqs),
 bgmodel(seqset, order),
 motif(seqset, nc, separams.pseudo),
@@ -29,7 +28,6 @@ mean_sc(0.0),
 stdev_sc(0.0),
 cumul_scores(ngenes),
 seqscores(ngenes),
-topL(-DBL_MAX),
 bestpos(ngenes),
 beststrand(ngenes),
 seqranks(ngenes),
@@ -79,12 +77,12 @@ void SEModel::set_final_params(){
 		separams.pseudo[i] = separams.npseudo * separams.backfreq[i];
 	}
 	separams.maxlen = 3 * motif.get_width();
-	separams.nruns = motif.positions_available() / separams.expect / motif.ncols() / separams.undersample * separams.oversample;
+	separams.nruns = motif.total_positions() / separams.expect / motif.ncols() / separams.undersample * separams.oversample;
 	separams.select = 5.0;
-	separams.minprob[0] = 0.0002;
-	separams.minprob[1] = 0.004;
-	separams.minprob[2] = 0.02;
-	separams.minprob[3] = 0.4;
+	separams.minprob[0] = 0.000001;
+	separams.minprob[1] = 0.0002;
+	separams.minprob[2] = 0.01;
+	separams.minprob[3] = 0.2;
 	separams.minscore[0] = 2.32;  // p ~ 0.01
 	separams.minscore[1] = 2.32;  // p ~ 0.01
 	separams.minscore[2] = 1.65;  // p ~ 0.05
@@ -100,31 +98,31 @@ void SEModel::ace_initialize(){
 }
 
 void SEModel::reset_search_space() {
-	clear_search_space();
+	motif.clear_search_space();
 	if(search_type == EXPRESSION) {
 		for(int i = 0; i < ngenes; i++)
-			add_to_search_space(i);
+			motif.add_to_search_space(i);
 	} else if(search_type == SUBSET) {
 		for(int i = 0; i < ngenes; i++)
 			if(binary_search(subset.begin(), subset.end(), nameset[i]))
-				add_to_search_space(i);
+				motif.add_to_search_space(i);
 	} else if(search_type == SCORE) {
 		vector<struct idscore>::iterator scit = scranks.begin();
 		for(; scit != scranks.end() && scit->score > motif.get_score_cutoff(); ++scit)
-			add_to_search_space(scit->id);
+			motif.add_to_search_space(scit->id);
 	}
-	assert(motif.get_possible() > 0);
-	assert(motif.get_possible() <= ngenes);
+	assert(motif.get_search_space_size() > 0);
+	assert(motif.get_search_space_size() <= ngenes);
 }
 
 void SEModel::adjust_search_space() {
 	int isect = 0;
 	if(search_type == EXPRESSION) {
 		calc_mean();
-		clear_search_space();
+		motif.clear_search_space();
 		vector<struct idscore>::iterator exprit = expranks.begin();
 		while(exprit != expranks.end() && exprit->score >= motif.get_expr_cutoff()) {
-			add_to_search_space(exprit->id);
+			motif.add_to_search_space(exprit->id);
 			if(seqscores[exprit->id] >= motif.get_seq_cutoff())
 				isect++;
 			++exprit;
@@ -133,10 +131,10 @@ void SEModel::adjust_search_space() {
 	} else if(search_type == SUBSET) {
 		reset_search_space();
 	} else if(search_type == SCORE) {
-		clear_search_space();
+		motif.clear_search_space();
 		vector<struct idscore>::iterator scit = scranks.begin();
 		while(scit != scranks.end() && scit->score >= motif.get_score_cutoff()) {
-			add_to_search_space(scit->id);
+			motif.add_to_search_space(scit->id);
 			if(seqscores[scit->id] >= motif.get_seq_cutoff())
 				isect++;
 			++scit;
@@ -147,42 +145,12 @@ void SEModel::adjust_search_space() {
 	}
 }
 
-void SEModel::add_to_search_space(const int gene) {
-	assert(motif.get_possible() < ngenes);
-	assert(! possible[gene]);
-	possible[gene] = true;
-	motif.inc_possible();
-	assert(motif.get_possible() <= ngenes);
-}
-
-void SEModel::remove_from_search_space(const int gene) {
-	assert(motif.get_possible() > 0);
-	assert(possible[gene]);
-	possible[gene] = false;
-	motif.dec_possible();
-	assert(motif.get_possible() >= 0);
-}
-
-void SEModel::clear_search_space() {
-	vector<bool> newp(ngenes, false);
-	swap(possible, newp);
-	motif.set_possible(0);
-}
-
-bool SEModel::is_in_search_space(const int gene) const {
-	return possible[gene];
-}
-
-int SEModel::possible_size() const {
-	return motif.get_possible();
-}
-
 int SEModel::total_positions() const {
-	return motif.positions_available();
+	return motif.total_positions();
 }
 
-int SEModel::possible_positions() const {
-	return motif.positions_available(possible);
+int SEModel::positions_in_search_space() const {
+	return motif.positions_in_search_space();
 }
 
 void SEModel::clear_sites() {
@@ -217,20 +185,17 @@ void SEModel::update_seq_count() {
 	vector<struct idscore>::iterator ids = seqranks.begin();
 	for(; ids != seqranks.end() && ids->score >= motif.get_seq_cutoff(); ++ids) {
 		seqn++;
-		if((search_type == EXPRESSION && expscores[ids->id] >= motif.get_expr_cutoff())
-				|| (search_type == SUBSET && is_in_search_space(ids->id))
-				|| (search_type == SCORE && scores[ids->id] >= motif.get_score_cutoff()))
+		if(motif.in_search_space(ids->id))
 			isect++;
 	}
 	assert(isect <= seqn);
-	assert(isect <= motif.get_possible());
+	assert(isect <= motif.get_search_space_size());
 	motif.set_above_seqc(seqn);
 	motif.set_above_cutoffs(isect);
-
 }
 
 void SEModel::seed_random_site() {
-	assert(motif.get_possible() > 0);
+	assert(motif.get_search_space_size() > 0);
 
 	int chosen_possible, chosen_seq, chosen_posit;
 	bool watson;
@@ -238,12 +203,12 @@ void SEModel::seed_random_site() {
 	chosen_seq = chosen_posit = -1;
 
 	/* First choose a sequence */
-	ran_int.set_range(0, possible_size() - 1);
+	ran_int.set_range(0, motif.get_search_space_size() - 1);
 	chosen_possible = ran_int.rnum();
 	int g;
 	for(g = 0; g < ngenes; g++) {
-		if(is_in_search_space(g) && chosen_possible == 0) break; 
-		if(is_in_search_space(g)) chosen_possible--;
+		if(motif.in_search_space(g) && chosen_possible == 0) break; 
+		if(motif.in_search_space(g)) chosen_possible--;
 	}
 	chosen_seq = g;
 
@@ -305,22 +270,20 @@ double SEModel::score_site(double* score_matrix, const int c, const int p, const
 }
 
 void SEModel::single_pass(bool greedy) {
-	double ap = separams.weight * possible_size(); 
+	double ap = separams.weight * motif.get_search_space_size(); 
 	ap += (1 - separams.weight) * motif.number();
-	ap /= 2.0 * motif.positions_available(possible);
-	double seqcut = motif.get_seq_cutoff() * ap/(1.0 - ap + motif.get_seq_cutoff() * ap);
+	ap /= 2.0 * motif.positions_in_search_space();
 	double* score_matrix = new double[4 * motif.ncols()];
 	calc_matrix(score_matrix);
 	motif.remove_all_sites();
 	select_sites.remove_all_sites();
-	//will only update once per pass
 
 	double Lw, Lc, Pw, Pc, F;
 	int considered = 0;
 	int gadd = -1, jadd = -1;
 	int width = motif.get_width();
 	for(int g = 0; g < seqset.num_seqs(); g++){
-		if (! is_in_search_space(g)) continue;
+		if (! motif.in_search_space(g)) continue;
 		for(int j = 0; j < seqset.len_seq(g) - width; j++){
 			Lw = score_site(score_matrix, g, j, 1);
 			Lc = score_site(score_matrix, g, j, 0);
@@ -328,8 +291,8 @@ void SEModel::single_pass(bool greedy) {
 			Pc = Lc * ap/(1.0 - ap + Lc * ap);
 			F = Pw + Pc - Pw * Pc;//probability of either
 			if(g == gadd && j < jadd + width) continue;
-			if(F > seqcut/5.0) select_sites.add_site(g, j, true);
-			if(F < seqcut) continue;
+			if(F > motif.get_seq_cutoff()/5.0) select_sites.add_site(g, j, true);
+			if(F < motif.get_seq_cutoff()) continue;
 			considered++;
 			Pw = F * Pw / (Pw + Pc);
 			Pc = F - Pw;
@@ -370,10 +333,9 @@ void SEModel::single_pass(bool greedy) {
 }
 
 void SEModel::single_pass_select(bool greedy) {
-	double ap = separams.weight * possible_size(); 
+	double ap = separams.weight * motif.get_search_space_size(); 
 	ap += (1 - separams.weight) * motif.number();
-	ap /= 2.0 * motif.positions_available(possible);
-	double seqcut = motif.get_seq_cutoff() * ap/(1.0 - ap + motif.get_seq_cutoff() * ap);
+	ap /= 2.0 * motif.positions_in_search_space();
 	double* score_matrix = new double[4 * motif.ncols()];
 	calc_matrix(score_matrix);
 	motif.remove_all_sites();
@@ -386,7 +348,7 @@ void SEModel::single_pass_select(bool greedy) {
 	for(int i = 0; i < num_sites; i++) {
 		g = select_sites.chrom(i);
 		j = select_sites.posit(i);
-		if (! is_in_search_space(g)) continue;
+		if (! motif.in_search_space(g)) continue;
 		if(j < 0 || j + width > seqset.len_seq(g)) continue;
 		Lw = score_site(score_matrix, g, j, 1);
 		Lc = score_site(score_matrix, g, j, 0);
@@ -394,7 +356,7 @@ void SEModel::single_pass_select(bool greedy) {
 		Pc = Lc * ap/(1.0 - ap + Lc * ap);
 		F = Pw + Pc - Pw * Pc;//probability of either
 		if(g == gadd && j < jadd + width) continue;
-		if(F <= seqcut) continue;
+		if(F <= motif.get_seq_cutoff()) continue;
 		Pw = F * Pw / (Pw + Pc);
 		Pc = F - Pw;
 		if(greedy) {                   // Always add if above minprob
@@ -433,33 +395,33 @@ void SEModel::single_pass_select(bool greedy) {
 }
 
 void SEModel::compute_seq_scores() {
+	double ap = separams.weight * motif.get_search_space_size(); 
+	ap += (1 - separams.weight) * motif.number();
+	ap /= 2.0 * motif.positions_in_search_space();
 	double* score_matrix = new double[4 * motif.ncols()];
 	calc_matrix(score_matrix);
-	double Lw, Lc, bestL;
-	seqranks.clear();
+	double Lw, Lc, Pw, Pc, F, bestF;
 	int width = motif.get_width();
 	int len;
 	for(int g = 0; g < ngenes; g++) {
-		bestL = -DBL_MAX;
+		bestF = 0.0;
 		bestpos[g] = -1;
 		len = seqset.len_seq(g);
 		for(int j = 0; j < len - width; j++) {
 			Lw = score_site(score_matrix, g, j, 1);
 			Lc = score_site(score_matrix, g, j, 0);
-			if(Lw > bestL) {
-				bestL = Lw;
+			Pw = Lw * ap/(1.0 - ap + Lw * ap);
+			Pc = Lc * ap/(1.0 - ap + Lc * ap);
+			F = Pw + Pc - Pw * Pc;
+			if(F > bestF) {
+				bestF = F;
 				bestpos[g] = j;
-				beststrand[g] = 1;
-			} else if(Lc > bestL) {
-				bestL = Lc;
-				bestpos[g] = j;
-				beststrand[g] = 1;
+				beststrand[g] = Pw > Pc? 1 : 0;
 			}
 		}
-		seqscores[g] = bestL;
-		struct idscore ids = {g, seqscores[g]};
-		seqranks.push_back(ids);
-		if(topL < bestL) topL = bestL;
+		seqscores[g] = bestF;
+		seqranks[g].id = g;
+		seqranks[g].score = seqscores[g];
 	}
 	delete [] score_matrix;
 	sort(seqranks.begin(), seqranks.end(), isc);
@@ -467,29 +429,33 @@ void SEModel::compute_seq_scores() {
 }
 
 void SEModel::compute_seq_scores_minimal() {
+	double ap = separams.weight * motif.get_search_space_size(); 
+	ap += (1 - separams.weight) * motif.number();
+	ap /= 2.0 * motif.positions_in_search_space();
 	double* score_matrix = new double[4 * motif.ncols()];
 	calc_matrix(score_matrix);
 	int width = motif.get_width();
-	double L, bestL;
-	bestL = -DBL_MAX;
-	seqranks.clear();
+	double Lw, Lc, Pw, Pc, F;
 	for(int g = 0; g < seqset.num_seqs(); g++) {
 		// Some best positions might have been invalidated by column sampling
 		// We mark these as invalid and don't score them
-		if(bestpos[g] >= 0 || bestpos[g] + width <= seqset.len_seq(g)) {
-			L = score_site(score_matrix, g, bestpos[g], beststrand[g]);
+		if(bestpos[g] >= 0 && bestpos[g] + width <= seqset.len_seq(g)) {
+			Lw = score_site(score_matrix, g, bestpos[g], 1);
+			Lc = score_site(score_matrix, g, bestpos[g], 0);
+			Pw = Lw * ap/(1.0 - ap + Lw * ap);
+			Pc = Lc * ap/(1.0 - ap + Lc * ap);
+			F = Pw + Pc - Pw * Pc;
 		} else {
 			bestpos[g] = -1;
-			L = -DBL_MAX;
+			F = 0.0;
 		}
-		seqscores[g] = L;
-		struct idscore ids = {g, seqscores[g]};
-		seqranks.push_back(ids);
-		if(bestL <= L) bestL = L;
+		seqscores[g] = F;
+		seqranks[g].id = g;
+		seqranks[g].score = seqscores[g];
 	}
 	delete [] score_matrix;
 	sort(seqranks.begin(), seqranks.end(), isc);
-	if(bestL/topL <= 0.85)
+	if(seqranks[0].score < 0.85)
 		compute_seq_scores();
 	else
 		update_seq_count();
@@ -622,7 +588,7 @@ double SEModel::matrix_score() {
 
 double SEModel::over_score() {
 	double os = 0.0;
-	double map_N = motif.positions_available(possible);  
+	double map_N = motif.positions_in_search_space();  
 	double w = separams.weight/(1.0-separams.weight);
 	double map_alpha = (double) separams.expect * w;
 	double map_beta = map_N * w - map_alpha;
@@ -633,7 +599,7 @@ double SEModel::over_score() {
 }
 
 double SEModel::spec_score() {
-	return -log_prob_overlap(motif.get_above_cutoffs(), motif.get_possible(), motif.get_above_seqc(), ngenes);
+	return -log_prob_overlap(motif.get_above_cutoffs(), motif.get_search_space_size(), motif.get_above_seqc(), ngenes);
 }
 
 void SEModel::output_params(ostream &fout){
@@ -693,12 +659,12 @@ int SEModel::search_for_motif_expr(const int worker, const int iter, const strin
 	}
 
 	motif.set_expr_cutoff(0.8);
-	adjust_search_space();
-	while(possible_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
+	compute_expr_scores();
+	while(motif.get_search_space_size() < separams.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
 		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
 		adjust_search_space();
 	}
-	if(possible_size() < 2) {
+	if(motif.get_search_space_size() < 2) {
 		cerr << "\t\t\tBad search start -- no genes within " << separams.mincorr << '\n';
 		return BAD_SEARCH_SPACE;
 	}
@@ -715,10 +681,11 @@ int SEModel::search_for_motif_expr(const int worker, const int iter, const strin
 	phase = 1;
 	for(i = 1; i < 10000 && phase < 3; i++) {
 		adjust_search_space();
-		if(i_worse == 0)
+		if(i_worse == 0) {
 			single_pass(false);
-		else
+		} else {
 			single_pass_select(false);
+		}
 		for(int j = 0; j < 3; j++)
 			if(! column_sample(true, true)) break;
 		compute_seq_scores_minimal();
@@ -847,11 +814,10 @@ int SEModel::search_for_motif_subset(const int worker, const int iter, const str
 		motif.set_motif_score(score());
 		print_status(cerr, i, phase);
 		r = ran_dbl.rnum();
-		if(r > 0.5) {
+		if(r > 0.5)
 			column_sample(true, false);
-		} else {
+		else
 			column_sample(false, true);
-		}
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting...\n";
 			return TOO_MANY_SITES;
@@ -980,7 +946,6 @@ int SEModel::search_for_motif_score(const int worker, const int iter, const stri
 		if(size() < 2) {
 			cerr << "\t\t\tZero or one sites, reloading best motif...\n";
 			phase++;
-			best_motif.set_seq_cutoff(separams.minprob[phase]);
 			motif = best_motif;
 			select_sites = best_motif;
 			compute_seq_scores();
@@ -1073,7 +1038,7 @@ void SEModel::print_status(ostream& out, const int i, const int phase) {
 	out << setw(7) << motif.seqs_with_sites();
 	out << setw(7) << motif.get_above_cutoffs();
 	out << setw(7) << motif.get_above_seqc();
-	out << setw(7) << motif.get_possible();
+	out << setw(7) << motif.get_search_space_size();
 	if(size() > 0) {
 		out << setw(50) << motif.consensus();
 		out << setw(15) << setprecision(10) << motif.get_motif_score();
@@ -1108,17 +1073,17 @@ void SEModel::set_seq_cutoff(const int phase) {
 	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
 	for(seqcut = sr_iter->score; sr_iter->score >= separams.minprob[phase] && sr_iter != seqranks.end(); ++sr_iter) {
 		if(seqcut >= sr_iter->score) {
-			assert(isect <= motif.get_possible());
+			assert(isect <= motif.get_search_space_size());
 			assert(isect <= seqn);
-			po = log_prob_overlap(isect, motif.get_possible(), seqn, ngenes);
-			// cerr << "\t\t\t" << motif.get_score_cutoff() << '\t' << seqcut << '\t' << motif.get_possible() << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
+			po = log_prob_overlap(isect, motif.get_search_space_size(), seqn, ngenes);
+			// cerr << "\t\t\t" << motif.get_score_cutoff() << '\t' << seqcut << '\t' << motif.get_search_space_size() << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
 			if(po < best_po) {
 				best_seqcut = seqcut;
 				best_po = po;
 			}
 		}
 		seqn++;
-		if(is_in_search_space(sr_iter->id))
+		if(motif.in_search_space(sr_iter->id))
 			isect++;
 		seqcut = sr_iter->score;
 	}
@@ -1178,19 +1143,3 @@ void SEModel::set_score_cutoff(const int phase) {
 	motif.set_score_cutoff(best_sccut);
 	adjust_search_space();
 }
-
-void SEModel::check_possible() const {
-	int poss_cnt = 0;
-	vector<bool>::const_iterator poss_iter = possible.begin();
-	for(; poss_iter != possible.end(); ++poss_iter) {
-		if(*poss_iter) poss_cnt++;
-	}
-	assert(poss_cnt == motif.get_possible());
-}
-
-void SEModel::print_possible(ostream& out) const {
-	for(int g = 0; g < ngenes; g++)
-		if(is_in_search_space(g)) out << nameset[g] << endl;
-}
-
-

@@ -42,7 +42,6 @@ class SEModel {
 	int search_type;
 	vector<string> nameset;
 	int ngenes;
-	vector<bool> possible;
 	
 	/* Sequence model */
 	SEParams separams;
@@ -79,11 +78,10 @@ class SEModel {
 	float stdev_sc;
 	vector<float> cumul_scores;
 	vector<double> seqscores;
-	double topL;
 	vector<int> bestpos;
 	vector<bool> beststrand;
 	vector<struct idscore> seqranks;
-	vector<double> expscores;
+	vector<float> expscores;
 	vector<struct idscore> expranks;
 	vector<struct idscore> scranks;
 	
@@ -92,8 +90,6 @@ class SEModel {
 	void set_seq_cutoff(const int phase);
 	void set_expr_cutoff();
 	void set_score_cutoff(const int phase);
-	void check_possible() const;
-  void print_possible(ostream& out) const;
 	
  public:
 	/* Return codes for search */
@@ -118,15 +114,10 @@ class SEModel {
 	ArchiveSites& get_archive() { return archive; };
 	
 	/* Manage search space */
-	void add_to_search_space(const int gene);                     // Add gene to search space
-	void remove_from_search_space(const int gene);                // Remove gene from search space
-	void clear_search_space();                                    // Remove all genes from search space
 	void reset_search_space();                                    // Set search space back to initial conditions
 	void adjust_search_space();                                   // Set search space according to current cutoffs
-	bool is_in_search_space(const int gene) const;					      // Return whether this gene is a potential member
-	int possible_size() const;															      // Return number of potential members
 	int total_positions() const;														      // Return total number of possible positions
-	int possible_positions() const;													      // Return number of potential positions
+	int positions_in_search_space() const;											  // Return number of potential positions
 	void clear_sites();																			      // Remove all sites currently in model
 	bool is_member(const int gene) const;										      // Return whether the gene is a member
 	int size() const;                                             // Return number of genes

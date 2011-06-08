@@ -15,10 +15,11 @@ class Motif {
   vector<int> columns;                     // columns in this motif
 	int num_seqs_with_sites;                 // number of sequences with sites
 	vector<int> has_sites;                   // number of sites in each sequence
+	vector<bool> possible;                   // whether or not each sequence is in search space
 	
 	double motif_score;                      // score of this motif
 	int above_seqc;													 // number of sequences above sequence threshold
-	int possible;                            // number of sequences in search space
+	int ssp_size;                            // number of sequences in search space
   int above_cutoffs;                       // number of sequences above both cutoffs
 	double seq_cutoff;                       // sequence cutoff for this motif
 	double expr_cutoff;                      // expression cutoff for this motif
@@ -45,10 +46,11 @@ public:
 	void set_motif_score(const double sc) { motif_score = sc; }
 	void set_above_seqc(const int sc) { above_seqc = sc; }
 	int get_above_seqc() const { return above_seqc; }
-	void set_possible(const int p) { possible = p; }
-	void inc_possible() { possible++; }
-	void dec_possible() { possible--; }
-	int get_possible() const { return possible; }
+	int get_search_space_size() const { return ssp_size; }
+	bool in_search_space(const int g) { return possible[g]; }
+	void clear_search_space();                                 // Remove all genes from search space
+	void add_to_search_space(const int g);                     // Add gene to search space
+	void remove_from_search_space(const int g);                // Remove gene from search space
   void set_above_cutoffs(const int ac) { above_cutoffs = ac; }
   int get_above_cutoffs() const { return above_cutoffs; }
  	double get_seq_cutoff() const { return seq_cutoff; }
@@ -65,9 +67,9 @@ public:
 	void add_site(const int c, const int p, const bool s);
   void clear_sites();
 	void remove_all_sites();
-  void calc_freq_matrix(int *fm) const;
+  void calc_freq_matrix(int* fm) const;
   void freq_matrix_extended(vector<float>& fm) const;
-	void calc_score_matrix(double *sm, double* pseudo) const;
+	void calc_score_matrix(double* sm, double* pseudo) const;
 	double score_site(double* score_matrix, const int c, const int p, const bool s) const;
 	double compare(const Motif& other);
   int column(const int i) const { return columns[i]; };
@@ -80,8 +82,8 @@ public:
   void shift_sites(const int shift);
   void flip_sites();
 	void orient();
-  int positions_available() const;
-	int positions_available(const vector<bool>& possible) const;
+  int total_positions() const;
+	int positions_in_search_space() const;
   void columns_open(int &l, int &r);
 	string consensus() const;                                                // Return the consensus sequence for the current set of sites
 	void read(istream& motin);                                               // Read list of sites from a stream
@@ -89,6 +91,7 @@ public:
 	void destroy();
 	void print_columns(ostream& out);
 	bool check_sites();
+	void check_possible();
 };
 
 #endif
