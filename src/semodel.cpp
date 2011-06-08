@@ -289,7 +289,7 @@ void SEModel::single_pass(bool greedy) {
 			Lc = score_site(score_matrix, g, j, 0);
 			Pw = Lw * ap/(1.0 - ap + Lw * ap);
 			Pc = Lc * ap/(1.0 - ap + Lc * ap);
-			F = Pw + Pc - Pw * Pc;//probability of either
+			F = Pw + Pc - Pw * Pc;
 			if(g == gadd && j < jadd + width) continue;
 			if(F > motif.get_seq_cutoff()/5.0) select_sites.add_site(g, j, true);
 			if(F < motif.get_seq_cutoff()) continue;
@@ -354,7 +354,7 @@ void SEModel::single_pass_select(bool greedy) {
 		Lc = score_site(score_matrix, g, j, 0);
 		Pw = Lw * ap/(1.0 - ap + Lw * ap);
 		Pc = Lc * ap/(1.0 - ap + Lc * ap);
-		F = Pw + Pc - Pw * Pc;//probability of either
+		F = Pw + Pc - Pw * Pc;
 		if(g == gadd && j < jadd + width) continue;
 		if(F <= motif.get_seq_cutoff()) continue;
 		Pw = F * Pw / (Pw + Pc);
