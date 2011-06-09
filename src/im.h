@@ -33,3 +33,4 @@ void print_ace(ostream& out, MotifSearch* se);
 void print_ace_status(ostream& out, MotifSearch* a, const int i, const int phase, const double cutoff, const double sc);
 void print_motifs(ostream& out, const vector<string>& nameset);
 void print_usage(ostream& fout);
+

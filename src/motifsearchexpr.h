@@ -20,3 +20,4 @@ public:
 	int search_for_motif(const int worker, const int iter, const string outfile);
   void print_status(ostream& out, const int i, const int phase);
 };
+
