@@ -125,14 +125,11 @@ int main(int argc, char *argv[]) {
 	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.8;
 	MotifSearch* ms;
 	if(search_type == EXPRESSION) {
-		MotifSearchExpr msex(nameset1, seqs, ncol, order, simcut, expr, npoints);
-		ms = &msex;
+		ms = new MotifSearchExpr(nameset1, seqs, ncol, order, simcut, expr, npoints);
 	} else if(search_type == SCORE) {
-		MotifSearchScore mssc(nameset1, seqs, ncol, order, simcut, scores);
-		ms = &mssc;
+		ms = new MotifSearchScore(nameset1, seqs, ncol, order, simcut, scores);
 	} else {
-		MotifSearchSubset mssu(nameset1, seqs, ncol, order, simcut, subset);
-		ms = &mssu;
+		ms = new MotifSearchSubset(nameset1, seqs, ncol, order, simcut, subset);
 	}
 	ms->modify_params(argc, argv);
 	ms->set_final_params();
@@ -200,6 +197,7 @@ int main(int argc, char *argv[]) {
 			ms->search_for_motif(worker, j, outfile);
 		}
 	}
+	delete ms;
 	return 0;
 }
 
