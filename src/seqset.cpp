@@ -4,24 +4,25 @@
 #include "seqset.h"
 
 Seqset::Seqset() : 
-ss_num_seqs(0),
-ss_seq(ss_num_seqs) {
+nseqs(0),
+seqs(nseqs),
+seq_lens(nseqs) {
 }
 
 Seqset::Seqset(const vector<string>& v) :
-ss_num_seqs(v.size()),
-ss_seq(ss_num_seqs) {
+nseqs(v.size()),
+seqs(nseqs),
+seq_lens(nseqs) {
 	map<char, int> nt;
 	nt['A'] = nt['a'] = 0;
 	nt['C'] = nt['c'] = 1;
 	nt['G'] = nt['g'] = 2;
 	nt['T'] = nt['t'] = 3;
-  int len;
-	for(int i = 0; i < ss_num_seqs; i++) {
-		len = v[i].length();
-		ss_seq[i].reserve(len);
-    for(int j = 0; j < len; j++) {
-			ss_seq[i].push_back(nt[v[i][j]]);
+	for(int i = 0; i < nseqs; i++) {
+		seq_lens[i] = v[i].length();
+		seqs[i].reserve(seq_lens[i]);
+    for(int j = 0; j < seq_lens[i]; j++) {
+			seqs[i].push_back(nt[v[i][j]]);
     }
 	}
 }
