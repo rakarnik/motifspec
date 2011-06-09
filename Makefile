@@ -4,7 +4,7 @@
 CC = /usr/bin/g++
 CC_OPTIONS = -O3 -Wall -Wextra
 CC_DEBUG_OPTIONS = -O0 -g -pg -Wall -Wextra
-LNK_OPTIONS =
+LNK_OPTIONS = -pg
 LNK_DEBUG_OPTIONS = -pg
 
 #
@@ -24,7 +24,10 @@ im: \
 		bin/bgmodel.o\
 		bin/im.o\
 		bin/motif.o\
-		bin/semodel.o\
+		bin/motifsearch.o\
+		bin/motifsearchexpr.o\
+		bin/motifsearchscore.o\
+		bin/motifsearchsubset.o\
 		bin/seqset.o\
 		bin/site.o\
 		bin/standard.o
@@ -33,7 +36,10 @@ im: \
 		bin/bgmodel.o\
 		bin/im.o\
 		bin/motif.o\
-		bin/semodel.o\
+		bin/motifsearch.o\
+		bin/motifsearchexpr.o\
+		bin/motifsearchscore.o\
+		bin/motifsearchsubset.o\
 		bin/seqset.o\
 		bin/site.o\
 		bin/standard.o\
@@ -44,7 +50,10 @@ im-debug: \
 		debug/bgmodel.o\
 		debug/im.o\
 		debug/motif.o\
-		debug/semodel.o\
+		debug/motifsearch.o\
+		debug/motifsearchexpr.o\
+		debug/motifsearchscore.o\
+		debug/motifsearchsubset.o\
 		debug/seqset.o\
 		debug/site.o\
 		debug/standard.o
@@ -53,7 +62,10 @@ im-debug: \
 		debug/bgmodel.o\
 		debug/im.o\
 		debug/motif.o\
-		debug/semodel.o\
+		debug/motifsearch.o\
+		debug/motifsearchexpr.o\
+		debug/motifsearchscore.o\
+		debug/motifsearchsubset.o\
 		debug/seqset.o\
 		debug/site.o\
 		debug/standard.o\
@@ -74,11 +86,20 @@ bin/im.o: src/im.h src/im.cpp
 bin/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_OPTIONS) src/motif.cpp -c $(INCLUDE) -o bin/motif.o
 
+bin/motifsearch.o: src/motifsearch.h src/motifsearch.cpp
+	$(CC) $(CC_OPTIONS) src/motifsearch.cpp -c $(INCLUDE) -o bin/motifsearch.o
+
+bin/motifsearchexpr.o: src/motifsearchexpr.h src/motifsearchexpr.cpp
+	$(CC) $(CC_OPTIONS) src/motifsearchexpr.cpp -c $(INCLUDE) -o bin/motifsearchexpr.o
+
+bin/motifsearchscore.o: src/motifsearchscore.h src/motifsearchscore.cpp
+	$(CC) $(CC_OPTIONS) src/motifsearchscore.cpp -c $(INCLUDE) -o bin/motifsearchscore.o
+
+bin/motifsearchsubset.o: src/motifsearchsubset.h src/motifsearchsubset.cpp
+	$(CC) $(CC_OPTIONS) src/motifsearchsubset.cpp -c $(INCLUDE) -o bin/motifsearchsubset.o
+
 bin/seqset.o: src/seqset.h src/seqset.cpp
 	$(CC) $(CC_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o bin/seqset.o
-
-bin/semodel.o: src/semodel.h src/semodel.cpp
-	$(CC) $(CC_OPTIONS) src/semodel.cpp -c $(INCLUDE) -o bin/semodel.o
 
 bin/site.o: src/site.h src/site.cpp
 	$(CC) $(CC_OPTIONS) src/site.cpp -c $(INCLUDE) -o bin/site.o
@@ -101,11 +122,20 @@ debug/im.o: src/im.h src/im.cpp
 debug/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/motif.cpp -c $(INCLUDE) -o debug/motif.o
 
+debug/motifsearch.o: src/motifsearch.h src/motifsearch.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/motifsearch.cpp -c $(INCLUDE) -o debug/motifsearch.o
+
+debug/motifsearchexpr.o: src/motifsearchexpr.h src/motifsearchexpr.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/motifsearchexpr.cpp -c $(INCLUDE) -o debug/motifsearchexpr.o
+
+debug/motifsearchscore.o: src/motifsearchscore.h src/motifsearchscore.cpp
+	$(CC) $(CC_OPTIONS) src/motifsearchscore.cpp -c $(INCLUDE) -o debug/motifsearchscore.o
+
+debug/motifsearchsubset.o: src/motifsearchsubset.h src/motifsearchsubset.cpp
+	$(CC) $(CC_OPTIONS) src/motifsearchsubset.cpp -c $(INCLUDE) -o debug/motifsearchsubset.o
+
 debug/seqset.o: src/seqset.h src/seqset.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o debug/seqset.o
-
-debug/semodel.o: src/semodel.h src/semodel.cpp
-	$(CC) $(CC_DEBUG_OPTIONS) src/semodel.cpp -c $(INCLUDE) -o debug/semodel.o
 
 debug/site.o: src/site.h src/site.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/site.cpp -c $(INCLUDE) -o debug/site.o

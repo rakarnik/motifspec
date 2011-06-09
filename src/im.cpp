@@ -119,14 +119,24 @@ int main(int argc, char *argv[]) {
 		cerr << "Successfully read input files -- dataset size is " << ngenes << " scored sequences\n";
 	}
 
-	cerr << "Setting up SEModel... ";
+	cerr << "Setting up MotifSearch... ";
 	if(! GetArg2(argc, argv, "-numcols", ncol)) ncol = 10;
 	if(! GetArg2(argc, argv, "-order", order)) order = 0;
 	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.8;
-	SEModel se(search_type, nameset1, seqs, expr, subset, scores, npoints, ncol, order, simcut);
-	se.modify_params(argc, argv);
-	se.set_final_params();
-	se.ace_initialize();
+	MotifSearch* ms;
+	if(search_type == EXPRESSION) {
+		MotifSearchExpr msex(nameset1, seqs, ncol, order, simcut, expr, npoints);
+		ms = &msex;
+	} else if(search_type == SCORE) {
+		MotifSearchScore mssc(nameset1, seqs, ncol, order, simcut, scores);
+		ms = &mssc;
+	} else {
+		MotifSearchSubset mssu(nameset1, seqs, ncol, order, simcut, subset);
+		ms = &mssu;
+	}
+	ms->modify_params(argc, argv);
+	ms->set_final_params();
+	ms->ace_initialize();
 	cerr << "done.\n";
 
 	if(archive) {
@@ -136,19 +146,19 @@ int main(int argc, char *argv[]) {
 		ifstream archin(archinstr.c_str());
 		if(archin) {
 			cerr << "Refreshing from existing archive file " << archinstr << "... ";
-			se.get_archive().read(archin);
+			ms->get_archive().read(archin);
 			cerr << "done.\n";
 		}
 		while(true) {
-			int found = read_motifs(se);
-			if(found > 0) output(se);
+			int found = read_motifs(ms);
+			if(found > 0) output(ms);
 			sleep(60);
 		}
 	} else {
 		cerr << "Running as worker " << worker << "...\n";
-		int nruns = se.positions_in_search_space()/(se.get_params().expect * ncol);
-		nruns *= se.get_params().oversample;
-		nruns /= se.get_params().undersample;
+		int nruns = ms->positions_in_search_space()/(ms->get_params().expect * ncol);
+		nruns *= ms->get_params().oversample;
+		nruns /= ms->get_params().undersample;
 		cerr << "Restarts planned: " << nruns << '\n';
 		string archinstr(outfile);
 		archinstr.append(".adj.ace");
@@ -175,25 +185,25 @@ int main(int argc, char *argv[]) {
 					ifstream archin(archinstr.c_str());
 					if(archin) {
 						cerr << "\t\tRefreshing archive from " << archinstr << "...";
-						se.get_archive().clear();
-						se.get_archive().read(archin);
+						ms->get_archive().clear();
+						ms->get_archive().read(archin);
 						archin.close();
 						cerr << "done.\n";
 					}
 					fl.l_type = F_UNLCK;
 					fcntl(fd, F_SETLK, &fl);
 					close(fd);
-					cerr << "\t\tArchive now has " << se.get_archive().nmots() << " motifs\n";
+					cerr << "\t\tArchive now has " << ms->get_archive().nmots() << " motifs\n";
 				}
 			}
 			cerr << "\t\tSearch restart #" << j << "/" << nruns << "\n";
-			se.search_for_motif(worker, j, outfile);
+			ms->search_for_motif(worker, j, outfile);
 		}
 	}
 	return 0;
 }
 
-int read_motifs(SEModel& se) {
+int read_motifs(MotifSearch* ms) {
 	DIR* workdir;
 	struct dirent* dirp;
 	string filename;
@@ -219,7 +229,7 @@ int read_motifs(SEModel& se) {
 			// check motif against archive, then move to "mots" directory
 			string newname("mots/");
 			newname.append(filename.c_str());
-			if(se.consider_motif(filename.c_str())) {
+			if(ms->consider_motif(filename.c_str())) {
 				cerr << "Motif was added\n";
 				nmot++;
 			} else {
@@ -235,7 +245,7 @@ int read_motifs(SEModel& se) {
 	return nmot;
 }
 
-void output(SEModel& se) {
+void output(MotifSearch* ms) {
 	string tmpstr(outfile);
 	string outstr(outfile);
 	string lockstr(outfile);
@@ -243,7 +253,7 @@ void output(SEModel& se) {
 	outstr.append(".adj.ace");
 	lockstr.append(".lock");
 	ofstream tmp(tmpstr.c_str(), ios::trunc);
-	print_ace(tmp, se);
+	print_ace(tmp, ms);
 	tmp.close();
 	struct flock fl;
 	int fd;
@@ -264,18 +274,18 @@ void output(SEModel& se) {
 	close(fd);
 }
 
-void print_full_ace(ostream& out, SEModel& se) {
+void print_full_ace(ostream& out, MotifSearch* ms) {
 	out << "Parameter values:\n";
-  se.output_params(out);
+  ms->output_params(out);
   out << "\nInput sequences:\n";
-  for(unsigned int x = 0; x < se.names().size(); x++)
-		out << "#" << x << '\t' << (se.names())[x] << endl;
+  for(unsigned int x = 0; x < ms->names().size(); x++)
+		out << "#" << x << '\t' << (ms->names())[x] << endl;
   out << '\n';
-  se.full_output(out);
+  ms->full_output(out);
 }
 
-void print_ace(ostream& out, SEModel& se) {
-	se.full_output(out);
+void print_ace(ostream& out, MotifSearch* ms) {
+	ms->full_output(out);
 }
 
 void print_usage(ostream& fout) {
