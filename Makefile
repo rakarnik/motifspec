@@ -2,7 +2,7 @@
 # Macros
 #
 CC = /usr/bin/g++
-CC_OPTIONS = -O3 -Wall -Wextra
+CC_OPTIONS = -O3 -DNDEBUG -Wall -Wextra
 CC_DEBUG_OPTIONS = -O0 -g -pg -Wall -Wextra
 LNK_OPTIONS = -pg
 LNK_DEBUG_OPTIONS = -pg
@@ -129,10 +129,10 @@ debug/motifsearchexpr.o: src/motifsearchexpr.h src/motifsearchexpr.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/motifsearchexpr.cpp -c $(INCLUDE) -o debug/motifsearchexpr.o
 
 debug/motifsearchscore.o: src/motifsearchscore.h src/motifsearchscore.cpp
-	$(CC) $(CC_OPTIONS) src/motifsearchscore.cpp -c $(INCLUDE) -o debug/motifsearchscore.o
+	$(CC) $(CC_DEBUG_OPTIONS) src/motifsearchscore.cpp -c $(INCLUDE) -o debug/motifsearchscore.o
 
 debug/motifsearchsubset.o: src/motifsearchsubset.h src/motifsearchsubset.cpp
-	$(CC) $(CC_OPTIONS) src/motifsearchsubset.cpp -c $(INCLUDE) -o debug/motifsearchsubset.o
+	$(CC) $(CC_DEBUG_OPTIONS) src/motifsearchsubset.cpp -c $(INCLUDE) -o debug/motifsearchsubset.o
 
 debug/seqset.o: src/seqset.h src/seqset.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/seqset.cpp -c $(INCLUDE) -o debug/seqset.o
