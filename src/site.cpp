@@ -8,3 +8,20 @@ chr(c),
 pos(p),
 str(s) {
 }
+
+Site::Site(const Site& s) :
+chr(s.chr),
+pos(s.pos),
+str(s.str) {
+	*this = s;
+}
+
+Site& Site::operator= (const Site& s) {
+	if(this != &s) {
+		chr = s.chr;
+		pos = s.pos;
+		str = s.str;
+	}
+	return *this;
+}
+
