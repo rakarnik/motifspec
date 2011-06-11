@@ -8,7 +8,7 @@ class MotifSearchExpr : public MotifSearch {
 	vector<struct idscore> expranks;                              // Ranked list of sequences by expression score
 	
 	void calc_mean();                                             // Calculate the mean expression pattern
-	void compute_expr_scores();                  // Calculate expression scores for sequences
+	void compute_expr_scores();                                   // Calculate expression scores for sequences
 	
 public:
 	MotifSearchExpr(const vector<string>& names, const vector<string>& seqs,
