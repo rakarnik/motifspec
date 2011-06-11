@@ -3,7 +3,6 @@
 
 #include "standard.h"
 #include "seqset.h"
-#include "motif.h"
 
 class BGModel {
 	const Seqset& seqset;
@@ -41,7 +40,7 @@ public:
 	float tot_seq_len() const { return total_seq_len; }           // Return total length of all sequences
 	float gcgenome() const { return gc_genome; }                  // Return overall GC content
 	float gccontent(const int i) const { return gc[i]; }          // Return GC content of a specified sequence
-	double score_site(Motif& motif, const int c, const int p, const bool s);
+	double score_site(vector<int>::const_iterator first_col, vector<int>::const_iterator last_col, const int width, const int c, const int p, const bool s) const;
 	vector<vector <float> > const& get_cumulscores() const { return cumulscores; }
 };
 

@@ -64,12 +64,11 @@ cumulscores(seqset.num_seqs()) {
 	}
 }
 
-double BGModel::score_site(Motif& motif, const int c, const int p, const bool s) {
+double BGModel::score_site(vector<int>::const_iterator first_col, vector<int>::const_iterator last_col, const int width,
+													 const int c, const int p, const bool s) const {
 	double L = 0.0;
-	int width = motif.get_width();
 	int matpos;
-	vector<int>::iterator col_iter = motif.first_column();
-	vector<int>::iterator last_col = motif.last_column();
+	vector<int>::const_iterator col_iter = first_col;
 	if(s) {
 		matpos = 0;
 		for(; col_iter != last_col; ++col_iter) {
