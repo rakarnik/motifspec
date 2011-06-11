@@ -29,11 +29,10 @@ void MotifSearchExpr::calc_mean() {
 
 void MotifSearchExpr::compute_expr_scores() {
 	calc_mean();
-	expranks.clear();
 	for(int g = 0; g < ngenes; g++) {
 		expscores[g] = corr(mean, expr[g]);
-		struct idscore ids = {g, expscores[g]};
-		expranks.push_back(ids);
+		expranks[g].id = g;
+		expranks[g].score = expscores[g];
 	}
 	sort(expranks.begin(), expranks.end(), isc);
 	adjust_search_space();
