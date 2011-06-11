@@ -4,7 +4,7 @@ Motif::Motif() :
 seqset(Seqset()) {
 }
 
-Motif::Motif(const Seqset& s, int nc, double* p) :
+Motif::Motif(const Seqset& s, const int nc, const double* p) :
 seqset(s),
 init_nc(nc),
 pseudo(p),
@@ -400,7 +400,7 @@ void Motif::freq_matrix_extended(vector<float>& fm) const {
   for(i = 0; i < fm_size; i++) fm[i] /= (double) number();
 }
 
-void Motif::calc_score_matrix(double *sm, double* pseudo) const {
+void Motif::calc_score_matrix(double *sm) const {
 	int* fm = new int[4 * ncols()];
 	double tot = (double) number();
 	for(int j = 0; j < 4; j++) {
@@ -596,6 +596,107 @@ void Motif::print_columns(ostream& out) {
 		out << " " << *col_iter;
 }
 
+double Motif::compare(const Motif& other, const BGModel& bgm) {
+	vector<float> scores;
+	vector<float> means;
+	vector<float> other_scores;
+	vector<float> other_means;
+	vector<float> bgscores;
+	int c, p, window_size;
+	int olap = 2; // overlap required between motifs
+	bool s;
+	float sc, bgsc, max_sc, mean_sc;
+	int j;
+	
+	// Set up score matrices
+	double* sm = new double[4 * ncols()];
+	calc_score_matrix(sm);
+	double* other_sm = new double[4 * other.ncols()];
+	other.calc_score_matrix(other_sm);
+	
+	// Score sites for this motif with both PWMs and background model
+	vector<Site>::iterator site_iter = sitelist.begin();
+	for(; site_iter != sitelist.end(); ++site_iter) {
+		c = site_iter->chrom();
+		p = site_iter->posit();
+		s = site_iter->strand();
+		max_sc = -INT_MAX;
+		mean_sc = 0.0;
+		j = 0;
+		window_size = other.width - olap;
+		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
+			sc = - score_site(sm, c, i, s);
+			bgsc = bgm.score_site(first_column(), last_column(), width, c, i, s);
+			sc += bgsc;
+			if(sc > max_sc) max_sc = sc;
+			mean_sc += sc;
+			j++;
+		}
+		mean_sc /= j;
+		scores.push_back(max_sc);
+		means.push_back(mean_sc);
+		
+		max_sc = -INT_MAX;
+		mean_sc = 0.0;
+		j = 0;
+		window_size = width - olap;
+		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
+			sc = - other.score_site(other_sm, c, i, s);
+			bgsc = bgm.score_site(other.first_column(), other.last_column(), other.get_width(), c, i, s);
+			sc += bgsc;
+			if(sc > max_sc) max_sc = sc;
+			mean_sc += sc;
+			j++;
+		}
+		mean_sc /= j;
+		other_scores.push_back(max_sc);
+		other_means.push_back(mean_sc);
+	}
+	
+	// Score sites for the other motif with both PWMs
+	vector<Site>::const_iterator other_site_iter = other.sitelist.begin();
+	for(; other_site_iter != other.sitelist.end(); ++other_site_iter) {
+		c = other_site_iter->chrom();
+		p = other_site_iter->posit();
+		s = other_site_iter->strand();
+		max_sc = -INT_MAX;
+		mean_sc = 0.0;
+		j = 0;
+		window_size = other.width - olap;
+		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - width - 1, p + window_size); i++) {
+			sc = - score_site(sm, c, i, s);
+			bgsc = bgm.score_site(first_column(), last_column(), width, c, i, s);
+			sc += bgsc;
+			if(sc > max_sc) max_sc = sc;
+			mean_sc += sc;
+			j++;
+		}
+		mean_sc /= j;
+		scores.push_back(max_sc);
+		means.push_back(mean_sc);
+		
+		max_sc = -INT_MAX;
+		mean_sc = 0.0;
+		j = 0;
+		window_size = width - olap;
+		for(int i = max(0, p - window_size); i < min(seqset.len_seq(c) - other.width - 1, p + window_size); i++) {
+			sc = - other.score_site(other_sm, c, i, s);
+			bgsc = bgm.score_site(other.first_column(), other.last_column(), other.get_width(), c, i, s);
+			sc += bgsc;
+			if(sc > max_sc) max_sc = sc;
+			mean_sc += sc;
+			j++;
+		}
+		mean_sc /= j;
+		other_scores.push_back(max_sc);
+		other_means.push_back(mean_sc);
+	}
+	delete [] sm;
+	delete [] other_sm;
+	
+	return corr(scores, other_scores);
+}
+
 bool Motif::check_sites() {
 	int c, p;
 	bool s;
@@ -610,33 +711,6 @@ bool Motif::check_sites() {
 		}
 	}
 	return true;
-}
-
-double Motif::compare(const Motif& other) {
-	int cols = 5;
-
-	int fm_size = (width + 2 * ncols()) * 4;
-	vector<float> fm(fm_size);
-	freq_matrix_extended(fm);
-
-	int other_fm_size = (other.get_width() + 2 * other.ncols()) * 4;
-	vector<float> other_fm(other_fm_size);
-	other.freq_matrix_extended(other_fm);
-	
-	double bestc = -1.1;
-	double c = 0.0;
-	for(int i = cols; i <= min(ncols(), other.ncols()); i++) {
-		for(int j = 0; j < fm_size - 4 * i; j += 4) {
-			for(int k = 0; k < other_fm_size - 4 * i; k += 4) {
-				c = corr(fm, other_fm, j, k, 4 * i);
-				if(c > bestc) {
-					bestc = c;
-				}
-			}
-		}
-	}
-
-	return bestc;
 }
 
 void Motif::check_possible() {

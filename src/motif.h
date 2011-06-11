@@ -3,11 +3,12 @@
 #include "standard.h"
 #include "seqset.h"
 #include "site.h"
+#include "bgmodel.h"
 
 class Motif {
 	const Seqset& seqset;                    // set of sequences that this motif refers to
 	int init_nc;                             // initial number of columns in this motif
-	double* pseudo;                          // pseudocounts to use for score calculations
+	const double* pseudo;                    // pseudocounts to use for score calculations
 	int width;															 // width of the motif (including non-informative columns)
   int num_seqs;                            // total number of sequences in this set
   int max_width;                           // maximum width of this motif
@@ -29,7 +30,7 @@ class Motif {
 
 public:
 	Motif();
-  Motif(const Seqset& v, int nc, double* p);
+  Motif(const Seqset& v, const int nc, const double* p);
   Motif(const Motif& m);
 	Motif& operator= (const Motif& m);
   int number() const { return sitelist.size(); }
@@ -69,12 +70,12 @@ public:
 	void remove_all_sites();
   void calc_freq_matrix(int* fm) const;
   void freq_matrix_extended(vector<float>& fm) const;
-	void calc_score_matrix(double* sm, double* pseudo) const;
+	void calc_score_matrix(double* sm) const;
 	double score_site(double* score_matrix, const int c, const int p, const bool s) const;
-	double compare(const Motif& other);
+	double compare(const Motif& other, const BGModel& bgm);
   int column(const int i) const { return columns[i]; };
-	vector<int>::iterator first_column() { return columns.begin(); };
-	vector<int>::iterator last_column() { return columns.end(); };
+	vector<int>::const_iterator first_column() const { return columns.begin(); };
+	vector<int>::const_iterator last_column() const { return columns.end(); };
   bool column_freq(const int col, int *ret);
   int remove_col(const int c);
 	void add_col(const int c);

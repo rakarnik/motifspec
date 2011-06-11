@@ -11,7 +11,7 @@ seqset(seqs),
 bgmodel(seqset, order),
 motif(seqset, nc, params.pseudo),
 select_sites(seqset, nc, params.pseudo),
-archive(seqset, sim_cut, params.pseudo),
+archive(seqset, bgmodel, sim_cut, params.pseudo),
 seqscores(ngenes),
 seqranks(ngenes),
 bestpos(ngenes),
@@ -147,12 +147,12 @@ void MotifSearch::seed_random_site() {
 }
 
 void MotifSearch::calc_matrix(double* score_matrix) {
-	motif.calc_score_matrix(score_matrix, params.pseudo);
+	motif.calc_score_matrix(score_matrix);
 }
 
 double MotifSearch::score_site(double* score_matrix, const int c, const int p, const bool s) {
 	double ms = motif.score_site(score_matrix, c, p, s);
-	double bs = bgmodel.score_site(motif, c, p, s);
+	double bs = bgmodel.score_site(motif.first_column(), motif.last_column(), motif.get_width(), c, p, s);
 	return exp(ms - bs);
 }
 
