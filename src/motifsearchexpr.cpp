@@ -121,7 +121,7 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 	Motif best_motif = motif;
 	
 	int i, i_worse = 0;
-	double r = 0.0;
+	// double r = 0.0;
 	phase = 1;
 	for(i = 1; i < 10000 && phase < 3; i++) {
 		adjust_search_space();
@@ -136,12 +136,14 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 		compute_expr_scores();
 		motif.set_motif_score(score());
 		print_status(cerr, i, phase);
+		/*
 		r = ran_dbl.rnum();
 		if(r > 0.5) {
 			column_sample(true, false);
 		} else {
 			column_sample(false, true);
 		}
+		*/
 		if(size() > ngenes/3) {
 			cerr << "\t\t\tToo many sites! Restarting...\n";
 			return TOO_MANY_SITES;
