@@ -71,7 +71,7 @@ Motif* ArchiveSites::return_best(const int i) {
 }
 
 void ArchiveSites::clear() {
-	vector<Motif>().swap(archive);
+	archive.clear();
 }
 
 void ArchiveSites::read(istream& archin) {

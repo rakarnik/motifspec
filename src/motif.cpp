@@ -80,7 +80,7 @@ Motif& Motif::operator= (const Motif& m) {
 }
 
 void Motif::clear_sites() {
-	vector<Site>().swap(sitelist);
+	sitelist.clear();
 	vector<int>(init_nc).swap(columns);
 	vector<int>::iterator col_iter = columns.begin();
 	for(; col_iter != columns.end(); ++col_iter) {
