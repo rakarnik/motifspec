@@ -251,7 +251,7 @@ void output(MotifSearch* ms) {
 	outstr.append(".adj.ace");
 	lockstr.append(".lock");
 	ofstream tmp(tmpstr.c_str(), ios::trunc);
-	print_ace(tmp, ms);
+	print_full_ace(tmp, ms);
 	tmp.close();
 	struct flock fl;
 	int fd;
