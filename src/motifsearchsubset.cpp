@@ -37,7 +37,6 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 	motif.set_iter(iterstr.str());
 	int phase = 0;
 	
-	reset_search_space();
 	seed_random_site();
 	if(size() < 1) {
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
