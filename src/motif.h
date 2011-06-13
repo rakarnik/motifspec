@@ -8,7 +8,7 @@
 class Motif {
 	const Seqset& seqset;                    // set of sequences that this motif refers to
 	int init_nc;                             // initial number of columns in this motif
-	const double* pseudo;                    // pseudocounts to use for score calculations
+	const vector<double>& pseudo;            // pseudocounts to use for score calculations
 	int width;															 // width of the motif (including non-informative columns)
   int num_seqs;                            // total number of sequences in this set
   int max_width;                           // maximum width of this motif
@@ -29,8 +29,7 @@ class Motif {
 	int dejavu;                              // number of times this motif was seen
 
 public:
-	Motif();
-  Motif(const Seqset& v, const int nc, const double* p);
+  Motif(const Seqset& v, const int nc, const vector<double>& p);
   Motif(const Motif& m);
 	Motif& operator= (const Motif& m);
   int number() const { return sitelist.size(); }

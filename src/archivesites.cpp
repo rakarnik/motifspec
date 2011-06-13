@@ -3,13 +3,13 @@
 
 #include "archivesites.h"
 
-ArchiveSites::ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const double* pseudo) : 
+ArchiveSites::ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const vector<double>& p) : 
 seqset(seq),
 bgm(bgm),
-archive(0),
-arch_sim_cutoff(sim_cut),
-pseudo(pseudo),
-arch_min_visits(3) {
+archive(0, Motif(seq, 12, p)),
+sim_cutoff(sim_cut),
+pseudo(p),
+min_visits(3) {
 }
 
 bool ArchiveSites::check_motif(const Motif& m) {
@@ -17,7 +17,7 @@ bool ArchiveSites::check_motif(const Motif& m) {
 	vector<Motif>::iterator iter = archive.begin();
   for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter){
     cmp = iter->compare(m, bgm);
-		if(cmp > arch_sim_cutoff && iter->get_dejavu() >= arch_min_visits)
+		if(cmp > sim_cutoff && iter->get_dejavu() >= min_visits)
 			return false;
   }
   return true;
@@ -33,7 +33,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	vector<Motif>::iterator iter = archive.begin();
 	for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter) {
 		cmp = iter->compare(m, bgm);
-		if(cmp > arch_sim_cutoff) {
+		if(cmp > sim_cutoff) {
 			iter->inc_dejavu();
 			return false;
 		}
@@ -48,7 +48,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	while(iter != archive.end()) {
 		assert(m.get_motif_score() > iter->get_motif_score());
 		cmp = iter->compare(m1, bgm);
-		if(cmp > arch_sim_cutoff) {
+		if(cmp > sim_cutoff) {
 	 		iter = archive.erase(iter);
 			m1.inc_dejavu();
 			delcount++;

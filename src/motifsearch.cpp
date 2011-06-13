@@ -36,10 +36,12 @@ void MotifSearch::set_default_params(){
 
 void MotifSearch::set_final_params(){
 	params.npseudo = params.expect * params.psfact;
-	params.backfreq[0] = params.backfreq[3] = (1 - bgmodel.gcgenome())/2.0;
-	params.backfreq[1] = params.backfreq[2] = bgmodel.gcgenome()/2.0;
+	params.backfreq.push_back((1 - bgmodel.gcgenome())/2.0);
+	params.backfreq.push_back(bgmodel.gcgenome()/2.0);
+	params.backfreq.push_back(params.backfreq[0]);
+	params.backfreq.push_back(params.backfreq[1]);
 	for(int i = 0; i < 4; i++) {
-		params.pseudo[i] = params.npseudo * params.backfreq[i];
+		params.pseudo.push_back(params.npseudo * params.backfreq[i]);
 	}
 	params.maxlen = 3 * motif.get_width();
 	params.nruns = motif.total_positions() / params.expect / motif.ncols() / params.undersample * params.oversample;

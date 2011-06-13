@@ -6,8 +6,8 @@ struct SearchParams {
   double weight;				           // fractional weight on priors
   double psfact;				           // psfact * numsites=npseudo
   double npseudo;				           // number of pseudo counts
-  double backfreq[4];		           // array for gc content
-  double pseudo[4];                // pseudocounts for any frequency calculations
+  vector<double> backfreq;         // array for gc content
+  vector<double> pseudo;           // pseudocounts for any frequency calculations
   int maxlen;						           // maximum length of sites
   int npass;
   int minpass;

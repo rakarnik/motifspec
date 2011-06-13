@@ -1,10 +1,6 @@
 #include "motif.h"
 
-Motif::Motif() :
-seqset(Seqset()) {
-}
-
-Motif::Motif(const Seqset& s, const int nc, const double* p) :
+Motif::Motif(const Seqset& s, const int nc, const vector<double>& p) :
 seqset(s),
 init_nc(nc),
 pseudo(p),
@@ -59,7 +55,7 @@ Motif& Motif::operator= (const Motif& m) {
   if(this != &m){
     //assume that the same Seqset is referred to, so ignore some things
 		init_nc = m.init_nc;
-		pseudo = m.pseudo;
+		// pseudo = m.pseudo;
 		sitelist.assign(m.sitelist.begin(), m.sitelist.end());
 		num_seqs_with_sites = m.num_seqs_with_sites;
 		has_sites.assign(m.has_sites.begin(), m.has_sites.end());
