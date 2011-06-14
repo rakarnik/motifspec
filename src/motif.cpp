@@ -690,7 +690,7 @@ double Motif::compare(const Motif& other, const BGModel& bgm) {
 	delete [] sm;
 	delete [] other_sm;
 	
-	return corr(scores, other_scores);
+	return corr(means, other_means);
 }
 
 bool Motif::check_sites() {
