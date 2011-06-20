@@ -40,6 +40,7 @@ public:
   bool strand(int i) const { return sitelist[i].strand(); }
   int get_max_width() const { return max_width; }
 	bool is_open_site(const int c, const int p);
+	const vector<Site>&  sites() const { return sitelist; }
 	int seqs_with_sites() const { return num_seqs_with_sites; }
 	bool seq_has_site(const int c) const { return (has_sites[c] != 0); }
 	double get_motif_score() const { return motif_score; }
