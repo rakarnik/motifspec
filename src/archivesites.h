@@ -7,10 +7,12 @@
 #include "seqset.h"
 #include "bgmodel.h"
 #include "motif.h"
+#include "motifcompare.h"
 
 class ArchiveSites{
   const Seqset& seqset;
 	const BGModel& bgm;
+	const MotifCompare& mc;
 	vector<Motif> archive;
 	const double sim_cutoff;
 	const vector<double>& pseudo;

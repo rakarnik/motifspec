@@ -6,6 +6,7 @@
 ArchiveSites::ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const vector<double>& p) : 
 seqset(seq),
 bgm(bgm),
+mc(seqset),
 archive(0, Motif(seq, 12, p)),
 sim_cutoff(sim_cut),
 pseudo(p),
@@ -16,7 +17,7 @@ bool ArchiveSites::check_motif(const Motif& m) {
 	float cmp;
 	vector<Motif>::iterator iter = archive.begin();
   for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter){
-    cmp = iter->compare(m, bgm);
+    cmp = mc.compare(*iter, m, bgm);
 		if(cmp > sim_cutoff && iter->get_dejavu() >= min_visits)
 			return false;
   }
@@ -32,7 +33,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	int motnum = 0;
 	vector<Motif>::iterator iter = archive.begin();
 	for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter) {
-		cmp = iter->compare(m, bgm);
+		cmp = mc.compare(*iter, m, bgm);
 		if(cmp > sim_cutoff) {
 			iter->inc_dejavu();
 			return false;
@@ -47,7 +48,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	int delcount = 0;
 	while(iter != archive.end()) {
 		assert(m.get_motif_score() > iter->get_motif_score());
-		cmp = iter->compare(m1, bgm);
+		cmp = mc.compare(*iter, m1, bgm);
 		if(cmp > sim_cutoff) {
 	 		iter = archive.erase(iter);
 			m1.inc_dejavu();
