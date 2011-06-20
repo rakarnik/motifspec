@@ -93,7 +93,7 @@ bin/motif.o: src/motif.h src/motif.cpp
 bin/motifcompare.o: src/motifcompare.h src/motifcompare.cpp
 	$(CC) $(CC_OPTIONS) src/motifcompare.cpp -c $(INCLUDE) -o bin/motifcompare.o
 
-bin/motifsearch.o: src/motifsearch.h src/motifsearch.cpp
+bin/motifsearch.o: src/motifsearch.h src/motifsearch.cpp src/searchparams.h
 	$(CC) $(CC_OPTIONS) src/motifsearch.cpp -c $(INCLUDE) -o bin/motifsearch.o
 
 bin/motifsearchexpr.o: src/motifsearchexpr.h src/motifsearchexpr.cpp
@@ -132,7 +132,7 @@ debug/motif.o: src/motif.h src/motif.cpp
 debug/motifcompare.o: src/motifcompare.h src/motifcompare.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/motifcompare.cpp -c $(INCLUDE) -o debug/motifcompare.o
 
-debug/motifsearch.o: src/motifsearch.h src/motifsearch.cpp
+debug/motifsearch.o: src/motifsearch.h src/motifsearch.cpp src/searchparams.h
 	$(CC) $(CC_DEBUG_OPTIONS) src/motifsearch.cpp -c $(INCLUDE) -o debug/motifsearch.o
 
 debug/motifsearchexpr.o: src/motifsearchexpr.h src/motifsearchexpr.cpp
