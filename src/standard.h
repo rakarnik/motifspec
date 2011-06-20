@@ -3,6 +3,7 @@
 
 #ifndef _standard
 #define _standard
+
 #include <cassert>
 #include <iostream>
 #include <iomanip>
@@ -59,6 +60,8 @@ double lnfact(int n);
 double gammaln(double x);
 double stirlingln(int n);
 double logsum(double x, double y);
+float mean(const vector<float>& v);
+float stdev(const vector<float>& v);
 float corr(const vector<float>& expr1, const vector<float>& expr2);
 float corr(const vector<float>& expr1, const vector<float>& expr2, const unsigned int start1, const unsigned int start2, const unsigned int length);
 double find_cutoff(double sum, double sumsq, int num, int num_sdevs_below);
@@ -68,6 +71,7 @@ bool is_number(string s);
 string ace_consensus(const char* file, int mot_num);
 double ace_mapscore(const char* file, int mot_num);
 void alloc_error();
+
 #endif
 
 

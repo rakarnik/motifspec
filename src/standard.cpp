@@ -232,6 +232,26 @@ string reverse_comp(const string &forward){
 	return rev;
 }
 
+float mean(const vector<float>& v) {
+	float m = 0.0;
+	vector<float>::const_iterator viter = v.begin();
+	for(; viter != v.end(); ++viter)
+		m += *viter;
+	m /= v.size();
+	return m;
+}
+
+float stdev(const vector<float>& v) {
+	float m = mean(v);
+	float std = 0.0;
+	vector<float>::const_iterator viter = v.begin();
+	for(; viter != v.end(); ++viter)
+		std += (*viter - m) * (*viter - m);
+	std /= v.size();
+	std = sqrt(std);
+	return std;
+}
+
 float corr(const vector<float>& expr1, const vector<float>& expr2) {
 	return corr(expr1, expr2, 0, 0, min(expr1.size(), expr2.size()));
 }
