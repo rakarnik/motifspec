@@ -24,6 +24,7 @@ im: \
 		bin/bgmodel.o\
 		bin/im.o\
 		bin/motif.o\
+		bin/motifcompare.o\
 		bin/motifsearch.o\
 		bin/motifsearchexpr.o\
 		bin/motifsearchscore.o\
@@ -36,6 +37,7 @@ im: \
 		bin/bgmodel.o\
 		bin/im.o\
 		bin/motif.o\
+		bin/motifcompare.o\
 		bin/motifsearch.o\
 		bin/motifsearchexpr.o\
 		bin/motifsearchscore.o\
@@ -50,6 +52,7 @@ im-debug: \
 		debug/bgmodel.o\
 		debug/im.o\
 		debug/motif.o\
+		debug/motifcompare.o\
 		debug/motifsearch.o\
 		debug/motifsearchexpr.o\
 		debug/motifsearchscore.o\
@@ -62,6 +65,7 @@ im-debug: \
 		debug/bgmodel.o\
 		debug/im.o\
 		debug/motif.o\
+		debug/motifcompare.o\
 		debug/motifsearch.o\
 		debug/motifsearchexpr.o\
 		debug/motifsearchscore.o\
@@ -85,6 +89,9 @@ bin/im.o: src/im.h src/im.cpp
 
 bin/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_OPTIONS) src/motif.cpp -c $(INCLUDE) -o bin/motif.o
+
+bin/motifcompare.o: src/motifcompare.h src/motifcompare.cpp
+	$(CC) $(CC_OPTIONS) src/motifcompare.cpp -c $(INCLUDE) -o bin/motifcompare.o
 
 bin/motifsearch.o: src/motifsearch.h src/motifsearch.cpp
 	$(CC) $(CC_OPTIONS) src/motifsearch.cpp -c $(INCLUDE) -o bin/motifsearch.o
@@ -121,6 +128,9 @@ debug/im.o: src/im.h src/im.cpp
 
 debug/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/motif.cpp -c $(INCLUDE) -o debug/motif.o
+
+debug/motifcompare.o: src/motifcompare.h src/motifcompare.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/motifcompare.cpp -c $(INCLUDE) -o debug/motifcompare.o
 
 debug/motifsearch.o: src/motifsearch.h src/motifsearch.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/motifsearch.cpp -c $(INCLUDE) -o debug/motifsearch.o
