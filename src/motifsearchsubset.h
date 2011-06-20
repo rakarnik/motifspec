@@ -1,3 +1,6 @@
+#ifndef _motifsearchsubset
+#define _motifsearchsubset
+
 #include "motifsearch.h"
 
 class MotifSearchSubset : public MotifSearch {
@@ -14,3 +17,4 @@ public:
   void print_status(ostream& out, const int i, const int phase);
 };
 
+#endif

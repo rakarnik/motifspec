@@ -1,3 +1,6 @@
+#ifndef _motifsearchscore
+#define _motifsearchscore
+
 #include "motifsearch.h"
 
 class MotifSearchScore : public MotifSearch {
@@ -18,3 +21,4 @@ public:
   void print_status(ostream& out, const int i, const int phase);
 };
 
+#endif

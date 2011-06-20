@@ -1,3 +1,6 @@
+#ifndef _motifsearchexpr
+#define _motifsearchexpr
+
 #include "motifsearch.h"
 
 class MotifSearchExpr : public MotifSearch {
@@ -21,3 +24,4 @@ public:
   void print_status(ostream& out, const int i, const int phase);
 };
 
+#endif
