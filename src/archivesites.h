@@ -12,7 +12,7 @@
 class ArchiveSites{
   const Seqset& seqset;
 	const BGModel& bgm;
-	const MotifCompare& mc;
+	const MotifCompare mc;
 	vector<Motif> archive;
 	const double sim_cutoff;
 	const vector<double>& pseudo;
