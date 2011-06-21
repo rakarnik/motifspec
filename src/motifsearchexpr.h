@@ -21,7 +21,7 @@ public:
 	void adjust_search_space();
 	void set_search_space_cutoff(const int phase);
 	int search_for_motif(const int worker, const int iter, const string outfile);
-  void print_status(ostream& out, const int i, const int phase);
+	void print_status(ostream& out, const int i, const int phase);
 };
 
 #endif

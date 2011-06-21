@@ -15,8 +15,8 @@ protected:
 	vector<string> nameset;
 	int ngenes;
 	Random<int> ran_int;
-  Random<double> ran_dbl;
-  
+	Random<double> ran_dbl;
+
 	struct idscore {
 		int id;
 		double score;
@@ -28,11 +28,11 @@ protected:
 	
 	/* Sequence model */
 	SearchParams params;
-  Seqset seqset;
+	Seqset seqset;
 	BGModel bgmodel;
-  Motif motif;
+	Motif motif;
 	Motif select_sites;
-  ArchiveSites archive;
+	ArchiveSites archive;
 	vector<double> seqscores;
 	vector<struct idscore> seqranks;
 	vector<int> bestpos;
@@ -57,12 +57,12 @@ public:
               const int nc, const int order, const double sim_cut);
 	virtual ~MotifSearch() {};
 	void modify_params(int argc, char *argv[]);
-  double get_best_motif(int i=0);
-  void output_params(ostream &fout);
-  void set_default_params();//modifiable
-  void set_final_params();//derived from others
+	double get_best_motif(int i=0);
+	void output_params(ostream &fout);
+	void set_default_params();//modifiable
+	void set_final_params();//derived from others
 	SearchParams get_params() const { return params; };
-  void ace_initialize();
+	void ace_initialize();
 	const vector<string>& names() const { return nameset; };
 	ArchiveSites& get_archive() { return archive; };
 	
@@ -88,17 +88,17 @@ public:
 	/* Algorithm steps */
 	void update_seq_count();
 	void seed_random_site();
-  void single_pass(bool greedy = false);
+	void single_pass(bool greedy = false);
 	void single_pass_select(bool greedy = false);
 	void compute_seq_scores();
 	void compute_seq_scores_minimal();
 	bool column_sample(const bool add, const bool remove);
 	virtual int search_for_motif(const int worker, const int iter, const string outfile) = 0;
-  bool consider_motif(const char* filename);
+	bool consider_motif(const char* filename);
 	
 	/* Output */
 	void full_output(ostream &fout);                        // Output all motifs stored in archive_sites
-  void full_output(char *name);
+	void full_output(char *name);
 	virtual void print_status(ostream& out, const int i, const int phase) = 0;
 };
 
