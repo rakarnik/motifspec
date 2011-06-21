@@ -2,7 +2,6 @@
 
 MotifCompare::MotifCompare(const Seqset& s) : seqset(s) 
 {
-	cerr << "\nSequence length of sequence 15 is " << seqset.len_seq(15) << "\n";
 }
 
 float MotifCompare::compare(const Motif& m1, const Motif& m2, const BGModel& bgm) const {
@@ -16,7 +15,6 @@ float MotifCompare::compare(const Motif& m1, const Motif& m2, const BGModel& bgm
 	bool s;
 	float sc, bgsc;
 	float max_sc_1, mean_sc_1, max_sc_2, mean_sc_2;
-	float mean_sc_diff, stdev_sc_diff;
 	int j;
 	
 	
@@ -86,7 +84,7 @@ float MotifCompare::compare(const Motif& m1, const Motif& m2, const BGModel& bgm
 		window_size = w2 - olap;
 		for(int i = max(0, p - window_size); i < min(len - w1 - 1, p + window_size); i++) {
 			sc = - m1.score_site(sm1, c, i, s);
-			bgsc = bgm.score_site(m1.first_column(), m2.last_column(), w1, c, i, s);
+			bgsc = bgm.score_site(m1.first_column(), m1.last_column(), w1, c, i, s);
 			sc += bgsc;
 			if(sc > max_sc_1) max_sc_1 = sc;
 			mean_sc_1 += sc;
@@ -116,10 +114,6 @@ float MotifCompare::compare(const Motif& m1, const Motif& m2, const BGModel& bgm
 	}
 	delete [] sm1;
 	delete [] sm2;
-	
-	mean_sc_diff = mean(scorediffs);
-	stdev_sc_diff = stdev(scorediffs);
-	float t = mean_sc_diff * sqrt(scorediffs.size())/stdev_sc_diff;
 	
 	return corr(means1, means2);
 }
