@@ -21,8 +21,8 @@ seq_lens(nseqs) {
 	for(int i = 0; i < nseqs; i++) {
 		seq_lens[i] = v[i].length();
 		seqs[i].reserve(seq_lens[i]);
-    for(int j = 0; j < seq_lens[i]; j++) {
+		for(int j = 0; j < seq_lens[i]; j++) {
 			seqs[i].push_back(nt[v[i][j]]);
-    }
+		}
 	}
 }

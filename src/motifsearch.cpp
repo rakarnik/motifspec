@@ -1,10 +1,10 @@
 #include "motifsearch.h"
 
 MotifSearch::MotifSearch(const vector<string>& names,
-                         const vector<string>& seqs,
-                         const int nc,
-												 const int order,
-												 const double sim_cut) :
+		const vector<string>& seqs,
+		const int nc,
+		const int order,
+		const double sim_cut) :
 nameset(names),
 ngenes(names.size()),
 seqset(seqs),
