@@ -92,7 +92,7 @@ public:
 	void single_pass_select(bool greedy = false);
 	void compute_seq_scores();
 	void compute_seq_scores_minimal();
-	bool column_sample(const bool add, const bool remove);
+	bool column_sample();
 	virtual int search_for_motif(const int worker, const int iter, const string outfile) = 0;
 	bool consider_motif(const char* filename);
 	
