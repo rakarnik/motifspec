@@ -14,11 +14,9 @@ min_visits(3) {
 }
 
 bool ArchiveSites::check_motif(const Motif& m) {
-	float cmp;
 	vector<Motif>::iterator iter = archive.begin();
   for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter){
-    cmp = mc.compare(*iter, m, bgm);
-		if(cmp > sim_cutoff && iter->get_dejavu() >= min_visits)
+    if(mc.compare(*iter, m, bgm) && iter->get_dejavu() >= min_visits)
 			return false;
   }
   return true;
@@ -26,15 +24,13 @@ bool ArchiveSites::check_motif(const Motif& m) {
 
 bool ArchiveSites::consider_motif(const Motif& m) {
   if(m.get_motif_score() < 1) return false;
-	float cmp;
-
+	
 	// Check if similar to better motif.
 	// If so, increment dejavu for better motif and return false
 	int motnum = 0;
 	vector<Motif>::iterator iter = archive.begin();
 	for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter) {
-		cmp = mc.compare(*iter, m, bgm);
-		if(cmp > sim_cutoff) {
+		if(mc.compare(*iter, m, bgm)) {
 			iter->inc_dejavu();
 			return false;
 		}
@@ -48,8 +44,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	int delcount = 0;
 	while(iter != archive.end()) {
 		assert(m.get_motif_score() > iter->get_motif_score());
-		cmp = mc.compare(*iter, m1, bgm);
-		if(cmp > sim_cutoff) {
+		if(mc.compare(*iter, m1, bgm)) {
 	 		iter = archive.erase(iter);
 			m1.inc_dejavu();
 			delcount++;
