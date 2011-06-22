@@ -24,13 +24,19 @@ bool ArchiveSites::check_motif(const Motif& m) {
 
 bool ArchiveSites::consider_motif(const Motif& m) {
   if(m.get_motif_score() < 1) return false;
+	float cmp1, cmp2;
+	Motif rm(m);
+	rm.flip_sites();
 	
 	// Check if similar to better motif.
 	// If so, increment dejavu for better motif and return false
 	int motnum = 0;
 	vector<Motif>::iterator iter = archive.begin();
 	for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter) {
-		if(mc.compare(*iter, m, bgm)) {
+		cmp1 = mc.compare(*iter, m, bgm);
+		cmp2 = mc.compare(*iter, rm, bgm);
+		// cerr << "Comparing with motif " << motnum << ", scores were " << cmp1 << " and " << cmp2 << '\n';
+		if(cmp1 >= 6 || cmp2 >= 6) {
 			iter->inc_dejavu();
 			return false;
 		}
@@ -44,7 +50,10 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	int delcount = 0;
 	while(iter != archive.end()) {
 		assert(m.get_motif_score() > iter->get_motif_score());
-		if(mc.compare(*iter, m1, bgm)) {
+		cmp1 = mc.compare(*iter, m, bgm);
+		cmp2 = mc.compare(*iter, rm, bgm);
+		// cerr << "Comparing with motif " << motnum << ", scores were " << cmp1 << " and " << cmp2 << '\n';
+		if(cmp1 >= 6 || cmp2 >= 6) {
 	 		iter = archive.erase(iter);
 			m1.inc_dejavu();
 			delcount++;
@@ -53,7 +62,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 		}
 		motnum++;
 	}
-
+	// cerr << "Deleted " << delcount << " motifs\n";
 	
 	// Step 2: Add the new motif at the correct position by score
 	for(iter = archive.begin(); iter != archive.end(); ++iter)

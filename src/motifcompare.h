@@ -8,7 +8,7 @@ class MotifCompare {
 	
 public:
 	MotifCompare(const Seqset& s);
-	bool compare(const Motif& m1, const Motif& m2, const BGModel& bgm) const;
+	float compare(const Motif& m1, const Motif& m2, const BGModel& bgm) const;
 };
 
 #endif
