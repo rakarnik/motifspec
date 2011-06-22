@@ -78,8 +78,8 @@ float MotifCompare::compare(const Motif& m1, const Motif& m2) const {
 	delete [] sm1;
 	delete [] sm2;
 	
-	assert(scores1.size() == m1.number() + m2.number());
-	assert(scores2.size() == m1.number() + m2.number());
+	assert(scores1.size() == (unsigned int) m1.number() + m2.number());
+	assert(scores2.size() == (unsigned int) m1.number() + m2.number());
 	
 	float mcorr = corr(scores1, scores2);
 	int df = scores1.size() - 2;
