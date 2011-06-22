@@ -10,14 +10,14 @@
 #include "motifcompare.h"
 
 class ArchiveSites{
-  const Seqset& seqset;
+	const Seqset& seqset;
 	const MotifCompare mc;
 	vector<Motif> archive;
 	const double sim_cutoff;
 	const vector<double>& pseudo;
 	int min_visits;
 
- public:
+public:
 	ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const vector<double>& p);
 	int nmots() const { return archive.size(); }
 	vector<Motif>& get_archive() { return archive; }
