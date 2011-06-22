@@ -11,7 +11,6 @@
 
 class ArchiveSites{
   const Seqset& seqset;
-	const BGModel& bgm;
 	const MotifCompare mc;
 	vector<Motif> archive;
 	const double sim_cutoff;
@@ -21,6 +20,7 @@ class ArchiveSites{
  public:
 	ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const vector<double>& p);
 	int nmots() const { return archive.size(); }
+	vector<Motif>& get_archive() { return archive; }
 	bool check_motif(const Motif& m);               // Returns true if no better motif, false otherwise
 	bool consider_motif(const Motif& m);            // Returns true if motif was added, false otherwise
 	Motif* return_best(const int i=0);

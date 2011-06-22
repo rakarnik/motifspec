@@ -5,8 +5,7 @@
 
 ArchiveSites::ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const vector<double>& p) : 
 seqset(seq),
-bgm(bgm),
-mc(seqset),
+mc(seqset, bgm),
 archive(0, Motif(seq, 12, p)),
 sim_cutoff(sim_cut),
 pseudo(p),
@@ -15,8 +14,13 @@ min_visits(3) {
 
 bool ArchiveSites::check_motif(const Motif& m) {
 	vector<Motif>::iterator iter = archive.begin();
-  for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter){
-    if(mc.compare(*iter, m, bgm) && iter->get_dejavu() >= min_visits)
+	float cmp1, cmp2;
+	Motif rm(m);
+	rm.flip_sites();
+	for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter){
+		cmp1 = mc.compare(*iter, m);
+		cmp2 = mc.compare(*iter, rm);
+		if((cmp1 >= 6 || cmp2 >= 6) && iter->get_dejavu() >= min_visits)
 			return false;
   }
   return true;
@@ -33,8 +37,8 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	int motnum = 0;
 	vector<Motif>::iterator iter = archive.begin();
 	for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter) {
-		cmp1 = mc.compare(*iter, m, bgm);
-		cmp2 = mc.compare(*iter, rm, bgm);
+		cmp1 = mc.compare(*iter, m);
+		cmp2 = mc.compare(*iter, rm);
 		// cerr << "Comparing with motif " << motnum << ", scores were " << cmp1 << " and " << cmp2 << '\n';
 		if(cmp1 >= 6 || cmp2 >= 6) {
 			iter->inc_dejavu();
@@ -50,8 +54,8 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 	int delcount = 0;
 	while(iter != archive.end()) {
 		assert(m.get_motif_score() > iter->get_motif_score());
-		cmp1 = mc.compare(*iter, m, bgm);
-		cmp2 = mc.compare(*iter, rm, bgm);
+		cmp1 = mc.compare(*iter, m);
+		cmp2 = mc.compare(*iter, rm);
 		// cerr << "Comparing with motif " << motnum << ", scores were " << cmp1 << " and " << cmp2 << '\n';
 		if(cmp1 >= 6 || cmp2 >= 6) {
 	 		iter = archive.erase(iter);
