@@ -20,17 +20,17 @@ cumulscores(seqset.num_seqs()) {
 	
 	int len;
 	for(int i = 0; i < ss_num_seqs; i++) {
-    gc[i] = 0.0;
+		gc[i] = 0.0;
 		len = seqset.len_seq(i);
-    for(int j = 0; j < len; j++) {
-      if(ss_seq[i][j] == 1 || ss_seq[i][j] == 2) {
+		for(int j = 0; j < len; j++) {
+			if(ss_seq[i][j] == 1 || ss_seq[i][j] == 2) {
 				gc[i]++;
 			}
-    }
+		}
 		gc_genome += gc[i];
 		gc[i] /= len;
 		total_seq_len += len;
-  }
+	}
 	gc_genome /= total_seq_len;
 	
 	train_background[0] = &BGModel::train_background_0;
@@ -119,20 +119,20 @@ void BGModel::train_background_5() {
 		// Compute counts for forward strand
 		for(int j = 5; j < len; j++) {
 			model5[ss_seq[i][j - 5] * 1024
-			          + ss_seq[i][j - 4] * 256
-                + ss_seq[i][j - 3] * 64
-								+ ss_seq[i][j - 2] * 16 
-								+ ss_seq[i][j - 1] * 4
-								+ ss_seq[i][j]]++;
+				+ ss_seq[i][j - 4] * 256
+				+ ss_seq[i][j - 3] * 64
+				+ ss_seq[i][j - 2] * 16 
+				+ ss_seq[i][j - 1] * 4
+				+ ss_seq[i][j]]++;
 		}
 		// Compute counts for reverse strand
 		for(int j = len - 6; j >= 0; j--) {
 			model5[(3 - ss_seq[i][j + 5]) * 1024
-			          + (3 - ss_seq[i][j + 4]) * 256
-			          + (3 - ss_seq[i][j + 3]) * 64
-								+ (3 - ss_seq[i][j + 2]) * 16
-								+ (3 - ss_seq[i][j + 1]) * 4
-								+ (3 - ss_seq[i][j])]++;
+				+ (3 - ss_seq[i][j + 4]) * 256
+				+ (3 - ss_seq[i][j + 3]) * 64
+				+ (3 - ss_seq[i][j + 2]) * 16
+				+ (3 - ss_seq[i][j + 1]) * 4
+				+ (3 - ss_seq[i][j])]++;
 		}
 
 	}
@@ -178,18 +178,18 @@ void BGModel::train_background_4() {
 		// Compute counts for forward strand
 		for(int j = 4; j < len; j++) {
 			model4[ss_seq[i][j - 4] * 256
-                + ss_seq[i][j - 3] * 64
-								+ ss_seq[i][j - 2] * 16 
-								+ ss_seq[i][j - 1] * 4
-								+ ss_seq[i][j]]++;
+				+ ss_seq[i][j - 3] * 64
+				+ ss_seq[i][j - 2] * 16 
+				+ ss_seq[i][j - 1] * 4
+				+ ss_seq[i][j]]++;
 		}
 		// Compute counts for reverse strand
 		for(int j = len - 5; j >= 0; j--) {
 			model4[(3 - ss_seq[i][j + 4]) * 256
-			          + (3 - ss_seq[i][j + 3]) * 64
-								+ (3 - ss_seq[i][j + 2]) * 16
-								+ (3 - ss_seq[i][j + 1]) * 4
-								+ (3 - ss_seq[i][j])]++;
+				+ (3 - ss_seq[i][j + 3]) * 64
+				+ (3 - ss_seq[i][j + 2]) * 16
+				+ (3 - ss_seq[i][j + 1]) * 4
+				+ (3 - ss_seq[i][j])]++;
 		}
 
 	}

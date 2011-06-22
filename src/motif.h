@@ -12,7 +12,7 @@ class Motif {
 	int width;															 // width of the motif (including non-informative columns)
 	int num_seqs;                            // total number of sequences in this set
 	int max_width;                           // maximum width of this motif
-  vector<Site> sitelist;                   // list of sites that comprise this motif
+	vector<Site> sitelist;                   // list of sites that comprise this motif
 	vector<int> columns;                     // columns in this motif
 	int num_seqs_with_sites;                 // number of sequences with sites
 	vector<int> has_sites;                   // number of sites in each sequence
@@ -68,12 +68,12 @@ public:
 	void add_site(const int c, const int p, const bool s);
 	void clear_sites();
 	void remove_all_sites();
-  void calc_freq_matrix(int* fm) const;
-  void freq_matrix_extended(vector<float>& fm) const;
+	void calc_freq_matrix(int* fm) const;
+	void freq_matrix_extended(vector<float>& fm) const;
 	void calc_score_matrix(double* sm) const;
 	double score_site(double* score_matrix, const int c, const int p, const bool s) const;
 	double compare(const Motif& other, const BGModel& bgm);
-  int column(const int i) const { return columns[i]; };
+	int column(const int i) const { return columns[i]; };
 	vector<int>::const_iterator first_column() const { return columns.begin(); };
 	vector<int>::const_iterator last_column() const { return columns.end(); };
 	void column_freq(const int col, int *ret);

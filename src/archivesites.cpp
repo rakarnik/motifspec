@@ -22,12 +22,12 @@ bool ArchiveSites::check_motif(const Motif& m) {
 		cmp2 = mc.compare(*iter, rm);
 		if((cmp1 >= 6 || cmp2 >= 6) && iter->get_dejavu() >= min_visits)
 			return false;
-  }
-  return true;
+	}
+	return true;
 }
 
 bool ArchiveSites::consider_motif(const Motif& m) {
-  if(m.get_motif_score() < 1) return false;
+	if(m.get_motif_score() < 1) return false;
 	float cmp1, cmp2;
 	Motif rm(m);
 	rm.flip_sites();
@@ -76,7 +76,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 }
 
 Motif* ArchiveSites::return_best(const int i) {
-  return &archive[i];
+	return &archive[i];
 }
 
 void ArchiveSites::clear() {

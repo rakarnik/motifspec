@@ -7,15 +7,15 @@
 
 class Seqset{
 	int nseqs;
-  vector<vector <int> > seqs;
+	vector<vector <int> > seqs;
 	vector<int> seq_lens;
 	
- public:
- 	Seqset();
+public:
+	Seqset();
 	Seqset(const vector<string>& v);
-  int num_seqs() const { return nseqs; }                     // Return number of sequences in this set
-  int len_seq(const int i) const { return seq_lens[i]; }     // Return length of a specified sequence
-  vector<vector<int> > const& seq() const { return seqs; }   // Return reference to sequence data
+	int num_seqs() const { return nseqs; }                     // Return number of sequences in this set
+	int len_seq(const int i) const { return seq_lens[i]; }     // Return length of a specified sequence
+	vector<vector<int> > const& seq() const { return seqs; }   // Return reference to sequence data
 };
 
 #endif

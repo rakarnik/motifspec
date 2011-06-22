@@ -54,7 +54,7 @@ public:
 	
 	/* General */
 	MotifSearch(const vector<string>& names, const vector<string>& seqs,
-              const int nc, const int order, const double sim_cut);
+			const int nc, const int order, const double sim_cut);
 	virtual ~MotifSearch() {};
 	void modify_params(int argc, char *argv[]);
 	double get_best_motif(int i=0);

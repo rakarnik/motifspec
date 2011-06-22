@@ -15,8 +15,8 @@ class MotifSearchExpr : public MotifSearch {
 	
 public:
 	MotifSearchExpr(const vector<string>& names, const vector<string>& seqs,
-                  const int nc, const int order, const double sim_cut,
-									vector<vector <float> >& exprtab, const int npts);
+			const int nc, const int order, const double sim_cut,
+			vector<vector <float> >& exprtab, const int npts);
 	void reset_search_space();
 	void adjust_search_space();
 	void set_search_space_cutoff(const int phase);

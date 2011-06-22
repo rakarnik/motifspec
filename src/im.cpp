@@ -4,15 +4,15 @@ int main(int argc, char *argv[]) {
 	set_new_handler(alloc_error);
 
 	if(argc < 6) {
-    print_usage(cout);
-    exit(0);
-  }
+		print_usage(cout);
+		exit(0);
+	}
 	
 	string seqfile;                       // file with sequences
 	string exprfile;                      // file with expression data
 	string subsetfile;                    // file with subset of sequence names to search
-  string scorefile;                     // file with scores
-    
+	string scorefile;                     // file with scores
+
 	if(! GetArg2(argc, argv, "-s", seqfile)) {
 		cerr << "Please specify sequence file\n\n";
 		print_usage(cout);
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 	
 	// Read parameters
 	vector<string> seqs, nameset1;
-    cerr << "Reading sequence data from '" << seqfile << "'... ";
+	cerr << "Reading sequence data from '" << seqfile << "'... ";
 	get_fasta_fast(seqfile.c_str(), seqs, nameset1);
 	cerr << "done.\n";
 	ngenes = nameset1.size();
@@ -274,12 +274,12 @@ void output(MotifSearch* ms) {
 
 void print_full_ace(ostream& out, MotifSearch* ms) {
 	out << "Parameter values:\n";
-  ms->output_params(out);
-  out << "\nInput sequences:\n";
-  for(unsigned int x = 0; x < ms->names().size(); x++)
+	ms->output_params(out);
+	out << "\nInput sequences:\n";
+	for(unsigned int x = 0; x < ms->names().size(); x++)
 		out << "#" << x << '\t' << (ms->names())[x] << endl;
-  out << '\n';
-  ms->full_output(out);
+	out << '\n';
+	ms->full_output(out);
 }
 
 void print_ace(ostream& out, MotifSearch* ms) {
@@ -287,18 +287,18 @@ void print_ace(ostream& out, MotifSearch* ms) {
 }
 
 void print_usage(ostream& fout) {
-  fout << "Usage: im -s seqfile [-ex exprfile | -su subsetfile | -sc scorefile] -o outputfile (options)\n";
-  fout << " Seqfile must be in FASTA format.\n";
+	fout << "Usage: im -s seqfile [-ex exprfile | -su subsetfile | -sc scorefile] -o outputfile (options)\n";
+	fout << " Seqfile must be in FASTA format.\n";
 	fout << " Exprfile must be in tab-delimited format.\n";
 	fout << " Subsetfile has one sequence name per line.\n";
-  fout << " Scorefile is tab-delimited, with one sequence name and score per line.";
-  fout << "Options:\n";
+	fout << " Scorefile is tab-delimited, with one sequence name and score per line.";
+	fout << "Options:\n";
 	fout << " -numcols    \tnumber of columns to align (10)\n";
 	fout << " -order      \torder of the background model (3, can be 0 to 5)\n";
 	fout << " -simcut     \tsimilarity cutoff for motifs (0.8)\n"; 
-  fout << " -expect     \tnumber of sites expected in model (10)\n";
-  fout << " -minpass    \tminimum number of non-improved passes in phase 1 (200)\n";
-  fout << " -seed       \tset seed for random number generator (time)\n";
-  fout << " -undersample\tpossible sites / (expect * numcols * seedings) (1)\n"; 
-  fout << " -oversample\t1/undersample (1)\n";
+	fout << " -expect     \tnumber of sites expected in model (10)\n";
+	fout << " -minpass    \tminimum number of non-improved passes in phase 1 (200)\n";
+	fout << " -seed       \tset seed for random number generator (time)\n";
+	fout << " -undersample\tpossible sites / (expect * numcols * seedings) (1)\n"; 
+	fout << " -oversample\t1/undersample (1)\n";
 }
