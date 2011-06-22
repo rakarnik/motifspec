@@ -10,10 +10,10 @@ class Motif {
 	int init_nc;                             // initial number of columns in this motif
 	const vector<double>& pseudo;            // pseudocounts to use for score calculations
 	int width;															 // width of the motif (including non-informative columns)
-  int num_seqs;                            // total number of sequences in this set
-  int max_width;                           // maximum width of this motif
+	int num_seqs;                            // total number of sequences in this set
+	int max_width;                           // maximum width of this motif
   vector<Site> sitelist;                   // list of sites that comprise this motif
-  vector<int> columns;                     // columns in this motif
+	vector<int> columns;                     // columns in this motif
 	int num_seqs_with_sites;                 // number of sequences with sites
 	vector<int> has_sites;                   // number of sites in each sequence
 	vector<bool> possible;                   // whether or not each sequence is in search space
@@ -21,7 +21,7 @@ class Motif {
 	double motif_score;                      // score of this motif
 	int above_seqc;													 // number of sequences above sequence threshold
 	int ssp_size;                            // number of sequences in search space
-  int above_cutoffs;                       // number of sequences above both cutoffs
+	int above_cutoffs;                       // number of sequences above both cutoffs
 	double seq_cutoff;                       // sequence cutoff for this motif
 	double expr_cutoff;                      // expression cutoff for this motif
 	double score_cutoff;                     // score cutoff for this motif
@@ -29,16 +29,16 @@ class Motif {
 	int dejavu;                              // number of times this motif was seen
 
 public:
-  Motif(const Seqset& v, const int nc, const vector<double>& p);
-  Motif(const Motif& m);
+	Motif(const Seqset& v, const int nc, const vector<double>& p);
+	Motif(const Motif& m);
 	Motif& operator= (const Motif& m);
-  int number() const { return sitelist.size(); }
-  int get_width() const { return width; }
-  int ncols() const { return columns.size(); }
-  int chrom(int i) const { return sitelist[i].chrom(); }
-  int posit(int i) const { return sitelist[i].posit(); }
-  bool strand(int i) const { return sitelist[i].strand(); }
-  int get_max_width() const { return max_width; }
+	int number() const { return sitelist.size(); }
+	int get_width() const { return width; }
+	int ncols() const { return columns.size(); }
+	int chrom(int i) const { return sitelist[i].chrom(); }
+	int posit(int i) const { return sitelist[i].posit(); }
+	bool strand(int i) const { return sitelist[i].strand(); }
+	int get_max_width() const { return max_width; }
 	bool is_open_site(const int c, const int p);
 	const vector<Site>&  sites() const { return sitelist; }
 	int seqs_with_sites() const { return num_seqs_with_sites; }
@@ -52,9 +52,9 @@ public:
 	void clear_search_space();                                 // Remove all genes from search space
 	void add_to_search_space(const int g);                     // Add gene to search space
 	void remove_from_search_space(const int g);                // Remove gene from search space
-  void set_above_cutoffs(const int ac) { above_cutoffs = ac; }
-  int get_above_cutoffs() const { return above_cutoffs; }
- 	double get_seq_cutoff() const { return seq_cutoff; }
+	void set_above_cutoffs(const int ac) { above_cutoffs = ac; }
+	int get_above_cutoffs() const { return above_cutoffs; }
+	double get_seq_cutoff() const { return seq_cutoff; }
 	void set_seq_cutoff(const double cutoff) { seq_cutoff = cutoff; }
 	double get_expr_cutoff() const { return expr_cutoff; }
 	void set_expr_cutoff(const double cutoff) { expr_cutoff = cutoff; }
@@ -66,7 +66,7 @@ public:
 	void set_dejavu(const int d) { dejavu = d; }
 	void inc_dejavu() { dejavu++; }
 	void add_site(const int c, const int p, const bool s);
-  void clear_sites();
+	void clear_sites();
 	void remove_all_sites();
   void calc_freq_matrix(int* fm) const;
   void freq_matrix_extended(vector<float>& fm) const;
@@ -76,16 +76,16 @@ public:
   int column(const int i) const { return columns[i]; };
 	vector<int>::const_iterator first_column() const { return columns.begin(); };
 	vector<int>::const_iterator last_column() const { return columns.end(); };
-  bool column_freq(const int col, int *ret);
-  int remove_col(const int c);
+	void column_freq(const int col, int *ret);
+	int remove_col(const int c);
 	void add_col(const int c);
 	bool has_col(const int c);
-  void shift_sites(const int shift);
-  void flip_sites();
+	void shift_sites(const int shift);
+	void flip_sites();
 	void orient();
-  int total_positions() const;
+	int total_positions() const;
 	int positions_in_search_space() const;
-  void columns_open(int &l, int &r);
+	void columns_open(int &l, int &r);
 	string consensus() const;                                                // Return the consensus sequence for the current set of sites
 	void read(istream& motin);                                               // Read list of sites from a stream
 	void write(ostream& motout) const;                                       // Write list of sites to a stream

@@ -137,25 +137,27 @@ void Motif::add_site(const int c, const int p, const bool s){
 	has_sites[c]++;
 }
 
-bool Motif::column_freq(const int col, int *ret){
+void Motif::column_freq(const int col, int *ret){
   const vector<vector <int> >& seq = seqset.seq();
 	for(int i = 0; i < 4; i++) ret[i] = 0;
-	int c, p;
+	int c, p, len;
 	bool s;
 	vector<Site>::iterator site_iter = sitelist.begin();
   for(; site_iter != sitelist.end(); ++site_iter) {
-    c = site_iter->chrom();
-    p = site_iter->posit();
-    s = site_iter->strand();
+		c = site_iter->chrom();
+		p = site_iter->posit();
+		s = site_iter->strand();
+		len = seqset.len_seq(c);
     if(s) {
-      if( (p + col > seqset.len_seq(c) - 1) || (p + col < 0) ) return false;
-      ret[seq[c][p + col]]++;
+			assert(p + col >= 0);
+			assert(p + col < len);
+			ret[seq[c][p + col]]++;
     } else {
-      if((p + width - 1 - col > seqset.len_seq(c) - 1) || (p + width - 1 - col < 0)) return false;
-      ret[3 - seq[c][p + width - 1 - col]]++;
+			assert(p + width - 1 - col >= 0);
+			assert(p + width - 1 - col < len - 1);
+			ret[3 - seq[c][p + width - 1 - col]]++;
     }
   }
-  return true;
 }
 
 double Motif::score_site(double* score_matrix, const int c, const int p, const bool s) const {
