@@ -319,8 +319,13 @@ void Motif::columns_open(int &l, int &r){
     p = site_iter->posit();
     s = site_iter->strand();
 		len = seqset.len_seq(c);
-		l = min(p, l);
-		r = min(len - p - w, r);
+		if(s) {
+			l = min(p, l);
+			r = min(len - p - w, r);
+		} else {
+			l = min(len - p - w, l);
+			r = min(p, r);
+		}
   }
 }
 
