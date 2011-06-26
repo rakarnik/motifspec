@@ -135,6 +135,7 @@ int main(int argc, char *argv[]) {
 	ms->set_final_params();
 	ms->ace_initialize();
 	cerr << "done.\n";
+	cerr << "Random seed: " << ms->get_params().seed << '\n';
 
 	if(archive) {
 		cerr << "Running in archive mode...\n";
