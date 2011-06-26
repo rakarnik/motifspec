@@ -48,31 +48,31 @@ score_cutoff(m.score_cutoff),
 iter(m.iter),
 dejavu(m.dejavu)
 {
-  *this = m;
+	*this = m;
 }
 
 Motif& Motif::operator= (const Motif& m) {
-  if(this != &m){
-    //assume that the same Seqset is referred to, so ignore some things
+	if(this != &m){
+		//assume that the same Seqset is referred to, so ignore some things
 		init_nc = m.init_nc;
 		// pseudo = m.pseudo;
 		sitelist.assign(m.sitelist.begin(), m.sitelist.end());
 		num_seqs_with_sites = m.num_seqs_with_sites;
 		has_sites.assign(m.has_sites.begin(), m.has_sites.end());
 		possible.assign(m.possible.begin(), m.possible.end());
-    columns.assign(m.columns.begin(), m.columns.end());
+		columns.assign(m.columns.begin(), m.columns.end());
 		width = ((int) columns.back()) + 1;
 		motif_score = m.motif_score;
 		above_seqc = m.above_seqc;
 		ssp_size = m.ssp_size;
-    above_cutoffs = m.above_cutoffs;
+		above_cutoffs = m.above_cutoffs;
 		seq_cutoff = m.seq_cutoff;
 		expr_cutoff = m.expr_cutoff;
 		score_cutoff = m.score_cutoff;
 		iter = m.iter;
 		dejavu = m.dejavu;
-  }
-  return *this;
+	}
+	return *this;
 }
 
 void Motif::clear_sites() {
@@ -83,7 +83,7 @@ void Motif::clear_sites() {
 		*col_iter = distance(columns.begin(), col_iter);
 	}
 	width = ((int) columns.back()) + 1;
-  num_seqs_with_sites = 0;
+	num_seqs_with_sites = 0;
 	has_sites.assign(num_seqs, false);
 	motif_score = 0.0;
 }
@@ -99,12 +99,12 @@ void Motif::remove_all_sites() {
 bool Motif::is_open_site(const int c, const int p){
 	vector<Site>::iterator site_iter = sitelist.begin();
 	for(; site_iter != sitelist.end(); ++site_iter) {
-    if(site_iter->chrom() == c) {
-      int pp = site_iter->posit();
-      if(pp > p - width && pp < p + width) return false;
-    }
-  }
-  return true;
+		if(site_iter->chrom() == c) {
+			int pp = site_iter->posit();
+			if(pp > p - width && pp < p + width) return false;
+		}
+	}
+	return true;
 }
 
 void Motif::clear_search_space() {
@@ -138,26 +138,26 @@ void Motif::add_site(const int c, const int p, const bool s){
 }
 
 void Motif::column_freq(const int col, int *ret){
-  const vector<vector <int> >& seq = seqset.seq();
+	const vector<vector <int> >& seq = seqset.seq();
 	for(int i = 0; i < 4; i++) ret[i] = 0;
 	int c, p, len;
 	bool s;
 	vector<Site>::iterator site_iter = sitelist.begin();
-  for(; site_iter != sitelist.end(); ++site_iter) {
+	for(; site_iter != sitelist.end(); ++site_iter) {
 		c = site_iter->chrom();
 		p = site_iter->posit();
 		s = site_iter->strand();
 		len = seqset.len_seq(c);
-    if(s) {
+		if(s) {
 			assert(p + col >= 0);
 			assert(p + col < len);
 			ret[seq[c][p + col]]++;
-    } else {
+		} else {
 			assert(p + width - 1 - col >= 0);
 			assert(p + width - 1 - col < len - 1);
 			ret[3 - seq[c][p + width - 1 - col]]++;
-    }
-  }
+		}
+	}
 }
 
 double Motif::score_site(double* score_matrix, const int c, const int p, const bool s) const {
@@ -187,10 +187,10 @@ double Motif::score_site(double* score_matrix, const int c, const int p, const b
 }
 
 int Motif::remove_col(const int c) {
-  int ret = 0, ns = 0;         // return number of removed column in new numbering
+	int ret = 0, ns = 0;				 // return number of removed column in new numbering
 	bool found = false;
-	if(c == 0) {                   // if the column to be removed is the first column, we shift all columns so first is 0
-    columns.erase(columns.begin());
+	if(c == 0) {									 // if the column to be removed is the first column, we shift all columns so first is 0
+		columns.erase(columns.begin());
 		if(columns.size() > 0) {
 			ns = columns[0];
 			vector<int>::iterator col_iter;
@@ -200,26 +200,26 @@ int Motif::remove_col(const int c) {
 		ret = -ns;
 		shift_sites(ns);
 		found = true;
-  } else {
+	} else {
 		vector<int>::iterator col_iter;
-    for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
-      if(*col_iter == c) {
+		for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
+			if(*col_iter == c) {
 				columns.erase(col_iter);
 				found = true;
 				break;
 			}
-    }
+		}
 	}
 	if (! found) {
 		cerr << "remove_column called for column " << c << " but it was not found!" << endl; 
 		abort();
 	}
 	width = ((int) columns.back()) + 1;
-  return ret;
+	return ret;
 }
 
 void Motif::add_col(const int c) {
-  if(c < 0){                   // column to the left of existing, shift existing to the right
+	if(c < 0){									 // column to the left of existing, shift existing to the right
 		if(columns.size() > 0) {
 			vector<int>::iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter){
@@ -228,7 +228,7 @@ void Motif::add_col(const int c) {
 			shift_sites(c);
 		}
 		columns.insert(columns.begin(), 0);
-  } else {
+	} else {
 		bool found = false;
 		vector<int>::iterator col_iter;
 		for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter){
@@ -240,7 +240,7 @@ void Motif::add_col(const int c) {
 		}
 		if(! found)
 			columns.push_back(c);
-  }
+	}
 	width = ((int) columns.back()) + 1;
 }
 
@@ -250,15 +250,15 @@ bool Motif::has_col(const int c) {
 
 void Motif::shift_sites(const int shift) {
 	vector<Site>::iterator site_iter;
-  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter)
+	for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter)
 		site_iter->shift(shift);
 }
 
 void Motif::flip_sites() {
-  int i;
-  for(i = 0; i < number(); i++) {
-    sitelist[i].flip();
-  }
+	int i;
+	for(i = 0; i < number(); i++) {
+		sitelist[i].flip();
+	}
 	vector<int>::iterator col_iter;
 	for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
 		*col_iter = width - *col_iter - 1;
@@ -273,32 +273,32 @@ void Motif::flip_sites() {
 
 void Motif::orient() {
 	int* freq_matrix = new int[4 * ncols()];
-  double *freq = new double[4];
+	double *freq = new double[4];
 	for(int i = 0; i < 4; i++)
 		freq[i] = 0.0;
 	
-  calc_freq_matrix(freq_matrix);
-  for(int i = 0; i < 4 * ncols(); i += 4) {
-    for(int j = 0; j < 4; j++)
-      freq[j] += freq_matrix[i + j];
-  }
+	calc_freq_matrix(freq_matrix);
+	for(int i = 0; i < 4 * ncols(); i += 4) {
+		for(int j = 0; j < 4; j++)
+			freq[j] += freq_matrix[i + j];
+	}
 	for(int i = 0; i < 4; i++)
 		freq[i] /= number();
 	
-  double flip = 1.5 * freq[2] + 1.0 * freq[0] - 1.0 * freq[3] - 1.5 * freq[1];
-  if(flip < 0.0) {
+	double flip = 1.5 * freq[2] + 1.0 * freq[0] - 1.0 * freq[3] - 1.5 * freq[1];
+	if(flip < 0.0) {
 		cerr << "\t\t\t\tFlipping motif...\n";
 		flip_sites();
 	}
 	delete [] freq_matrix;
-  delete [] freq;
+	delete [] freq;
 }
 
 int Motif::total_positions() const {
-  int ret = 0;
-  for(int i = 0; i < num_seqs; i++)
-    ret += seqset.len_seq(i) - width + 1;
-  return ret;
+	int ret = 0;
+	for(int i = 0; i < num_seqs; i++)
+		ret += seqset.len_seq(i) - width + 1;
+	return ret;
 }
 
 int Motif::positions_in_search_space() const {
@@ -314,36 +314,36 @@ void Motif::columns_open(int &l, int &r){
 	int c, p, len;
 	bool s;
 	vector<Site>::iterator site_iter;
-  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
-    c = site_iter->chrom();
-    p = site_iter->posit();
-    s = site_iter->strand();
+	for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
+		c = site_iter->chrom();
+		p = site_iter->posit();
+		s = site_iter->strand();
 		len = seqset.len_seq(c);
 		if(s) {
-			l = min(p, l);
-			r = min(len - p - w, r);
+			l = min(p - 1, l);
+			r = min(len - 1 - p - w, r);
 		} else {
-			l = min(len - p - w, l);
-			r = min(p, r);
+			l = min(len - 1 - p - w, l);
+			r = min(p - 1, r);
 		}
-  }
+	}
 }
 
 void Motif::calc_freq_matrix(int *fm) const {
 	const vector<vector <int> >& seq = seqset.seq();
 	for(int i = 0; i < 4 * ncols(); i++){
 		fm[i] = 0;
-  }
+	}
 	
 	int g, j, pos, matpos;
 	bool s;
-  vector<Site>::const_iterator site_iter;
-  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
+	vector<Site>::const_iterator site_iter;
+	for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
 		g = site_iter->chrom();
-    j = site_iter->posit();
-    s = site_iter->strand();
-    if(s) {                              // forward strand
-      matpos = 0;
+		j = site_iter->posit();
+		s = site_iter->strand();
+		if(s) {															 // forward strand
+			matpos = 0;
 			pos = 0;
 			vector<int>::const_iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
@@ -352,10 +352,10 @@ void Motif::calc_freq_matrix(int *fm) const {
 					fm[matpos + seq[g][pos]]++;
 				}
 				matpos += 4;
-      }
-    } else {                             // reverse strand
-      matpos = 0;
-      pos = 0;
+			}
+		} else {														 // reverse strand
+			matpos = 0;
+			pos = 0;
 			vector<int>::const_iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
 				pos = j + width - 1 - *col_iter;
@@ -363,23 +363,23 @@ void Motif::calc_freq_matrix(int *fm) const {
 					fm[matpos + 3 - seq[g][pos]]++;
 				}
 				matpos += 4;
-      }
-    }
-  }
+			}
+		}
+	}
 }
 
 void Motif::freq_matrix_extended(vector<float>& fm) const {
-  const vector<vector <int> >& seq = seqset.seq();
+	const vector<vector <int> >& seq = seqset.seq();
 	int i, col, j;
-  int fm_size = fm.size();
-  for(i = 0; i < fm_size; i++) fm[i] = 0.0;
-  if(number() == 0) return;
-  for(i = 0; i < number(); i++) {//i = site number
-    int c = chrom(i);
-    int p = posit(i);
-    bool s = strand(i);
-    for(j = 0, col = -ncols(); col < width + ncols(); col++, j += 4) {
-      if(s) {
+	int fm_size = fm.size();
+	for(i = 0; i < fm_size; i++) fm[i] = 0.0;
+	if(number() == 0) return;
+	for(i = 0; i < number(); i++) {//i = site number
+		int c = chrom(i);
+		int p = posit(i);
+		bool s = strand(i);
+		for(j = 0, col = -ncols(); col < width + ncols(); col++, j += 4) {
+			if(s) {
 				if((p + col <= seqset.len_seq(c) - 1) && (p + col >= 0)) {
 					assert(j + seq[c][p + col] < fm_size);
 					fm[j + seq[c][p + col]] += 1.0;
@@ -388,7 +388,7 @@ void Motif::freq_matrix_extended(vector<float>& fm) const {
 						fm[j + k] += 0.25;
 					}
 				}
-      } else {
+			} else {
 				if((p + width - 1 - col <= seqset.len_seq(c) - 1) && (p + width - 1 - col >= 0)) {
 					assert(j + 3 - seq[c][p + width - 1 - col] < fm_size);
 					fm[j + 3 - seq[c][p + width - 1 - col]] += 1.0;
@@ -398,9 +398,9 @@ void Motif::freq_matrix_extended(vector<float>& fm) const {
 					}
 				}
 			}
-    }
-  }
-  for(i = 0; i < fm_size; i++) fm[i] /= (double) number();
+		}
+	}
+	for(i = 0; i < fm_size; i++) fm[i] /= (double) number();
 }
 
 void Motif::calc_score_matrix(double *sm) const {
@@ -409,10 +409,10 @@ void Motif::calc_score_matrix(double *sm) const {
 	for(int j = 0; j < 4; j++) {
 		tot += pseudo[j];
 	}
-  calc_freq_matrix(fm);
-  for(int i = 0; i < 4 * ncols(); i += 4){
+	calc_freq_matrix(fm);
+	for(int i = 0; i < 4 * ncols(); i += 4){
 		for(int j = 0; j < 4; j++){
-      sm[i + j] = log((fm[i + j] + pseudo[j])/tot);
+			sm[i + j] = log((fm[i + j] + pseudo[j])/tot);
 		}
 	}
 	delete [] fm;
@@ -430,8 +430,8 @@ string Motif::consensus() const {
 	bool s;
 	for(; siteit != sitelist.end(); ++siteit) {
 		c = siteit->chrom();
-    p = siteit->posit();
-    s = siteit->strand();
+		p = siteit->posit();
+		s = siteit->strand();
 		if(s) {
 			string hitseq = "";
 			for(int k = p; k < p + width - 1; k++)
@@ -442,58 +442,58 @@ string Motif::consensus() const {
 			for(int k = p + width - 1; k > p - 1; k--)
 				hitseq.append(1, nt[3 - seq[c][k]]);
 			hits.push_back(hitseq);
-    }
-  }
+		}
+	}
 	
 	string cons;
-  int wide1 = hits[0].size();
-  int num1 = hits.size();
-  int num1a, num1c, num1g, num1t;
-  for(int i = 0; i < wide1; i++){
-    num1a = num1c = num1g = num1t = 0;
-    for(int j = 0; j < num1; j++){
-      if(hits[j][i] == 'a' || hits[j][i] == 'A') num1a += 1;
-      if(hits[j][i] == 'c' || hits[j][i] == 'C') num1c += 1;
-      if(hits[j][i] == 'g' || hits[j][i] == 'G') num1g += 1;
-      if(hits[j][i] == 't' || hits[j][i] == 'T') num1t += 1;
-    }
-    if(num1a > num1*0.7) cons += 'A';
-    else if(num1c > num1*0.7) cons += 'C';
-    else if(num1g > num1*0.7) cons += 'G';
-    else if(num1t > num1*0.7) cons += 'T';
-    else if((num1a + num1t) > num1 * 0.85) cons +='W';
-    else if((num1a + num1c) > num1 * 0.85) cons +='M';
-    else if((num1a + num1g) > num1 * 0.85) cons +='R';
-    else if((num1t + num1c) > num1 * 0.85) cons +='Y';
-    else if((num1t + num1g) > num1 * 0.85) cons +='K';
-    else if((num1c + num1g) > num1 * 0.85) cons +='S';
-    else cons += '-';
-  }
-  return cons;
+	int wide1 = hits[0].size();
+	int num1 = hits.size();
+	int num1a, num1c, num1g, num1t;
+	for(int i = 0; i < wide1; i++){
+		num1a = num1c = num1g = num1t = 0;
+		for(int j = 0; j < num1; j++){
+			if(hits[j][i] == 'a' || hits[j][i] == 'A') num1a += 1;
+			if(hits[j][i] == 'c' || hits[j][i] == 'C') num1c += 1;
+			if(hits[j][i] == 'g' || hits[j][i] == 'G') num1g += 1;
+			if(hits[j][i] == 't' || hits[j][i] == 'T') num1t += 1;
+		}
+		if(num1a > num1*0.7) cons += 'A';
+		else if(num1c > num1*0.7) cons += 'C';
+		else if(num1g > num1*0.7) cons += 'G';
+		else if(num1t > num1*0.7) cons += 'T';
+		else if((num1a + num1t) > num1 * 0.85) cons +='W';
+		else if((num1a + num1c) > num1 * 0.85) cons +='M';
+		else if((num1a + num1g) > num1 * 0.85) cons +='R';
+		else if((num1t + num1c) > num1 * 0.85) cons +='Y';
+		else if((num1t + num1g) > num1 * 0.85) cons +='K';
+		else if((num1c + num1g) > num1 * 0.85) cons +='S';
+		else cons += '-';
+	}
+	return cons;
 }
 
 void Motif::write(ostream& motout) const {
 	char nt[] = {'A', 'C', 'G', 'T'};
 	const vector<vector <int> >& seq = seqset.seq();
 	vector<Site>::const_iterator site_iter;
-  for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
-    int c = site_iter->chrom();
-    int p = site_iter->posit();
-    bool s = site_iter->strand();
-    for(int j = 0; j < width; j++){
-      if(s) {
+	for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
+		int c = site_iter->chrom();
+		int p = site_iter->posit();
+		bool s = site_iter->strand();
+		for(int j = 0; j < width; j++){
+			if(s) {
 				if(p + j >= 0 && p + j < seqset.len_seq(c))
 					motout << nt[seq[c][p + j]];
 				else motout << ' ';
-      }
-      else {
+			}
+			else {
 				if(p + width - 1 - j >= 0 && p + width - 1 - j < seqset.len_seq(c))
 					motout << nt[3 - seq[c][p + width - 1 - j]];
 				else motout << ' ';
-      }
-    }
-    motout << '\t' << c << '\t' << p << '\t' << s << '\n';
-  }
+			}
+		}
+		motout << '\t' << c << '\t' << p << '\t' << s << '\n';
+	}
 	int col = 0, prev_col = 0;
 	vector<int>::const_iterator col_iter;
 	for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {	
@@ -502,7 +502,7 @@ void Motif::write(ostream& motout) const {
 		motout << '*';
 		prev_col = col;
 	}
-  motout << endl;
+	motout << endl;
 	
 	motout << "Score: " << motif_score << "\n";
 	motout << "Sequences above sequence threshold: " << above_seqc << "\n";
@@ -589,8 +589,8 @@ void Motif::read(istream& motin) {
 }
 
 void Motif::destroy() {
-  //for when the = operator can fail
-  max_width=0;
+	//for when the = operator can fail
+	max_width=0;
 }
 
 void Motif::print_columns(ostream& out) {
