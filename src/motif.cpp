@@ -607,8 +607,8 @@ void Motif::check_sites() {
 		c = site_iter->chrom();
 		p = site_iter->posit();
 		s = site_iter->strand();
-		assert(p < 0);
-		assert(p + width - 1 >= seqset.len_seq(c));
+		assert(p >= 0);
+		assert(p + width - 1 < seqset.len_seq(c));
 	}
 }
 
