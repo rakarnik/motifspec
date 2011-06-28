@@ -91,7 +91,7 @@ public:
 	void write(ostream& motout) const;                                       // Write list of sites to a stream
 	void destroy();
 	void print_columns(ostream& out);
-	bool check_sites();
+	void check_sites();
 	void check_possible();
 };
 

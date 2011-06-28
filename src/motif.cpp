@@ -599,7 +599,7 @@ void Motif::print_columns(ostream& out) {
 		out << " " << *col_iter;
 }
 
-bool Motif::check_sites() {
+void Motif::check_sites() {
 	int c, p;
 	bool s;
 	vector<Site>::iterator site_iter;
@@ -607,12 +607,9 @@ bool Motif::check_sites() {
 		c = site_iter->chrom();
 		p = site_iter->posit();
 		s = site_iter->strand();
-		if(p < 0 || p + width - 1 >= seqset.len_seq(c)) {
-			cerr << "\t\t\t\t\tc: " << c << " p: " << p << " s: " << s << " w: " << width << " len: " << seqset.len_seq(c) << endl;
-			return false;
-		}
+		assert(p < 0);
+		assert(p + width - 1 >= seqset.len_seq(c));
 	}
-	return true;
 }
 
 void Motif::check_possible() {
