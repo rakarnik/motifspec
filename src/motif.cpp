@@ -154,7 +154,7 @@ void Motif::column_freq(const int col, int *ret){
 			ret[seq[c][p + col]]++;
 		} else {
 			assert(p + width - 1 - col >= 0);
-			assert(p + width - 1 - col < len - 1);
+			assert(p + width - 1 - col < len);
 			ret[3 - seq[c][p + width - 1 - col]]++;
 		}
 	}
@@ -320,12 +320,14 @@ void Motif::columns_open(int &l, int &r){
 		s = site_iter->strand();
 		len = seqset.len_seq(c);
 		if(s) {
-			l = min(p - 1, l);
-			r = min(len - 1 - p - w, r);
+			l = min(p, l);
+			r = min(len - p - w, r);
 		} else {
-			l = min(len - 1 - p - w, l);
-			r = min(p - 1, r);
+			l = min(len - p - w, l);
+			r = min(p, r);
 		}
+		assert(l >= 0);
+		assert(r >= 0);
 	}
 }
 
@@ -335,22 +337,23 @@ void Motif::calc_freq_matrix(int *fm) const {
 		fm[i] = 0;
 	}
 	
-	int g, j, pos, matpos;
+	int g, j, pos, matpos, len;
 	bool s;
 	vector<Site>::const_iterator site_iter;
 	for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter) {
 		g = site_iter->chrom();
 		j = site_iter->posit();
 		s = site_iter->strand();
+		len = seqset.len_seq(g);
 		if(s) {															 // forward strand
 			matpos = 0;
 			pos = 0;
 			vector<int>::const_iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
 				pos = j + *col_iter;
-				if(pos >= 0 && pos < seqset.len_seq(g)) {
-					fm[matpos + seq[g][pos]]++;
-				}
+				assert(pos >= 0);
+				assert(pos < len);
+				fm[matpos + seq[g][pos]]++;
 				matpos += 4;
 			}
 		} else {														 // reverse strand
@@ -359,9 +362,9 @@ void Motif::calc_freq_matrix(int *fm) const {
 			vector<int>::const_iterator col_iter;
 			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
 				pos = j + width - 1 - *col_iter;
-				if(pos >= 0 && pos < seqset.len_seq(g)) {
-					fm[matpos + 3 - seq[g][pos]]++;
-				}
+				assert(pos >= 0);
+				assert(pos < len);
+				fm[matpos + 3 - seq[g][pos]]++;
 				matpos += 4;
 			}
 		}
