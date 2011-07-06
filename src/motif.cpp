@@ -61,7 +61,7 @@ Motif& Motif::operator= (const Motif& m) {
 		has_sites.assign(m.has_sites.begin(), m.has_sites.end());
 		possible.assign(m.possible.begin(), m.possible.end());
 		columns.assign(m.columns.begin(), m.columns.end());
-		width = ((int) columns.back()) + 1;
+		width = m.width;
 		motif_score = m.motif_score;
 		above_seqc = m.above_seqc;
 		ssp_size = m.ssp_size;
@@ -163,7 +163,6 @@ void Motif::column_freq(const int col, int *ret){
 double Motif::score_site(double* score_matrix, const int c, const int p, const bool s) const {
 	const vector<vector<int> >& ss_seq = seqset.seq();
 	double L = 0.0;
-	int width = get_width();
 	int matpos;
 	vector<int>::const_iterator col_iter = columns.begin();
 	if(s) {
@@ -186,48 +185,31 @@ double Motif::score_site(double* score_matrix, const int c, const int p, const b
 	return L;
 }
 
-int Motif::remove_col(const int c) {
-	int ret = 0, ns = 0;				 // return number of removed column in new numbering
-	bool found = false;
-	if(c == 0) {									 // if the column to be removed is the first column, we shift all columns so first is 0
-		columns.erase(columns.begin());
-		if(columns.size() > 0) {
-			ns = columns[0];
-			vector<int>::iterator col_iter;
-			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter)
-				*col_iter -= ns;
-		}
-		ret = -ns;
-		shift_sites(ns);
-		found = true;
-	} else {
-		vector<int>::iterator col_iter;
-		for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
-			if(*col_iter == c) {
-				columns.erase(col_iter);
-				found = true;
-				break;
-			}
-		}
-	}
-	if (! found) {
-		cerr << "remove_column called for column " << c << " but it was not found!" << endl; 
-		abort();
-	}
-	width = ((int) columns.back()) + 1;
-	return ret;
-}
-
 void Motif::add_col(const int c) {
-	if(c < 0){									 // column to the left of existing, shift existing to the right
-		if(columns.size() > 0) {
-			vector<int>::iterator col_iter;
-			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter){
-				*col_iter -= c;
-			}
-			shift_sites(c);
+	if(c == 0) {
+		assert(columns.size() == 0);
+		columns.push_back(c);
+	} else if(c < 0) {									 // column to the left of existing
+		assert(columns.size() > 0);
+		// Shift columns
+		vector<int>::iterator col_iter;
+		for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter){
+			*col_iter -= c;
 		}
+		// Shift sites on Watson left
+		vector<Site>::iterator site_iter = sitelist.begin();
+		for(; site_iter != sitelist.end(); ++site_iter) 
+			if(site_iter->strand()) 
+				site_iter->shift(c);
 		columns.insert(columns.begin(), 0);
+	} else if(c > width - 1) {   // column to right of existing columns
+		int shift = c - columns.back();
+		// Shift sites on Crick strand left
+		vector<Site>::iterator site_iter = sitelist.begin();
+		for(; site_iter != sitelist.end(); ++site_iter)
+			if(! site_iter->strand())
+				site_iter->shift(-shift);
+		columns.push_back(c);
 	} else {
 		bool found = false;
 		vector<int>::iterator col_iter;
@@ -238,20 +220,53 @@ void Motif::add_col(const int c) {
 				break;
 			}
 		}
-		if(! found)
-			columns.push_back(c);
+		assert(found);
 	}
 	width = ((int) columns.back()) + 1;
+	check_sites();
+}
+
+void Motif::remove_col(const int c) {
+	if(c == 0) {									            // column to be removed is the first column
+		columns.erase(columns.begin());
+		if(columns.size() > 0) {
+			int shift = columns.front();
+			// Shift columns over to make first column 0
+			vector<int>::iterator col_iter;
+			for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter)
+				*col_iter -= shift;
+			// Shift sites on Watson strand right
+			vector<Site>::iterator site_iter = sitelist.begin();
+			for(; site_iter != sitelist.end(); ++site_iter) 
+				if(site_iter->strand()) 
+					site_iter->shift(shift);
+		}
+	} else if(c == columns.back()) {          // column to be removed is the last column
+		// Shift sites on Crick strand right
+		int shift = columns.back() - columns[columns.size() - 2];
+		vector<Site>::iterator site_iter = sitelist.begin();
+		for(; site_iter != sitelist.end(); ++site_iter)
+			if(! site_iter->strand())
+				site_iter->shift(shift);
+		columns.pop_back();
+	} else {
+		bool found = false;
+		vector<int>::iterator col_iter;
+		for(col_iter = columns.begin(); col_iter != columns.end(); ++col_iter) {
+			if(*col_iter == c) {
+				columns.erase(col_iter);
+				found = true;
+				break;
+			}
+		}
+		assert(found);
+	}
+	width = ((int) columns.back()) + 1;
+	check_sites();
 }
 
 bool Motif::has_col(const int c) {
 	return binary_search(columns.begin(), columns.end(), c);
-}
-
-void Motif::shift_sites(const int shift) {
-	vector<Site>::iterator site_iter;
-	for(site_iter = sitelist.begin(); site_iter != sitelist.end(); ++site_iter)
-		site_iter->shift(shift);
 }
 
 void Motif::flip_sites() {
@@ -310,7 +325,6 @@ int Motif::positions_in_search_space() const {
 }
 
 void Motif::columns_open(int &l, int &r){
-	int w = width;
 	int c, p, len;
 	bool s;
 	vector<Site>::iterator site_iter;
@@ -321,9 +335,9 @@ void Motif::columns_open(int &l, int &r){
 		len = seqset.len_seq(c);
 		if(s) {
 			l = min(p, l);
-			r = min(len - p - w, r);
+			r = min(len - p - width, r);
 		} else {
-			l = min(len - p - w, l);
+			l = min(len - p - width, l);
 			r = min(p, r);
 		}
 		assert(l >= 0);
@@ -545,6 +559,7 @@ void Motif::read(istream& motin) {
 	int num_sites = c.size();
 	for(int i = 0; i < num_sites; i++) {
 		assert(p[i] >= 0);
+		assert(p[i] + width - 1 < seqset.len_seq(c[i]));
 		add_site(c[i], p[i], s[i]);
 	}
 	
@@ -589,11 +604,6 @@ void Motif::read(istream& motin) {
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
 	set_dejavu(atoi(strtok(NULL, "\0")));
-}
-
-void Motif::destroy() {
-	//for when the = operator can fail
-	max_width=0;
 }
 
 void Motif::print_columns(ostream& out) {
