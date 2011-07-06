@@ -77,10 +77,9 @@ public:
 	vector<int>::const_iterator first_column() const { return columns.begin(); };
 	vector<int>::const_iterator last_column() const { return columns.end(); };
 	void column_freq(const int col, int *ret);
-	int remove_col(const int c);
 	void add_col(const int c);
+	void remove_col(const int c);
 	bool has_col(const int c);
-	void shift_sites(const int shift);
 	void flip_sites();
 	void orient();
 	int total_positions() const;
@@ -89,7 +88,6 @@ public:
 	string consensus() const;                                                // Return the consensus sequence for the current set of sites
 	void read(istream& motin);                                               // Read list of sites from a stream
 	void write(ostream& motout) const;                                       // Write list of sites to a stream
-	void destroy();
 	void print_columns(ostream& out);
 	void check_sites();
 	void check_possible();
