@@ -437,7 +437,7 @@ string Motif::consensus() const {
 		s = siteit->strand();
 		if(s) {
 			string hitseq = "";
-			for(int k = p; k < p + width - 1; k++)
+			for(int k = p; k < p + width; k++)
 				hitseq.append(1, nt[seq[c][k]]);
 			hits.push_back(hitseq);
 		} else {
