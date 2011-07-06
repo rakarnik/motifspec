@@ -355,69 +355,70 @@ bool MotifSearch::column_sample(){
 	int freq[4];
 	int width = motif.get_width();
 	// Compute scores for current and surrounding columns
-	int max_left, max_right;
-	max_left = max_right = (motif.get_max_width() - width)/2;
-	motif.columns_open(max_left, max_right);
-	int cs_span = max_left + max_right + width;
+	int max_l, max_r;
+	max_l = max_r = (motif.get_max_width() - width)/2;
+	motif.columns_open(max_l, max_r);
+	int cs_span = max_l + max_r + width;
 	
 	// Compute information content for each column
 	vector<struct idscore> wtx(cs_span);
-	int x = max_left;
 	double best_wt = -DBL_MAX;
 	for(int i = 0; i < cs_span; i++) {
-		motif.column_freq(i - x, freq);
+		motif.column_freq(i - max_l, freq);
 		wtx[i].id = i;
 		wtx[i].score = 0.0;
 		for(int j = 0;j < 4; j++){
 			wtx[i].score += gammaln(freq[j] + params.pseudo[j]);
 			wtx[i].score -= (double)freq[j] * log(params.backfreq[j]);
 		}
-		if(wtx[i].score > best_wt) best_wt = wtx[i].score;
 	}
 
 	// Penalize outermost columns for length
-	double scale = 0.0;
-	if(best_wt > 100.0) scale = best_wt - 100.0; //keep exp from overflowing
-	for(int i = 0; i < cs_span; i++){
-		wtx[i].score -= scale;
-		wtx[i].score = exp(wtx[i].score);
-		int newwidth = width;
-		if(i < x)
-			newwidth += (x - i);
-		else if(i > (x + width - 1))
-			newwidth += (i - x - width + 1);
-		wtx[i].score /= bico(newwidth - 2, motif.ncols() - 2);
+	vector<struct idscore>::iterator witer = wtx.begin();
+	int newwidth;
+	for(; witer != wtx.end(); ++witer) {
+		newwidth = width;
+		if(witer->id < max_l)
+			newwidth += max_l - witer->id;
+		else if(witer->id > max_l + width - 1)
+			newwidth += witer->id - max_l - width + 1;
+		witer->score -= lnbico(newwidth - 2, motif.ncols() - 2);
+		if(witer->score > best_wt) best_wt = witer->score;
 	}
 
-	// Sort columns by weight
+	// Scale and sort columns by weight
+	for(witer = wtx.begin(); witer != wtx.end(); ++witer)
+		witer->score /= best_wt;
 	sort(wtx.begin(), wtx.end(), isc);
 	
 	int nc = motif.ncols();
 	int nadded = 0;
-	vector<struct idscore>::iterator witer = wtx.begin();
 	vector<struct idscore>::iterator witer1;
 	// Add top nc columns
-	for(; witer != wtx.end() && nadded < nc; ++witer) {
-		if(! motif.has_col(witer->id - x)) {     // column is not already in motif
-			motif.add_col(witer->id - x);
+	for(witer = wtx.begin(); witer != wtx.end() && nadded < nc; ++witer) {
+		if(! motif.has_col(witer->id - max_l)) {     // column is not already in motif
+			motif.add_col(witer->id - max_l);
 			changed = true;
-			if(witer->id - x < 0)                  // new column is to left of all existing columns, adjust column numbers
+			if(witer->id - max_l < 0)                  // new column is to left of all existing columns, adjust column numbers
 				for(witer1 = witer + 1; witer1 != wtx.end(); ++witer1)
-					witer1->id -= witer->id - x;
+					witer1->id -= witer->id - max_l;
 		}
+		motif.check_sites();
 		nadded++;
 	}
+
 	// Remove any columns not in top nc but currently in motif
 	for(; witer != wtx.end(); ++witer) {
-		if(motif.has_col(witer->id - x)) {
-			if(witer->id - x == 0)
+		if(motif.has_col(witer->id - max_l)) {
+			if(witer->id - max_l == 0)
 				for(witer1 = witer + 1; witer1 != wtx.end(); ++witer1)
 					witer1->id -= motif.column(1);
-			motif.remove_col(witer->id - x);
+			motif.remove_col(witer->id - max_l);
 			changed = true;
 		}
+		motif.check_sites();
 	}
-	
+
 	return changed;
 }
 
