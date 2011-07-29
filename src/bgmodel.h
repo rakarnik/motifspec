@@ -1,7 +1,6 @@
 #ifndef _bgmodel
 #define _bgmodel
 
-#include "standard.h"
 #include "seqset.h"
 
 class BGModel {
