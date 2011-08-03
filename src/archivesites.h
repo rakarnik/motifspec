@@ -1,9 +1,5 @@
-//Copyright 1999 President and Fellows of Harvard University
-//archivesites.h
-
 #ifndef _archivesites
 #define _archivesites
-#include "standard.h"
 #include "seqset.h"
 #include "bgmodel.h"
 #include "motif.h"
