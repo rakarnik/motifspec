@@ -6,8 +6,7 @@ MotifCompare::MotifCompare(const Seqset& s, const BGModel& bgm)
 }
 
 float MotifCompare::compare(const Motif& m1, const Motif& m2) const {
-	vector<float> scores1;
-	vector<float> scores2;
+	vector<float> scores1, scores2;
 	int c, p, len, window_size;
 	int olap = 2; // overlap required between motifs
 	bool s;
@@ -33,7 +32,8 @@ float MotifCompare::compare(const Motif& m1, const Motif& m2) const {
 		max_sc_1 = -1000;
 		window_size = w2 - olap;
 		for(int i = max(0, p - window_size); i < min(len - w1 - 1, p + window_size); i++) {
-			sc = - m1.score_site(sm1, c, i, s) + bgmodel.score_site(m1.first_column(), m1.last_column(), w1, c, i, s);
+			sc = m1.score_site(sm1, c, i, s) - bgmodel.score_site(m1.first_column(), m1.last_column(), w1, c, i, s);
+			sc /= m1.ncols();
 			if(sc > max_sc_1)
 				max_sc_1 = sc;
 		}
@@ -42,7 +42,8 @@ float MotifCompare::compare(const Motif& m1, const Motif& m2) const {
 		max_sc_2 = -1000;
 		window_size = w1 - olap;
 		for(int i = max(0, p - window_size); i < min(len - w2 - 1, p + window_size); i++) {
-			sc = - m2.score_site(sm2, c, i, s) + bgmodel.score_site(m2.first_column(), m2.last_column(), w2, c, i, s);
+			sc = m2.score_site(sm2, c, i, s) - bgmodel.score_site(m2.first_column(), m2.last_column(), w2, c, i, s);
+			sc /= m2.ncols();
 			if(sc > max_sc_2)
 				max_sc_2 = sc;
 		}
@@ -60,7 +61,8 @@ float MotifCompare::compare(const Motif& m1, const Motif& m2) const {
 		max_sc_1 = -1000;
 		window_size = w2 - olap;
 		for(int i = max(0, p - window_size); i < min(len - w1 - 1, p + window_size); i++) {
-			sc = - m1.score_site(sm1, c, i, s) + bgmodel.score_site(m1.first_column(), m1.last_column(), w1, c, i, s);
+			sc = m1.score_site(sm1, c, i, s) - bgmodel.score_site(m1.first_column(), m1.last_column(), w1, c, i, s);
+			sc /= m1.ncols();
 			if(sc > max_sc_1)
 				max_sc_1 = sc;
 		}
@@ -69,7 +71,8 @@ float MotifCompare::compare(const Motif& m1, const Motif& m2) const {
 		max_sc_2 = -1000;
 		window_size = w1 - olap;
 		for(int i = max(0, p - window_size); i < min(len - w2 - 1, p + window_size); i++) {
-			sc = - m2.score_site(sm2, c, i, s) + bgmodel.score_site(m2.first_column(), m2.last_column(), w2, c, i, s);
+			sc = m2.score_site(sm2, c, i, s) - bgmodel.score_site(m2.first_column(), m2.last_column(), w2, c, i, s);
+			sc /= m2.ncols();
 			if(sc > max_sc_2)
 				max_sc_2 = sc;
 		}
@@ -82,13 +85,6 @@ float MotifCompare::compare(const Motif& m1, const Motif& m2) const {
 	assert(scores2.size() == (unsigned int) m1.number() + m2.number());
 	
 	float mcorr = corr(scores1, scores2);
-	int df = scores1.size() - 2;
-	float t = 0.0;
-	if(mcorr > 0.999) {
-		t = 1000;
-	} else {
-		t = mcorr * sqrt((df - 2)/(1 - mcorr * mcorr));
-	}
-	return t;
+	return mcorr;
 }
 
