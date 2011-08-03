@@ -69,11 +69,12 @@ double BGModel::score_site(vector<int>::const_iterator first_col, vector<int>::c
 	double L = 0.0;
 	int matpos;
 	vector<int>::const_iterator col_iter = first_col;
+	int len = seqset.len_seq(c);
 	if(s) {
 		matpos = 0;
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + *col_iter >= 0);
-			assert(p + *col_iter < seqset.len_seq(c));
+			assert(p + *col_iter < len);
 			L += wbgscores[c][p + *col_iter];
 			matpos += 4;
 		}
@@ -81,7 +82,7 @@ double BGModel::score_site(vector<int>::const_iterator first_col, vector<int>::c
 		matpos = 0;
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + width - 1 - *col_iter >= 0);
-			assert(p + width - 1 - *col_iter < seqset.len_seq(c));
+			assert(p + width - 1 - *col_iter < len);
 			L += cbgscores[c][p + width - 1 - *col_iter];
 			matpos += 4;
 		}
