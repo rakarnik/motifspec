@@ -1,9 +1,10 @@
 #include "motif.h"
 
-Motif::Motif(const Seqset& s, const int nc, const vector<double>& p) :
+Motif::Motif(const Seqset& s, const int nc, const vector<double>& p, const vector<double>& b) :
 seqset(s),
 init_nc(nc),
 pseudo(p),
+backfreq(b),
 num_seqs(s.num_seqs()),
 max_width(3 * init_nc),
 columns(init_nc),
@@ -31,6 +32,7 @@ Motif::Motif(const Motif& m) :
 seqset(m.seqset),
 init_nc(m.init_nc),
 pseudo(m.pseudo),
+backfreq(m.backfreq),
 width(m.width),
 num_seqs(m.num_seqs),
 max_width(m.max_width),
@@ -55,7 +57,6 @@ Motif& Motif::operator= (const Motif& m) {
 	if(this != &m){
 		//assume that the same Seqset is referred to, so ignore some things
 		init_nc = m.init_nc;
-		// pseudo = m.pseudo;
 		sitelist.assign(m.sitelist.begin(), m.sitelist.end());
 		num_seqs_with_sites = m.num_seqs_with_sites;
 		has_sites.assign(m.has_sites.begin(), m.has_sites.end());
@@ -267,6 +268,75 @@ void Motif::remove_col(const int c) {
 
 bool Motif::has_col(const int c) {
 	return binary_search(columns.begin(), columns.end(), c);
+}
+
+bool Motif::column_sample(){
+	bool changed = false;
+	int freq[4];
+	// Compute scores for current and surrounding columns
+	int max_l, max_r;
+	max_l = max_r = (max_width - width)/2;
+	columns_open(max_l, max_r);
+	int cs_span = max_l + max_r + width;
+	
+	// Compute information content for each column
+	vector<struct idscore> wtx(cs_span);
+	double best_wt = -DBL_MAX;
+	for(int i = 0; i < cs_span; i++) {
+		column_freq(i - max_l, freq);
+		wtx[i].id = i;
+		wtx[i].score = 0.0;
+		for(int j = 0;j < 4; j++){
+			wtx[i].score += gammaln(freq[j] + pseudo[j]);
+			wtx[i].score -= (double)freq[j] * log(backfreq[j]);
+		}
+	}
+	
+	// Penalize outermost columns for length
+	vector<struct idscore>::iterator witer = wtx.begin();
+	int newwidth;
+	for(; witer != wtx.end(); ++witer) {
+		newwidth = width;
+		if(witer->id < max_l)
+			newwidth += max_l - witer->id;
+		else if(witer->id > max_l + width - 1)
+			newwidth += witer->id - max_l - width + 1;
+		witer->score -= lnbico(newwidth - 2, ncols() - 2);
+		if(witer->score > best_wt) best_wt = witer->score;
+	}
+	
+	// Scale and sort columns by weight
+	for(witer = wtx.begin(); witer != wtx.end(); ++witer)
+		witer->score /= best_wt;
+	sort(wtx.begin(), wtx.end(), isc);
+	
+	int nc = ncols();
+	int nadded = 0;
+	vector<struct idscore>::iterator witer1;
+	// Add top nc columns
+	for(witer = wtx.begin(); witer != wtx.end() && nadded < nc; ++witer) {
+		if(! has_col(witer->id - max_l)) {     // column is not already in motif
+			add_col(witer->id - max_l);
+			changed = true;
+			if(witer->id - max_l < 0)                  // new column is to left of all existing columns, adjust column numbers
+				for(witer1 = witer + 1; witer1 != wtx.end(); ++witer1)
+					witer1->id -= witer->id - max_l;
+		}
+		nadded++;
+	}
+	
+	// Remove any columns not in top nc but currently in motif
+	for(; witer != wtx.end(); ++witer) {
+		if(has_col(witer->id - max_l)) {
+			if(witer->id - max_l == 0)
+				for(witer1 = witer + 1; witer1 != wtx.end(); ++witer1)
+					witer1->id -= column(1);
+			remove_col(witer->id - max_l);
+			changed = true;
+		}
+	}
+	
+	return changed;
 }
 
 void Motif::flip_sites() {

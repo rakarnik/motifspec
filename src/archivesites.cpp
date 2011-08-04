@@ -3,12 +3,14 @@
 
 #include "archivesites.h"
 
-ArchiveSites::ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const vector<double>& p) : 
+ArchiveSites::ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut,
+													 const vector<double>& p, const vector<double>& b) : 
 seqset(seq),
 mc(seqset, bgm),
-archive(0, Motif(seq, 12, p)),
+archive(0, Motif(seq, 12, p, b)),
 sim_cutoff(sim_cut),
 pseudo(p),
+backfreq(b),
 min_visits(3) {
 }
 
@@ -87,7 +89,7 @@ void ArchiveSites::read(istream& archin) {
 	char line[200];
 	while(archin.getline(line, 200)) {
 		if(strstr(line, "Motif")) {
-			Motif m(seqset, 12, pseudo);
+			Motif m(seqset, 12, pseudo, backfreq);
 			m.read(archin);
 			archive.push_back(m);
 		}

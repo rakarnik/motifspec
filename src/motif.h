@@ -9,6 +9,7 @@ class Motif {
 	const Seqset& seqset;                    // set of sequences that this motif refers to
 	int init_nc;                             // initial number of columns in this motif
 	const vector<double>& pseudo;            // pseudocounts to use for score calculations
+	const vector<double>& backfreq;          // background frequencies to use for score calculations
 	int width;															 // width of the motif (including non-informative columns)
 	int num_seqs;                            // total number of sequences in this set
 	int max_width;                           // maximum width of this motif
@@ -28,8 +29,17 @@ class Motif {
 	string iter;                             // iteration in which this motif was found
 	int dejavu;                              // number of times this motif was seen
 
+	struct idscore {
+		int id;
+		double score;
+	};
+	
+	struct iscomp {
+		bool operator() (struct idscore is1, struct idscore is2) { return (is1.score > is2.score); }
+	} isc;
+	
 public:
-	Motif(const Seqset& v, const int nc, const vector<double>& p);
+	Motif(const Seqset& v, const int nc, const vector<double>& p, const vector<double>& b);
 	Motif(const Motif& m);
 	Motif& operator= (const Motif& m);
 	int number() const { return sitelist.size(); }
@@ -80,6 +90,7 @@ public:
 	void add_col(const int c);
 	void remove_col(const int c);
 	bool has_col(const int c);
+	bool column_sample();
 	void flip_sites();
 	void orient();
 	int total_positions() const;

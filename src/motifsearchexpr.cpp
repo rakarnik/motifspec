@@ -130,7 +130,7 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 			single_pass_select(false);
 		}
 		for(int j = 0; j < 3; j++)
-			if(! column_sample()) break;
+			if(! motif.column_sample()) break;
 		compute_seq_scores_minimal();
 		compute_expr_scores();
 		motif.set_motif_score(score());

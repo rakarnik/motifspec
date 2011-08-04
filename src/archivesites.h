@@ -11,10 +11,11 @@ class ArchiveSites{
 	vector<Motif> archive;
 	const double sim_cutoff;
 	const vector<double>& pseudo;
+	const vector<double>& backfreq;
 	int min_visits;
 
 public:
-	ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const vector<double>& p);
+	ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const vector<double>& p, const vector<double>& b);
 	int nmots() const { return archive.size(); }
 	vector<Motif>& get_archive() { return archive; }
 	bool check_motif(const Motif& m);               // Returns true if no better motif, false otherwise
