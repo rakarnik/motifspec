@@ -7,8 +7,23 @@ MotifSearchScore::MotifSearchScore(const vector<string>& names,
 																 const double sim_cut,
 																 vector<float>& sctab) :
 MotifSearch(names, seqs, nc, order, sim_cut),
-scores(sctab) {
-	
+scores(sctab),
+scranks(ngenes) {
+		float sc_max = DBL_MAX;
+		float sc_min = DBL_MIN;
+		vector<float>::iterator sciter = scores.begin();
+		for(; sciter != scores.end(); ++sciter) {
+			sc_max = max(sc_max, *sciter);
+			sc_min = min(sc_min, *sciter);
+		}
+		int i = 0;
+		sciter = scores.begin();
+		for(; sciter != scores.end(); ++sciter) {
+			*sciter = (*sciter - sc_min)/(sc_max - sc_min);
+			scranks[i].id = i;
+			scranks[i].score = *sciter;
+		}
+		sort(scranks.begin(), scranks.end(), isc);
 	reset_search_space();
 }
 
