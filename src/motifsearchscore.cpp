@@ -76,10 +76,6 @@ void MotifSearchScore::set_search_space_cutoff(const int phase) {
 	adjust_search_space();
 }
 
-void MotifSearchScore::calc_matrix(double* score_matrix) {
-	motif.calc_score_matrix(score_matrix, scores);
-}
-
 int MotifSearchScore::search_for_motif(const int worker, const int iter, const string outfile) {
 	motif.clear_sites();
 	select_sites.clear_sites();
