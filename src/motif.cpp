@@ -501,12 +501,17 @@ void Motif::freq_matrix_extended(vector<float>& fm) const {
 }
 
 void Motif::calc_score_matrix(double *sm) const {
+	vector<float> w(num_seqs, 1.0);
+	calc_score_matrix(sm, w);
+}
+
+void Motif::calc_score_matrix(double *sm, const vector<float>& w) const {
 	int* fm = new int[4 * ncols()];
 	double tot = (double) number();
 	for(int j = 0; j < 4; j++) {
 		tot += pseudo[j];
 	}
-	calc_freq_matrix(fm);
+	calc_freq_matrix(fm, w);
 	for(int i = 0; i < 4 * ncols(); i += 4){
 		for(int j = 0; j < 4; j++){
 			sm[i + j] = log((fm[i + j] + pseudo[j])/tot);
