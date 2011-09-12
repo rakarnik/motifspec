@@ -79,6 +79,7 @@ public:
 	void clear_sites();
 	void remove_all_sites();
 	void calc_freq_matrix(int* fm) const;
+	void calc_freq_matrix(int* fm, const vector<float>& w) const;
 	void freq_matrix_extended(vector<float>& fm) const;
 	void calc_score_matrix(double* sm) const;
 	double score_site(double* score_matrix, const int c, const int p, const bool s) const;

@@ -416,8 +416,17 @@ void Motif::columns_open(int &l, int &r){
 }
 
 void Motif::calc_freq_matrix(int *fm) const {
-	const vector<vector <int> >& seq = seqset.seq();
 	for(int i = 0; i < 4 * ncols(); i++){
+		fm[i] = 0;
+	}
+	
+	vector<float> w(num_seqs, 1.0);
+	calc_freq_matrix(fm, w);
+}
+
+void Motif::calc_freq_matrix(int *fm, const vector<float>& w) const {
+	const vector<vector <int> >& seq = seqset.seq();
+	for(int i = 0; i < 4 * ncols(); i++) {
 		fm[i] = 0;
 	}
 	
@@ -437,7 +446,7 @@ void Motif::calc_freq_matrix(int *fm) const {
 				pos = j + *col_iter;
 				assert(pos >= 0);
 				assert(pos < len);
-				fm[matpos + seq[g][pos]]++;
+				fm[matpos + seq[g][pos]] += w[g];
 				matpos += 4;
 			}
 		} else {														 // reverse strand
@@ -448,12 +457,13 @@ void Motif::calc_freq_matrix(int *fm) const {
 				pos = j + width - 1 - *col_iter;
 				assert(pos >= 0);
 				assert(pos < len);
-				fm[matpos + 3 - seq[g][pos]]++;
+				fm[matpos + 3 - seq[g][pos]] += w[g];
 				matpos += 4;
 			}
 		}
 	}
 }
+
 
 void Motif::freq_matrix_extended(vector<float>& fm) const {
 	const vector<vector <int> >& seq = seqset.seq();
