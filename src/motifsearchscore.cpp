@@ -16,12 +16,10 @@ scranks(ngenes) {
 			sc_max = max(sc_max, *sciter);
 			sc_min = min(sc_min, *sciter);
 		}
-		int i = 0;
-		sciter = scores.begin();
-		for(; sciter != scores.end(); ++sciter) {
-			*sciter = (*sciter - sc_min)/(sc_max - sc_min);
+		for(int i = 0; i < ngenes; i++) {
+			scores[i] = (scores[i] - sc_min)/(sc_max - sc_min);
 			scranks[i].id = i;
-			scranks[i].score = *sciter;
+			scranks[i].score = scores[i];
 		}
 		sort(scranks.begin(), scranks.end(), isc);
 	reset_search_space();
@@ -31,7 +29,7 @@ scranks(ngenes) {
 void MotifSearchScore::reset_search_space() {
 	motif.clear_search_space();
 	vector<struct idscore>::iterator scit = scranks.begin();
-	for(; scit != scranks.end() && scit->score > motif.get_score_cutoff(); ++scit)
+	for(; scit != scranks.end() && motif.get_search_space_size() <= 100; ++scit)
 		motif.add_to_search_space(scit->id);
 	assert(motif.get_search_space_size() > 0);
 	assert(motif.get_search_space_size() <= ngenes);
