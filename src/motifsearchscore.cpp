@@ -9,8 +9,8 @@ MotifSearchScore::MotifSearchScore(const vector<string>& names,
 MotifSearch(names, seqs, nc, order, sim_cut),
 scores(sctab),
 scranks(ngenes) {
-	float sc_max = DBL_MAX;
-	float sc_min = DBL_MIN;
+	float sc_max = DBL_MIN;
+	float sc_min = DBL_MAX;
 	vector<float>::iterator sciter = scores.begin();
 	for(; sciter != scores.end(); ++sciter) {
 		sc_max = max(sc_max, *sciter);
