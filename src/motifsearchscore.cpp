@@ -31,6 +31,7 @@ void MotifSearchScore::reset_search_space() {
 	vector<struct idscore>::iterator scit = scranks.begin();
 	for(; scit != scranks.end() && motif.get_search_space_size() <= 100; ++scit)
 		motif.add_to_search_space(scit->id);
+	motif.set_score_cutoff(scit->score);
 	assert(motif.get_search_space_size() > 0);
 	assert(motif.get_search_space_size() <= ngenes);
 }
@@ -53,7 +54,7 @@ void MotifSearchScore::set_search_space_cutoff(const int phase) {
 	float sccut, best_sccut = 0.0;
 	double po, best_po = DBL_MAX;
 	vector<struct idscore>::const_iterator sc_iter = scranks.begin();
-	for(sccut = sc_iter->score; sc_iter != scranks.end() && sc_iter->score > params.minscore[phase]; ++sc_iter) {
+	for(sccut = sc_iter->score; sc_iter != scranks.end(); ++sc_iter) {
 		if(sccut >= sc_iter->score) {
 			assert(isect <= motif.get_above_seqc());
 			assert(isect <= scn);
