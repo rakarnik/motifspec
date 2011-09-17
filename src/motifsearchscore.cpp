@@ -70,7 +70,7 @@ void MotifSearchScore::set_search_space_cutoff(const int phase) {
 			isect++;
 		sccut = sc_iter->score;
 	}
-	// cerr << "\t\t\tSetting score cutoff to " << best_sccut << " (minimum " << separams.minscore[phase] << ")\n";
+	// cerr << "\t\t\tSetting score cutoff to " << best_sccut << " (minimum " << params.minscore[phase] << ")\n";
 	motif.set_score_cutoff(best_sccut);
 	adjust_search_space();
 }
