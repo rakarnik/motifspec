@@ -357,7 +357,7 @@ void Motif::flip_sites() {
 }
 
 void Motif::orient() {
-	int* freq_matrix = new int[4 * ncols()];
+	float* freq_matrix = new float[4 * ncols()];
 	double *freq = new double[4];
 	for(int i = 0; i < 4; i++)
 		freq[i] = 0.0;
@@ -415,7 +415,7 @@ void Motif::columns_open(int &l, int &r){
 	}
 }
 
-void Motif::calc_freq_matrix(int *fm) const {
+void Motif::calc_freq_matrix(float* fm) const {
 	for(int i = 0; i < 4 * ncols(); i++){
 		fm[i] = 0;
 	}
@@ -424,10 +424,10 @@ void Motif::calc_freq_matrix(int *fm) const {
 	calc_freq_matrix(fm, w);
 }
 
-void Motif::calc_freq_matrix(int *fm, const vector<float>& w) const {
+void Motif::calc_freq_matrix(float* fm, const vector<float>& w) const {
 	const vector<vector <int> >& seq = seqset.seq();
 	for(int i = 0; i < 4 * ncols(); i++) {
-		fm[i] = 0;
+		fm[i] = 0.0;
 	}
 	
 	int g, j, pos, matpos, len;
@@ -506,7 +506,7 @@ void Motif::calc_score_matrix(double *sm) const {
 }
 
 void Motif::calc_score_matrix(double *sm, const vector<float>& w) const {
-	int* fm = new int[4 * ncols()];
+	float* fm = new float[4 * ncols()];
 	double tot = (double) number();
 	for(int j = 0; j < 4; j++) {
 		tot += pseudo[j];

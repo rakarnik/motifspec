@@ -358,7 +358,7 @@ double MotifSearch::score() {
 
 double MotifSearch::matrix_score() {
 	double ms = 0.0;
-	int* freq_matrix = new int[4 * motif.ncols()];
+	float* freq_matrix = new float[4 * motif.ncols()];
 	motif.calc_freq_matrix(freq_matrix);
 	int nc = motif.ncols();
 	int w = motif.get_width();
