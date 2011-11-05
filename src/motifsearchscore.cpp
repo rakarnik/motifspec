@@ -9,22 +9,13 @@ MotifSearchScore::MotifSearchScore(const vector<string>& names,
 MotifSearch(names, seqs, nc, order, sim_cut),
 scores(sctab),
 scranks(ngenes) {
-	float sc_max = DBL_MIN;
-	float sc_min = DBL_MAX;
-	vector<float>::iterator sciter = scores.begin();
-	for(; sciter != scores.end(); ++sciter) {
-		sc_max = max(sc_max, *sciter);
-		sc_min = min(sc_min, *sciter);
-	}
 	for(int i = 0; i < ngenes; i++) {
-		scores[i] = (scores[i] - sc_min)/(sc_max - sc_min);
 		scranks[i].id = i;
 		scranks[i].score = scores[i];
 	}
 	sort(scranks.begin(), scranks.end(), isc);
 	reset_search_space();
 }
-
 
 void MotifSearchScore::reset_search_space() {
 	motif.clear_search_space();
