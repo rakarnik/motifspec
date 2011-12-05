@@ -20,7 +20,7 @@ scranks(ngenes) {
 void MotifSearchScore::reset_search_space() {
 	motif.clear_search_space();
 	vector<struct idscore>::iterator scit = scranks.begin();
-	for(; scit != scranks.end() && motif.get_search_space_size() <= 100; ++scit)
+	for(; scit != scranks.end() && motif.get_search_space_size() <= ngenes/10; ++scit)
 		motif.add_to_search_space(scit->id);
 	motif.set_score_cutoff(scit->score);
 	assert(motif.get_search_space_size() > 0);
@@ -78,16 +78,18 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 	motif.set_iter(iterstr.str());
 	int phase = 0;
 	
-	motif.set_score_cutoff(2.3);
+	motif.set_score_cutoff(0.8);
 	reset_search_space();
 	seed_random_site();
 	if(size() < 1) {
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
 		return BAD_SEED;
 	}
+	adjust_search_space();
 	
 	compute_seq_scores();
 	set_seq_cutoff(phase);
+	update_seq_count();
 	set_search_space_cutoff(phase);
 	motif.set_motif_score(score());
 	print_status(cerr, 0, phase);
@@ -104,6 +106,7 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 		for(int j = 0; j < 3; j++)
 			if(! motif.column_sample()) break;
 		compute_seq_scores_minimal();
+		update_seq_count();
 		motif.set_motif_score(score());
 		print_status(cerr, i, phase);
 		if(size() > ngenes/3) {
@@ -116,6 +119,7 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 			motif = best_motif;
 			select_sites = best_motif;
 			compute_seq_scores();
+			update_seq_count();
 			set_seq_cutoff(phase);
 			set_search_space_cutoff(phase);
 			motif.set_motif_score(score());
@@ -144,6 +148,7 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 				select_sites = best_motif;
 				if(phase < 3) {
 					compute_seq_scores_minimal();
+					update_seq_count();
 					set_seq_cutoff(phase);
 					set_search_space_cutoff(phase);
 				}
