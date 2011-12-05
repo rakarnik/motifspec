@@ -22,7 +22,7 @@ bool ArchiveSites::check_motif(const Motif& m) {
 	for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter){
 		cmp1 = mc.compare(*iter, m);
 		cmp2 = mc.compare(*iter, rm);
-		if((cmp1 >= 6 || cmp2 >= 6) && iter->get_dejavu() >= min_visits)
+		if((cmp1 >= 0.9 || cmp2 >= 0.9) && iter->get_dejavu() >= min_visits)
 			return false;
 	}
 	return true;
