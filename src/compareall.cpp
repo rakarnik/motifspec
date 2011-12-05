@@ -23,7 +23,8 @@ int main(int argc, char** argv) {
 	int nmots = mots.size();
 	for(int i = 0; i < nmots; i++) {
 		for(int j = i + 1; j < nmots; j++) {
-			cout << acefile << '\t' << i + 1 << '\t' << acefile << '\t' << j + 1 << '\t' << mc.compare(mots[i], mots[j]) << '\n';
+			double c = mc.compare(mots[i], mots[j]);
+			cout << acefile << '\t' << i + 1 << '\t' << acefile << '\t' << j + 1 << '\t' << c << '\n';
 		}
 	}
 }
