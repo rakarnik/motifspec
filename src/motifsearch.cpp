@@ -314,7 +314,6 @@ void MotifSearch::compute_seq_scores() {
 	}
 	delete [] score_matrix;
 	sort(seqranks.begin(), seqranks.end(), isc);
-	update_seq_count();
 }
 
 void MotifSearch::compute_seq_scores_minimal() {
@@ -346,8 +345,6 @@ void MotifSearch::compute_seq_scores_minimal() {
 	sort(seqranks.begin(), seqranks.end(), isc);
 	if(seqranks[0].score < 0.85)
 		compute_seq_scores();
-	else
-		update_seq_count();
 }
 
 double MotifSearch::score() {
@@ -448,24 +445,24 @@ void MotifSearch::full_output(char *name){
 
 void MotifSearch::set_seq_cutoff(const int phase) {
 	int seqn = 0, isect = 0;
-	float seqcut, best_seqcut = params.minprob[phase];
+	double seqcut, best_seqcut = params.minprob[phase];
 	double po, best_po = DBL_MAX;
 	vector<struct idscore>::const_iterator sr_iter = seqranks.begin();
-	for(seqcut = sr_iter->score; sr_iter->score >= params.minprob[phase] && sr_iter != seqranks.end(); ++sr_iter) {
-		if(seqcut >= sr_iter->score) {
-			assert(isect <= motif.get_search_space_size());
-			assert(isect <= seqn);
-			po = log_prob_overlap(isect, motif.get_search_space_size(), seqn, ngenes);
-			// cerr << "\t\t\t" << motif.get_score_cutoff() << '\t' << seqcut << '\t' << motif.get_search_space_size() << '\t' << seqn << '\t' << isect << '\t' << po << '\n';
-			if(po < best_po) {
-				best_seqcut = seqcut;
-				best_po = po;
-			}
+	for(seqcut = 0.999; seqcut >= params.minprob[phase]; seqcut -= 0.001) {
+		while(sr_iter->score >= seqcut) {
+			seqn++;
+			if(motif.in_search_space(sr_iter->id))
+				isect++;
+			++sr_iter;
 		}
-		seqn++;
-		if(motif.in_search_space(sr_iter->id))
-			isect++;
-		seqcut = sr_iter->score;
+		assert(isect <= seqn);
+		assert(isect <= motif.get_search_space_size());
+		po = log_prob_overlap(isect, seqn, motif.get_search_space_size(), ngenes);
+		cerr << "\t\t\t" << seqcut << '\t' << motif.get_seq_cutoff() << '\t' << seqn << '\t' << motif.get_search_space_size() << '\t' << isect << '\t' << po << '\n';
+		if(po <= best_po) {
+			best_seqcut = seqcut;
+			best_po = po;
+		}
 	}
 	// cerr << "\t\t\tSetting sequence cutoff to " << best_seqcut << "(minimum " << params.minprob[phase] << ")\n";
 	motif.set_seq_cutoff(best_seqcut);
