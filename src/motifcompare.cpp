@@ -64,3 +64,4 @@ void MotifCompare::copy_subfreq(const vector<float>& fm, const vector<int>& cols
 		for(int j = 0; j < 4; j++)
 			subfm.push_back(fm[*col_iter * 4 + j]);
 }
+
