@@ -42,7 +42,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 		cmp1 = mc.compare(*iter, m);
 		cmp2 = mc.compare(*iter, rm);
 		// cerr << "Comparing with motif " << motnum << ", scores were " << cmp1 << " and " << cmp2 << '\n';
-		if(cmp1 >= 6 || cmp2 >= 6) {
+		if(cmp1 >= 0.9 || cmp2 >= 0.9) {
 			iter->inc_dejavu();
 			return false;
 		}
