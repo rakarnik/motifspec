@@ -40,7 +40,7 @@ void MotifSearchScore::adjust_search_space() {
 	motif.set_above_cutoffs(isect);
 }
 
-void MotifSearchScore::set_search_space_cutoff(const int phase) {
+void MotifSearchScore::set_search_space_cutoff(const int) {
 	int scn = 0, isect = 0;
 	float sccut, best_sccut = 0.0;
 	double po, best_po = DBL_MAX;
