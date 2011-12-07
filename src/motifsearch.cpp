@@ -458,7 +458,7 @@ void MotifSearch::set_seq_cutoff(const int phase) {
 		assert(isect <= seqn);
 		assert(isect <= motif.get_search_space_size());
 		po = log_prob_overlap(isect, seqn, motif.get_search_space_size(), ngenes);
-		cerr << "\t\t\t" << seqcut << '\t' << motif.get_seq_cutoff() << '\t' << seqn << '\t' << motif.get_search_space_size() << '\t' << isect << '\t' << po << '\n';
+		// cerr << "\t\t\t" << seqcut << '\t' << motif.get_seq_cutoff() << '\t' << seqn << '\t' << motif.get_search_space_size() << '\t' << isect << '\t' << po << '\n';
 		if(po <= best_po) {
 			best_seqcut = seqcut;
 			best_po = po;
