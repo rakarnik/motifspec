@@ -8,21 +8,20 @@ LNK_OPTIONS = -pg
 LNK_DEBUG_OPTIONS = -pg
 
 #
-# INCLUDE directories for im
+# INCLUDE directories for inspector
 #
 INCLUDE = -I.\
 					-Isrc
 
-
 #
-# Build im
+# Build inspector
 #
-all: im im-debug
+all: inspector inspector-debug
 
-im: \
+inspector: \
 		bin/archivesites.o\
 		bin/bgmodel.o\
-		bin/im.o\
+		bin/inspector.o\
 		bin/motif.o\
 		bin/motifcompare.o\
 		bin/motifsearch.o\
@@ -35,7 +34,7 @@ im: \
 	$(CC) $(LNK_OPTIONS) \
 		bin/archivesites.o\
 		bin/bgmodel.o\
-		bin/im.o\
+		bin/inspector.o\
 		bin/motif.o\
 		bin/motifcompare.o\
 		bin/motifsearch.o\
@@ -45,12 +44,12 @@ im: \
 		bin/seqset.o\
 		bin/site.o\
 		bin/standard.o\
-		-o bin/im
+		-o bin/inspector
 
-im-debug: \
+inspector-debug: \
 		debug/archivesites.o\
 		debug/bgmodel.o\
-		debug/im.o\
+		debug/inspector.o\
 		debug/motif.o\
 		debug/motifcompare.o\
 		debug/motifsearch.o\
@@ -63,7 +62,7 @@ im-debug: \
 	$(CC) $(LNK_DEBUG_OPTIONS) \
 		debug/archivesites.o\
 		debug/bgmodel.o\
-		debug/im.o\
+		debug/inspector.o\
 		debug/motif.o\
 		debug/motifcompare.o\
 		debug/motifsearch.o\
@@ -73,10 +72,10 @@ im-debug: \
 		debug/seqset.o\
 		debug/site.o\
 		debug/standard.o\
-		-o debug/im-debug
+		-o debug/inspector-debug
 
 clean: 
-	rm -f bin/*.o debug/*.o bin/im debug/im-debug
+	rm -f bin/*.o debug/*.o bin/inspector debug/inspector-debug
 
 bin/archivesites.o: src/archivesites.h src/archivesites.cpp
 	$(CC) $(CC_OPTIONS) src/archivesites.cpp -c $(INCLUDE) -o bin/archivesites.o
@@ -84,8 +83,8 @@ bin/archivesites.o: src/archivesites.h src/archivesites.cpp
 bin/bgmodel.o: src/bgmodel.h src/bgmodel.cpp
 	$(CC) $(CC_OPTIONS) src/bgmodel.cpp -c $(INCLUDE) -o bin/bgmodel.o
 
-bin/im.o: src/im.h src/im.cpp
-	$(CC) $(CC_OPTIONS) src/im.cpp -c $(INCLUDE) -o bin/im.o
+bin/inspector.o: src/inspector.h src/inspector.cpp
+	$(CC) $(CC_OPTIONS) src/inspector.cpp -c $(INCLUDE) -o bin/inspector.o
 
 bin/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_OPTIONS) src/motif.cpp -c $(INCLUDE) -o bin/motif.o
@@ -123,8 +122,8 @@ debug/bgmodel.o: src/bgmodel.h src/bgmodel.cpp
 debug/compareace.o: src/compareace.h src/compareace.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/compareace.cpp -c $(INCLUDE) -o debug/compareace.o
 
-debug/im.o: src/im.h src/im.cpp
-	$(CC) $(CC_DEBUG_OPTIONS) src/im.cpp -c $(INCLUDE) -o debug/im.o
+debug/inspector.o: src/inspector.h src/inspector.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/inspector.cpp -c $(INCLUDE) -o debug/inspector.o
 
 debug/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/motif.cpp -c $(INCLUDE) -o debug/motif.o
