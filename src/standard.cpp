@@ -304,7 +304,8 @@ double log_prob_overlap(int x, int s1, int s2, int n) {
 		if(! ret)
 			ret = lt;
 		else
-			ret = logsum(ret, lt); 
+			ret = logsum(ret, lt);
+		if(lt < ret - 5) break;
 	}
 	return ret;
 }
