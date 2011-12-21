@@ -106,8 +106,10 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 			single_pass(false);
 		else
 			single_pass_select(false);
-		for(int j = 0; j < 3; j++)
-			if(! motif.column_sample()) break;
+		if(i % 5 == 0)
+			motif.column_sample(true, false);
+		if((i + 3) % 5 == 0)
+			motif.column_sample(false, true);
 		compute_seq_scores_minimal();
 		update_seq_count();
 		motif.set_motif_score(score());
