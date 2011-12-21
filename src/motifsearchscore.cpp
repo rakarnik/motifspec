@@ -80,14 +80,11 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 	
 	motif.set_score_cutoff(0.8);
 	reset_search_space();
-	/*
 	seed_random_site();
 	if(size() < 1) {
 		cerr << "\t\t\tSeeding failed -- restarting...\n";
 		return BAD_SEED;
 	}
-	*/
-	motif.add_site(0, 4, 1);
 	adjust_search_space();
 	
 	compute_seq_scores();
