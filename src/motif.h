@@ -92,7 +92,7 @@ public:
 	void add_col(const int c);
 	void remove_col(const int c);
 	bool has_col(const int c);
-	bool column_sample();
+	bool column_sample(const bool add = 1, const bool remove = 1);
 	void flip_sites();
 	void orient();
 	int total_positions() const;

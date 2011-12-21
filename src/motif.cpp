@@ -270,7 +270,7 @@ bool Motif::has_col(const int c) {
 	return binary_search(columns.begin(), columns.end(), c);
 }
 
-bool Motif::column_sample(){
+bool Motif::column_sample(const bool add, const bool remove){
 	bool changed = false;
 	int freq[4];
 	// Compute scores for current and surrounding columns
@@ -311,6 +311,8 @@ bool Motif::column_sample(){
 	sort(wtx.begin(), wtx.end(), isc);
 	
 	int nc = ncols();
+	if(add) nc++;
+	if(remove) nc--;
 	int nadded = 0;
 	vector<struct idscore>::iterator witer1;
 	// Add top nc columns
