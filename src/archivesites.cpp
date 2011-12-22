@@ -22,7 +22,7 @@ bool ArchiveSites::check_motif(const Motif& m) {
 	for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter){
 		cmp1 = mc.compare(*iter, m);
 		cmp2 = mc.compare(*iter, rm);
-		if((cmp1 >= 0.9 || cmp2 >= 0.9) && iter->get_dejavu() >= min_visits)
+		if((cmp1 >= sim_cutoff || cmp2 >= sim_cutoff) && iter->get_dejavu() >= min_visits)
 			return false;
 	}
 	return true;
@@ -42,7 +42,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 		cmp1 = mc.compare(*iter, m);
 		cmp2 = mc.compare(*iter, rm);
 		// cerr << "Comparing with motif " << motnum << ", scores were " << cmp1 << " and " << cmp2 << '\n';
-		if(cmp1 >= 0.9 || cmp2 >= 0.9) {
+		if(cmp1 >= sim_cutoff || cmp2 >= sim_cutoff) {
 			iter->inc_dejavu();
 			return false;
 		}
@@ -59,7 +59,7 @@ bool ArchiveSites::consider_motif(const Motif& m) {
 		cmp1 = mc.compare(*iter, m);
 		cmp2 = mc.compare(*iter, rm);
 		// cerr << "Comparing with motif " << motnum << ", scores were " << cmp1 << " and " << cmp2 << '\n';
-		if(cmp1 >= 6 || cmp2 >= 6) {
+		if(cmp1 >= sim_cutoff || cmp2 >= sim_cutoff) {
 	 		iter = archive.erase(iter);
 			m1.inc_dejavu();
 			delcount++;

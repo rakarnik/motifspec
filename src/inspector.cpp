@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 	cerr << "Setting up MotifSearch... ";
 	if(! GetArg2(argc, argv, "-numcols", ncol)) ncol = 10;
 	if(! GetArg2(argc, argv, "-order", order)) order = 0;
-	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.8;
+	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.9;
 	MotifSearch* ms;
 	if(search_type == EXPRESSION) {
 		ms = new MotifSearchExpr(nameset1, seqs, ncol, order, simcut, expr, npoints);
