@@ -4,7 +4,7 @@
 CC = /usr/bin/g++
 CC_OPTIONS = -O3 -DNDEBUG -Wall -Wextra
 CC_DEBUG_OPTIONS = -O0 -g -pg -Wall -Wextra
-LNK_OPTIONS = -pg
+LNK_OPTIONS =
 LNK_DEBUG_OPTIONS = -pg
 
 #
