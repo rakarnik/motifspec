@@ -103,9 +103,9 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 			single_pass(false);
 		else
 			single_pass_select(false);
-		if(i % 5 == 0)
+		if(i % 5 == 0 && motif.ncols() < 15)
 			motif.column_sample(true, false);
-		if((i + 3) % 5 == 0)
+		if((i + 3) % 5 == 0 && motif.ncols() > 6)
 			motif.column_sample(false, true);
 		compute_seq_scores_minimal();
 		update_seq_count();
