@@ -48,20 +48,16 @@ int main(int argc, char *argv[]) {
 	}
 	
 	// Read parameters
-	vector<string> seqs, nameset1;
+	vector<string> seqs;
 	cerr << "Reading sequence data from '" << seqfile << "'... ";
-	get_fasta_fast(seqfile.c_str(), seqs, nameset1);
+	get_fasta_fast(seqfile.c_str(), seqs, seq_nameset);
 	cerr << "done.\n";
-	ngenes = nameset1.size();
+	ngenes = seq_nameset.size();
 	
-	vector<vector <float> > expr;
-	vector<string> nameset2;
-	vector<string> subset;
-	vector<float> scores;
 	npoints = 0;
 	if(search_type == EXPRESSION) {
 		cerr << "Reading expression data from '" << exprfile << "'... ";
-		get_expr(exprfile.c_str(), expr, nameset2);
+		get_expr(exprfile.c_str(), expr, data_nameset);
 		cerr << "done.\n";
 		npoints = expr[0].size();
 		nsubset = 0;
@@ -78,37 +74,19 @@ int main(int argc, char *argv[]) {
 		sort(subset.begin(), subset.end());
 	} else if(search_type == SCORE) {
 		cerr << "Reading sequence scores from '" << scorefile << "'... ";
-		get_scores(scorefile.c_str(), scores, nameset2);
+		get_scores(scorefile.c_str(), scores, data_nameset);
 		cerr << "done.\n";
 		npoints = 1;
 		nsubset = 0;
 	}
 
-	if(search_type == EXPRESSION || search_type == SCORE) {
-		if(nameset1.size() != nameset2.size()) {
-			if(search_type == EXPRESSION) {
-				cerr << "Inconsistent sizes for sequence and expression datasets\n";
-			} else {
-				cerr << "Inconsistent sizes for sequence and score datasets\n";
-			}
-			exit(0);
-		}
-
-		bool match = true;
-		for (int i = 0; i < ngenes; i++) {
-			match = match && (nameset1[i] == nameset2[i]);
-			if (nameset1[i] != nameset2[i]) {
-				cerr << "Row " << i << ": Sequence: '" << nameset1[i] << "'  " << "Data: '" << nameset2[i] << "'\n";
-			}
-		}
-		if(! match) {
-			if(search_type == EXPRESSION) {
-				cerr << "Inconsistent sequence names for sequence and expression datasets\n";
-			} else {
-				cerr << "Inconsistent sequence names for sequence and score datasets\n";
-			}
-			exit(0);
-		}
+	vector<vector <float> > newexpr;
+	vector<float> newscores;
+	if(search_type == EXPRESSION) {
+		order_data_expr(newexpr);
+	}
+	if(search_type == SCORE) {
+		order_data_scores(newscores);
 	}
 
 	if(search_type == EXPRESSION) {
@@ -125,11 +103,11 @@ int main(int argc, char *argv[]) {
 	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.9;
 	MotifSearch* ms;
 	if(search_type == EXPRESSION) {
-		ms = new MotifSearchExpr(nameset1, seqs, ncol, order, simcut, expr, npoints);
+		ms = new MotifSearchExpr(seq_nameset, seqs, ncol, order, simcut, newexpr, npoints);
 	} else if(search_type == SCORE) {
-		ms = new MotifSearchScore(nameset1, seqs, ncol, order, simcut, scores);
+		ms = new MotifSearchScore(seq_nameset, seqs, ncol, order, simcut, newscores);
 	} else {
-		ms = new MotifSearchSubset(nameset1, seqs, ncol, order, simcut, subset);
+		ms = new MotifSearchSubset(seq_nameset, seqs, ncol, order, simcut, subset);
 	}
 	ms->modify_params(argc, argv);
 	ms->set_final_params();
@@ -200,6 +178,40 @@ int main(int argc, char *argv[]) {
 	}
 	delete ms;
 	return 0;
+}
+
+void order_data_expr(vector<vector <float> >& newexpr) {
+	map<string, vector<float> > data;
+	for(unsigned int i = 0; i < data_nameset.size(); i++) {
+		data[data_nameset[i]] = expr[i];
+	}
+	
+	vector<string>::const_iterator nsiter = seq_nameset.begin();
+	for(; nsiter != seq_nameset.end(); ++nsiter) {
+		if(data.find(*nsiter) == data.end()) {
+			cerr << "No expression data found for sequence '" << *nsiter << "'\n";
+			exit(0);
+		} else {
+			newexpr.push_back(data[*nsiter]);
+		}
+	}
+}
+
+void order_data_scores(vector<float>& newscores) {
+	map<string, float> data;
+	for(unsigned int i = 0; i < data_nameset.size(); i++) {
+		data[data_nameset[i]] = scores[i];
+	}
+	
+	vector<string>::const_iterator nsiter = seq_nameset.begin();
+	for(; nsiter != seq_nameset.end(); ++nsiter) {
+		if(data.find(*nsiter) == data.end()) {
+			cerr << "No score found for sequence '" << *nsiter << "'\n";
+			exit(0);
+		} else {
+			newscores.push_back(data[*nsiter]);
+		}
+	}
 }
 
 int read_motifs(MotifSearch* ms) {
