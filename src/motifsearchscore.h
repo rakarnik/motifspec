@@ -12,7 +12,7 @@ class MotifSearchScore : public MotifSearch {
 
 public:
 	MotifSearchScore(const vector<string>& names, const vector<string>& seqs,
-			const int nc, const int order, const double sim_cut,
+			const int nc, const int order, const double sim_cut, const int maxm,
 			vector<float>& sctab);
 	void reset_search_space();
 	void adjust_search_space();

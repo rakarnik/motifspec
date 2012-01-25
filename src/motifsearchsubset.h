@@ -8,7 +8,7 @@ class MotifSearchSubset : public MotifSearch {
 	
 public:
 	MotifSearchSubset(const vector<string>& names, const vector<string>& seqs,
-									const int nc, const int order, const double sim_cut,
+									const int nc, const int order, const double sim_cut, const int maxm,
 									const vector<string>& sub);
 	void reset_search_space();
 	void adjust_search_space();

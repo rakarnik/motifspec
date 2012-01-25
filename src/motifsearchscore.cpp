@@ -5,8 +5,9 @@ MotifSearchScore::MotifSearchScore(const vector<string>& names,
 																 const int nc,
 																 const int order,
 																 const double sim_cut,
+																 const int maxm,
 																 vector<float>& sctab) :
-MotifSearch(names, seqs, nc, order, sim_cut),
+MotifSearch(names, seqs, nc, order, sim_cut, maxm),
 scores(sctab),
 scranks(ngenes) {
 	for(int i = 0; i < ngenes; i++) {

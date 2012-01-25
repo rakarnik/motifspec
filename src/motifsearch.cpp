@@ -4,14 +4,15 @@ MotifSearch::MotifSearch(const vector<string>& names,
 		const vector<string>& seqs,
 		const int nc,
 		const int order,
-		const double sim_cut) :
+		const double sim_cut,
+		const int maxm) :
 nameset(names),
 ngenes(names.size()),
 seqset(seqs),
 bgmodel(seqset, order),
 motif(seqset, nc, params.pseudo, params.backfreq),
 select_sites(seqset, nc, params.pseudo, params.backfreq),
-archive(seqset, bgmodel, sim_cut, params.pseudo, params.backfreq),
+archive(seqset, bgmodel, sim_cut, maxm, params.pseudo, params.backfreq),
 seqscores(ngenes),
 seqranks(ngenes),
 bestpos(ngenes),
@@ -427,15 +428,13 @@ bool MotifSearch::consider_motif(const char* filename) {
 }
 
 void MotifSearch::full_output(ostream &fout){
-	Motif* s;
-	for(int j = 0; j < archive.nmots(); j++){
-		s = archive.return_best(j);
-		if(s->get_motif_score() > 1){
-			fout << "Motif " << j + 1 << '\n';
-			s->write(fout);
-		}
-		else break;
-	}
+	fout << "Parameter values:\n";
+	output_params(fout);
+	fout << "\nInput sequences:\n";
+	for(unsigned int x = 0; x < nameset.size(); x++)
+		fout << "#" << x << '\t' << nameset[x] << endl;
+	fout << '\n';
+	archive.write(fout);
 }
 
 void MotifSearch::full_output(char *name){

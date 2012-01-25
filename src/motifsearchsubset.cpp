@@ -5,8 +5,9 @@ MotifSearchSubset::MotifSearchSubset(const vector<string>& names,
 																 const int nc,
 																 const int order,
 																 const double sim_cut,
+																 const int maxm,
 																 const vector<string>& sub) :
-MotifSearch(names, seqs, nc, order, sim_cut),
+MotifSearch(names, seqs, nc, order, sim_cut, maxm),
 subset(sub) {
 	reset_search_space();
 }
