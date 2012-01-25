@@ -3,12 +3,13 @@
 
 #include "archivesites.h"
 
-ArchiveSites::ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut,
+ArchiveSites::ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const int maxm,
 													 const vector<double>& p, const vector<double>& b) : 
 seqset(seq),
 mc(seqset, bgm),
 archive(0, Motif(seq, 12, p, b)),
 sim_cutoff(sim_cut),
+max_motifs(maxm),
 pseudo(p),
 backfreq(b),
 min_visits(3) {
@@ -97,13 +98,13 @@ void ArchiveSites::read(istream& archin) {
 }
 
 void ArchiveSites::write(ostream& archout) {
-	int i = 0;
+	int i = 1;
 	vector<Motif>::iterator iter = archive.begin();
-	for(; iter != archive.end(); ++iter) {
+	for(; i <= max_motifs && iter != archive.end(); ++iter) {
 		if(iter->get_motif_score() > 1) {
-			archout << "Motif " << i + 1 << "\n";
+			archout << "Motif " << i << "\n";
 			iter->write(archout);
-			i++;
 		}
+		i++;
 	}
 }
