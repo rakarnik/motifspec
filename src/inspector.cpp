@@ -101,13 +101,14 @@ int main(int argc, char *argv[]) {
 	if(! GetArg2(argc, argv, "-numcols", ncol)) ncol = 10;
 	if(! GetArg2(argc, argv, "-order", order)) order = 0;
 	if(! GetArg2(argc, argv, "-simcut", simcut)) simcut = 0.9;
+	if(! GetArg2(argc, argv, "-maxm", maxm)) maxm = 20;
 	MotifSearch* ms;
 	if(search_type == EXPRESSION) {
-		ms = new MotifSearchExpr(seq_nameset, seqs, ncol, order, simcut, newexpr, npoints);
+		ms = new MotifSearchExpr(seq_nameset, seqs, ncol, order, simcut, maxm, newexpr, npoints);
 	} else if(search_type == SCORE) {
-		ms = new MotifSearchScore(seq_nameset, seqs, ncol, order, simcut, newscores);
+		ms = new MotifSearchScore(seq_nameset, seqs, ncol, order, simcut, maxm, newscores);
 	} else {
-		ms = new MotifSearchSubset(seq_nameset, seqs, ncol, order, simcut, subset);
+		ms = new MotifSearchSubset(seq_nameset, seqs, ncol, order, simcut, maxm, subset);
 	}
 	ms->modify_params(argc, argv);
 	ms->set_final_params();
@@ -309,6 +310,7 @@ void print_usage(ostream& fout) {
 	fout << " -numcols    \tnumber of columns to align (10)\n";
 	fout << " -order      \torder of the background model (3, can be 0 to 5)\n";
 	fout << " -simcut     \tsimilarity cutoff for motifs (0.8)\n"; 
+	fout << " -maxm       \tmaximum number of motifs to output (20)\n";
 	fout << " -expect     \tnumber of sites expected in model (10)\n";
 	fout << " -minpass    \tminimum number of non-improved passes in phase 1 (200)\n";
 	fout << " -seed       \tset seed for random number generator (time)\n";

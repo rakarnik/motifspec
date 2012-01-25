@@ -28,6 +28,7 @@ int nsubset;                               // number of sequences in search subs
 int ncol;                                  // number of columns
 int order;                                 // order of background model
 double simcut;                             // similarity cutoff for motifs
+int maxm;                                  // maximum number of motifs
 string outfile;                            // name of output file
 
 void order_data_expr(vector<vector <float> >& newexpr);
