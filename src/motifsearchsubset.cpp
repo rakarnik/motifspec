@@ -62,10 +62,6 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 		compute_seq_scores_minimal();
 		motif.set_motif_score(score());
 		print_status(cerr, i, phase);
-		if(size() > ngenes/3) {
-			cerr << "\t\t\tToo many sites! Restarting...\n";
-			return TOO_MANY_SITES;
-		}
 		if(size() < 2) {
 			cerr << "\t\t\tZero or one sites, reloading best motif...\n";
 			phase++;
