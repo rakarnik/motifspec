@@ -54,9 +54,9 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 	phase = 1;
 	for(i = 1; i < 10000 && phase < 3; i++) {
 		if(i_worse == 0)
-			single_pass(false);
+			single_pass();
 		else
-			single_pass_select(false);
+			single_pass_select();
 		for(int j = 0; j < 3; j++)
 			if(! motif.column_sample()) break;
 		compute_seq_scores_minimal();
@@ -74,7 +74,8 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 			i_worse = 0;
 			continue;
 		}
-		if(motif.get_motif_score() > best_motif.get_motif_score()) {
+		if(motif.get_motif_score() > best_motif.get_motif_score() || 
+				(motif.get_motif_score() > best_motif.get_motif_score() * 0.99 && motif.number() > best_motif.number())) {
 			if(! archive.check_motif(motif)) {
 				cerr << "\t\t\tToo similar! Restarting...\n";
 				return TOO_SIMILAR;
@@ -97,6 +98,7 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 				compute_seq_scores_minimal();
 				set_seq_cutoff(phase);
 				print_status(cerr, i, phase);
+				i_worse = 0;
 			}
 		}
 	}
@@ -112,10 +114,6 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 	if(size() < params.minsize) {
 		cerr << "\t\t\tToo few sites! Restarting...\n";
 		return TOO_FEW_SITES;
-	}
-	if(size() > ngenes/3) {
-		cerr << "\t\t\tToo many sites! Restarting...\n";
-		return TOO_MANY_SITES;
 	}
 	if(! archive.check_motif(motif)) {
 		cerr << "\t\t\tToo similar! Restarting...\n";
@@ -139,7 +137,6 @@ void MotifSearchSubset::print_status(ostream& out, const int i, const int phase)
 	out << setw(3) << phase;
 	int prec = cerr.precision(2);
 	out << setw(10) << setprecision(3) << motif.get_seq_cutoff();
-	out << setw(10) << "N/A";
 	out << setw(7) << motif.seqs_with_sites();
 	out << setw(7) << motif.get_above_cutoffs();
 	out << setw(7) << motif.get_above_seqc();
