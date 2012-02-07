@@ -35,10 +35,4 @@ void order_data_expr(vector<vector <float> >& newexpr);
 void order_data_scores(vector <float>& newscores);
 int read_motifs(MotifSearch* se);
 void output(MotifSearch* se);
-void print_clusters(ostream& out, const vector<string>& nameset);
-void print_full_ace(ostream& out, MotifSearch* se);
-void print_ace(ostream& out, MotifSearch* se);
-void print_ace_status(ostream& out, MotifSearch* a, const int i, const int phase, const double cutoff, const double sc);
-void print_motifs(ostream& out, const vector<string>& nameset);
 void print_usage(ostream& fout);
-

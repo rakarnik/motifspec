@@ -265,7 +265,7 @@ void output(MotifSearch* ms) {
 	outstr.append(".adj.ace");
 	lockstr.append(".lock");
 	ofstream tmp(tmpstr.c_str(), ios::trunc);
-	print_ace(tmp, ms);
+	ms->full_output(tmp);
 	tmp.close();
 	struct flock fl;
 	int fd;
@@ -284,20 +284,6 @@ void output(MotifSearch* ms) {
 	fl.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &fl);
 	close(fd);
-}
-
-void print_full_ace(ostream& out, MotifSearch* ms) {
-	out << "Parameter values:\n";
-	ms->output_params(out);
-	out << "\nInput sequences:\n";
-	for(unsigned int x = 0; x < ms->names().size(); x++)
-		out << "#" << x << '\t' << (ms->names())[x] << endl;
-	out << '\n';
-	ms->full_output(out);
-}
-
-void print_ace(ostream& out, MotifSearch* ms) {
-	ms->full_output(out);
 }
 
 void print_usage(ostream& fout) {
