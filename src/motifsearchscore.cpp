@@ -130,7 +130,8 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 			i_worse = 0;
 			continue;
 		}
-		if(motif.get_motif_score() > best_motif.get_motif_score()) {
+		if(motif.get_motif_score() > best_motif.get_motif_score() ||
+				(motif.get_motif_score() > best_motif.get_motif_score() * 0.99 && motif.number() > best_motif.number())) {
 			if(! archive.check_motif(motif)) {
 				cerr << "\t\t\tToo similar! Restarting...\n";
 				return TOO_SIMILAR;
@@ -149,6 +150,7 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 				phase++;
 				motif = best_motif;
 				select_sites = best_motif;
+				i_worse = 0;
 				if(phase < 3) {
 					compute_seq_scores_minimal();
 					update_seq_count();
