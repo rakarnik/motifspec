@@ -238,17 +238,15 @@ int read_motifs(MotifSearch* ms) {
 			extension = "";
 		if(filename.find(match) == 0 && extension.compare(".mot") == 0) {
 			cerr << "Reading from file " << filename << endl;
-			// check motif against archive, then move to "mots" directory
-			string newname("mots/");
-			newname.append(filename.c_str());
+			// check motif against archive, then delete
 			if(ms->consider_motif(filename.c_str())) {
 				cerr << "Motif was added\n";
 				nmot++;
 			} else {
 				cerr << "Motif was not added\n";
 			}
-			cerr << "Moving motif to " << newname << "\n\n";
-			rename(filename.c_str(), newname.c_str());
+			cerr << "Deleting " << filename << "\n\n";
+			remove(filename.c_str());
 			nfound++;
 		}
 	}
