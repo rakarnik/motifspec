@@ -13,7 +13,7 @@ Seqset::Seqset(const vector<string>& v) :
 nseqs(v.size()),
 seqs(nseqs),
 seq_lens(nseqs) {
-	map<char, int> nt;
+	map<char, char> nt;
 	nt['A'] = nt['a'] = 0;
 	nt['C'] = nt['c'] = 1;
 	nt['G'] = nt['g'] = 2;
