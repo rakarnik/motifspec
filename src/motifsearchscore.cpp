@@ -104,9 +104,8 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 			single_pass(false);
 		else
 			single_pass_select(false);
-		for(int j = 0; j < 3; j++) {
+		for(int j = 0; j < 3; j++)
 			if(! motif.column_sample()) break;
-		}
 		compute_seq_scores_minimal();
 		update_seq_count();
 		motif.set_motif_score(score());
@@ -149,13 +148,11 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 				phase++;
 				motif = best_motif;
 				select_sites = best_motif;
+				compute_seq_scores_minimal();
+				update_seq_count();
+				set_seq_cutoff(phase);
+				set_search_space_cutoff(phase);
 				i_worse = 0;
-				if(phase < 3) {
-					compute_seq_scores_minimal();
-					update_seq_count();
-					set_seq_cutoff(phase);
-					set_search_space_cutoff(phase);
-				}
 			}
 		}
 	}
