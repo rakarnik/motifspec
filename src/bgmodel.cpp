@@ -67,23 +67,21 @@ cumulscores(seqset.num_seqs()) {
 double BGModel::score_site(vector<int>::const_iterator first_col, vector<int>::const_iterator last_col, const int width,
 													 const int c, const int p, const bool s) const {
 	double L = 0.0;
-	int matpos, len;
+	int matpos;
 	vector<int>::const_iterator col_iter = first_col;
 	if(s) {
 		matpos = 0;
-		len = seqset.len_seq(c);
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + *col_iter >= 0);
-			assert(p + *col_iter < len);
+			assert(p + *col_iter < seqset.len_seq(c));
 			L += wbgscores[c][p + *col_iter];
 			matpos += 4;
 		}
 	} else {
 		matpos = 0;
-		len = seqset.len_seq(c);
 		for(; col_iter != last_col; ++col_iter) {
 			assert(p + width - 1 - *col_iter >= 0);
-			assert(p + width - 1 - *col_iter < len);
+			assert(p + width - 1 - *col_iter < seqset.len_seq(c));
 			L += cbgscores[c][p + width - 1 - *col_iter];
 			matpos += 4;
 		}
