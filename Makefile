@@ -2,7 +2,7 @@
 # Macros
 #
 CC = /usr/bin/g++
-CC_OPTIONS = -O3 -DNDEBUG -Wall -Wextra
+CC_OPTIONS = -O3 -g -DNDEBUG -Wall -Wextra
 CC_DEBUG_OPTIONS = -O0 -g -pg -Wall -Wextra
 LNK_OPTIONS =
 LNK_DEBUG_OPTIONS = -pg
@@ -22,6 +22,7 @@ inspector: \
 		bin/archivesites.o\
 		bin/bgmodel.o\
 		bin/inspector.o\
+		bin/fastmath.o\
 		bin/motif.o\
 		bin/motifcompare.o\
 		bin/motifsearch.o\
@@ -35,6 +36,7 @@ inspector: \
 		bin/archivesites.o\
 		bin/bgmodel.o\
 		bin/inspector.o\
+		bin/fastmath.o\
 		bin/motif.o\
 		bin/motifcompare.o\
 		bin/motifsearch.o\
@@ -50,6 +52,7 @@ inspector-debug: \
 		debug/archivesites.o\
 		debug/bgmodel.o\
 		debug/inspector.o\
+		debug/fastmath.o\
 		debug/motif.o\
 		debug/motifcompare.o\
 		debug/motifsearch.o\
@@ -63,6 +66,7 @@ inspector-debug: \
 		debug/archivesites.o\
 		debug/bgmodel.o\
 		debug/inspector.o\
+		debug/fastmath.o\
 		debug/motif.o\
 		debug/motifcompare.o\
 		debug/motifsearch.o\
@@ -85,6 +89,9 @@ bin/bgmodel.o: src/bgmodel.h src/bgmodel.cpp
 
 bin/inspector.o: src/inspector.h src/inspector.cpp
 	$(CC) $(CC_OPTIONS) src/inspector.cpp -c $(INCLUDE) -o bin/inspector.o
+
+bin/fastmath.o: src/fastmath.h src/fastmath.cpp
+	$(CC) $(CC_OPTIONS) src/fastmath.cpp -c $(INCLUDE) -o bin/fastmath.o
 
 bin/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_OPTIONS) src/motif.cpp -c $(INCLUDE) -o bin/motif.o
@@ -124,6 +131,9 @@ debug/compareace.o: src/compareace.h src/compareace.cpp
 
 debug/inspector.o: src/inspector.h src/inspector.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/inspector.cpp -c $(INCLUDE) -o debug/inspector.o
+
+debug/fastmath.o: src/fastmath.h src/fastmath.cpp
+	$(CC) $(CC_DEBUG_OPTIONS) src/fastmath.cpp -c $(INCLUDE) -o debug/fastmath.o
 
 debug/motif.o: src/motif.h src/motif.cpp
 	$(CC) $(CC_DEBUG_OPTIONS) src/motif.cpp -c $(INCLUDE) -o debug/motif.o
