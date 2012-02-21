@@ -129,7 +129,7 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 			continue;
 		}
 		if(motif.get_motif_score() > best_motif.get_motif_score() ||
-				(motif.get_motif_score() > best_motif.get_motif_score() * 0.99 && motif.number() > best_motif.number())) {
+				(motif.get_motif_score() > best_motif.get_motif_score() * 0.999999 && motif.number() > best_motif.number())) {
 			if(! archive.check_motif(motif)) {
 				cerr << "\t\t\tToo similar! Restarting...\n";
 				return TOO_SIMILAR;
