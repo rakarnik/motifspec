@@ -156,7 +156,7 @@ void MotifSearch::calc_matrix(double* score_matrix) {
 double MotifSearch::score_site(double* score_matrix, const int c, const int p, const bool s) {
 	double ms = motif.score_site(score_matrix, c, p, s);
 	double bs = bgmodel.score_site(motif.first_column(), motif.last_column(), motif.get_width(), c, p, s);
-	return exp(ms - bs);
+	return fastexp(ms - bs);
 }
 
 void MotifSearch::single_pass(bool greedy) {

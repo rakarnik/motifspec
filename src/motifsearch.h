@@ -3,6 +3,7 @@
 
 #include "standard.h"
 #include "Random.h"
+#include "fastmath.h"
 #include "seqset.h"
 #include "bgmodel.h"
 #include "archivesites.h"
