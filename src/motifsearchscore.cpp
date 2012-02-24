@@ -123,8 +123,6 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 			update_seq_count();
 			set_seq_cutoff(phase);
 			set_search_space_cutoff(phase);
-			motif.set_motif_score(score());
-			print_status(cerr, i, phase);
 			i_worse = 0;
 			continue;
 		}
@@ -148,7 +146,7 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 				phase++;
 				motif = best_motif;
 				select_sites = best_motif;
-				compute_seq_scores_minimal();
+				compute_seq_scores();
 				update_seq_count();
 				set_seq_cutoff(phase);
 				set_search_space_cutoff(phase);
