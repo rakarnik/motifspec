@@ -6,7 +6,7 @@ MotifCompare::MotifCompare(const Seqset& s, const BGModel& bgm)
 }
 
 float MotifCompare::compare(const Motif& m1, const Motif& m2) const {
-	int cols = 5;
+	int cols = 6;
 	
 	int fmsize1 = m1.get_width() + 2 * m1.ncols();
 	vector<float> fm1(fmsize1 * 4);
