@@ -20,10 +20,10 @@ bool ArchiveSites::check_motif(const Motif& m) {
 	float cmp1, cmp2;
 	Motif rm(m);
 	rm.flip_sites();
-	for(; iter != archive.end() && m.get_motif_score() <= iter->get_motif_score(); ++iter){
+	for(; iter != archive.end() && m.get_motif_score() <= 0.9 * iter->get_motif_score(); ++iter){
 		cmp1 = mc.compare(*iter, m);
 		cmp2 = mc.compare(*iter, rm);
-		if((cmp1 >= sim_cutoff || cmp2 >= sim_cutoff) && iter->get_dejavu() >= min_visits)
+		if((cmp1 >= 0.95 || cmp2 >= 0.95) && iter->get_dejavu() >= min_visits)
 			return false;
 	}
 	return true;
