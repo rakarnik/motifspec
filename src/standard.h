@@ -24,7 +24,7 @@
 #include "float.h"
 using namespace std;
 
-#define MAX_LN_FACT 50000
+#define MAX_LN_FACT 150000
 
 void get_fasta_fast(const char* filename, vector<string>& seqset, 
 			   vector<string>& nameset);
