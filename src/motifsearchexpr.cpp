@@ -104,7 +104,6 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 	}
 	
 	motif.set_expr_cutoff(0.8);
-	compute_expr_scores();
 	while(motif.get_search_space_size() < params.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
 		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
 		adjust_search_space();
@@ -114,9 +113,10 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 		return BAD_SEARCH_SPACE;
 	}
 	
-	compute_seq_scores();
 	compute_expr_scores();
+	compute_seq_scores();
 	set_seq_cutoff(phase);
+	update_seq_count();
 	motif.set_motif_score(score());
 	print_status(cerr, 0, phase);
 	Motif best_motif = motif;
@@ -148,6 +148,7 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 			select_sites = best_motif;
 			compute_seq_scores_minimal();
 			compute_expr_scores();
+			update_seq_count();
 			set_seq_cutoff(phase);
 			set_search_space_cutoff(phase);
 			print_status(cerr, i, phase);
@@ -177,6 +178,7 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 				select_sites = best_motif;
 				compute_seq_scores_minimal();
 				compute_expr_scores();
+				update_seq_count();
 				set_seq_cutoff(phase);
 				set_search_space_cutoff(phase);
 				print_status(cerr, i, phase);
@@ -191,6 +193,7 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 	motif.orient();
 	compute_seq_scores();
 	compute_expr_scores();
+	update_seq_count();
 	motif.set_motif_score(score());
 	print_status(cerr, i, phase);
 	
