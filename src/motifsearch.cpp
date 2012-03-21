@@ -51,10 +51,6 @@ void MotifSearch::set_final_params(){
 	params.minprob[1] = 0.0002;
 	params.minprob[2] = 0.01;
 	params.minprob[3] = 0.2;
-	params.minscore[0] = 2.32;  // p ~ 0.01
-	params.minscore[1] = 2.32;  // p ~ 0.01
-	params.minscore[2] = 1.65;  // p ~ 0.05
-	params.minscore[3] = 1.28;  // p ~ 0.1
 }
 
 void MotifSearch::ace_initialize(){

@@ -13,7 +13,6 @@ struct SearchParams {
 	int minpass;
 	int nruns;
 	float minprob[4];                // minimum P(m|s) cutoff in each phase
-	float minscore[4];               // minimum score cutoff in each phase
 	bool fragment;
 	int seed;
 	double select;
