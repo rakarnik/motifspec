@@ -60,8 +60,8 @@ public:
 	void modify_params(int argc, char *argv[]);
 	double get_best_motif(int i=0);
 	void output_params(ostream &fout);
-	void set_default_params();//modifiable
-	void set_final_params();//derived from others
+	void set_default_params();
+	virtual void set_final_params();
 	SearchParams get_params() const { return params; };
 	void ace_initialize();
 	const vector<string>& names() const { return nameset; };
