@@ -17,6 +17,14 @@ expranks(ngenes) {
 	reset_search_space();
 }
 
+void MotifSearchExpr::set_final_params() {
+	MotifSearch::set_final_params();
+	params.minprob[0] = 0.00003;
+	params.minprob[1] = 0.006;
+	params.minprob[2] = 0.3;
+	params.minprob[3] = 0.6;
+}
+
 void MotifSearchExpr::calc_mean() {
 	int i, j;
 	for (i = 0; i < npoints; i++) {

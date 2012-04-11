@@ -17,6 +17,7 @@ public:
 	MotifSearchExpr(const vector<string>& names, const vector<string>& seqs,
 			const int nc, const int order, const double sim_cut, const int maxm,
 			vector<vector <float> >& exprtab, const int npts);
+	void set_final_params();
 	void reset_search_space();
 	void adjust_search_space();
 	void set_search_space_cutoff(const int phase);
