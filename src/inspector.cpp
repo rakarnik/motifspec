@@ -228,7 +228,7 @@ int read_motifs(MotifSearch* ms) {
 	unsigned long pos = 0;
 	workdir = opendir(".");
 
-	while((dirp = readdir(workdir))) {
+	while(nmot <= 20 && (dirp = readdir(workdir))) {
 		filename = string(dirp->d_name);
 		len = filename.length();
 		pos = filename.find_last_of('.');
