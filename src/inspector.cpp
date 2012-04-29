@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
 		while(true) {
 			int found = read_motifs(ms);
 			if(found > 0) output(ms);
-			sleep(60);
+			if(found < 50) sleep(10);
 		}
 	} else {
 		cerr << "Running as worker " << worker << "...\n";
@@ -228,7 +228,7 @@ int read_motifs(MotifSearch* ms) {
 	unsigned long pos = 0;
 	workdir = opendir(".");
 
-	while(nmot <= 20 && (dirp = readdir(workdir))) {
+	while(nmot <= 50 && (dirp = readdir(workdir))) {
 		filename = string(dirp->d_name);
 		len = filename.length();
 		pos = filename.find_last_of('.');
