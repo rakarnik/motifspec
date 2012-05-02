@@ -46,6 +46,7 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 	
 	compute_seq_scores();
 	set_seq_cutoff(phase);
+	update_seq_count();
 	motif.set_motif_score(score());
 	print_status(cerr, 0, phase);
 	Motif best_motif = motif;
@@ -69,7 +70,9 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 			motif = best_motif;
 			select_sites = best_motif;
 			compute_seq_scores_minimal();
+			update_seq_count();
 			set_seq_cutoff(phase);
+			update_seq_count();
 			print_status(cerr, i, phase);
 			i_worse = 0;
 			continue;
@@ -96,7 +99,9 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 				motif = best_motif;
 				select_sites = best_motif;
 				compute_seq_scores_minimal();
+				update_seq_count();
 				set_seq_cutoff(phase);
+				update_seq_count();
 				print_status(cerr, i, phase);
 				i_worse = 0;
 			}
@@ -108,6 +113,7 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 	cerr << "done.\n";
 	motif.orient();
 	compute_seq_scores();
+	update_seq_count();
 	motif.set_motif_score(score());
 	print_status(cerr, i, phase);
 	
