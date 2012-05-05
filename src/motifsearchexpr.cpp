@@ -21,8 +21,8 @@ void MotifSearchExpr::set_final_params() {
 	MotifSearch::set_final_params();
 	params.minprob[0] = 0.00003;
 	params.minprob[1] = 0.006;
-	params.minprob[2] = 0.3;
-	params.minprob[3] = 0.6;
+	params.minprob[2] = 0.2;
+	params.minprob[3] = 0.4;
 }
 
 void MotifSearchExpr::calc_mean() {
@@ -60,7 +60,7 @@ void MotifSearchExpr::adjust_search_space() {
 	calc_mean();
 	motif.clear_search_space();
 	vector<struct idscore>::iterator exprit = expranks.begin();
-	while(exprit != expranks.end() && exprit->score >= motif.get_expr_cutoff()) {
+	while(exprit != expranks.end() && exprit->score >= motif.get_ssp_cutoff()) {
 		motif.add_to_search_space(exprit->id);
 		if(seqscores[exprit->id] >= motif.get_seq_cutoff())
 			isect++;
@@ -92,7 +92,7 @@ void MotifSearchExpr::set_search_space_cutoff(const int phase) {
 		}
 	}
 	// cerr << "\t\t\tSetting expression cutoff to " << best_exprcut << '\n';
-	motif.set_expr_cutoff(best_exprcut);
+	motif.set_ssp_cutoff(best_exprcut);
 	adjust_search_space();
 }
 
@@ -111,9 +111,9 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 		return BAD_SEED;
 	}
 	
-	motif.set_expr_cutoff(0.8);
-	while(motif.get_search_space_size() < params.minsize * 5 && motif.get_expr_cutoff() > 0.4) {
-		motif.set_expr_cutoff(motif.get_expr_cutoff() - 0.05);
+	motif.set_ssp_cutoff(0.8);
+	while(motif.get_search_space_size() < params.minsize * 5 && motif.get_ssp_cutoff() > 0.4) {
+		motif.set_ssp_cutoff(motif.get_ssp_cutoff() - 0.05);
 		adjust_search_space();
 	}
 	if(motif.get_search_space_size() < 2) {
@@ -230,22 +230,4 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 	return 0;
 }
 
-void MotifSearchExpr::print_status(ostream& out, const int i, const int phase) {
-	out << setw(5) << i;
-	out << setw(3) << phase;
-	int prec = cerr.precision(2);
-	out << setw(10) << setprecision(3) << motif.get_seq_cutoff();
-	out << setw(10) << setprecision(2) << motif.get_expr_cutoff();
-	out << setw(7) << motif.seqs_with_sites();
-	out << setw(7) << motif.get_above_cutoffs();
-	out << setw(7) << motif.get_above_seqc();
-	out << setw(7) << motif.get_search_space_size();
-	if(size() > 0) {
-		out << setw(50) << motif.consensus();
-		out << setw(15) << setprecision(10) << motif.get_motif_score();
-	} else {
-		out << setw(50) << "---------------------------------------";
-	}
-	out << '\n';
-	cerr.precision(prec);
-}
+

@@ -16,8 +16,7 @@ above_seqc(0),
 ssp_size(0),
 above_cutoffs(0),
 seq_cutoff(0.00001),
-expr_cutoff(0.70),
-score_cutoff(2.3),
+ssp_cutoff(0.70),
 dejavu(0)
 {
 	vector<int>::iterator cb = columns.begin();
@@ -45,8 +44,7 @@ above_seqc(m.above_seqc),
 ssp_size(m.ssp_size),
 above_cutoffs(m.above_cutoffs),
 seq_cutoff(m.seq_cutoff),
-expr_cutoff(m.expr_cutoff),
-score_cutoff(m.score_cutoff),
+ssp_cutoff(m.ssp_cutoff),
 iter(m.iter),
 dejavu(m.dejavu)
 {
@@ -68,8 +66,7 @@ Motif& Motif::operator= (const Motif& m) {
 		ssp_size = m.ssp_size;
 		above_cutoffs = m.above_cutoffs;
 		seq_cutoff = m.seq_cutoff;
-		expr_cutoff = m.expr_cutoff;
-		score_cutoff = m.score_cutoff;
+		ssp_cutoff = m.ssp_cutoff;
 		iter = m.iter;
 		dejavu = m.dejavu;
 	}
@@ -628,8 +625,7 @@ void Motif::write(ostream& motout) const {
 	motout << "Sequences above sequence threshold: " << above_seqc << "\n";
 	motout << "Size of search space: " << ssp_size << "\n";
 	motout << "Sequence cutoff: " << seq_cutoff << "\n";
-	motout << "Expression cutoff: " << expr_cutoff << "\n";
-	motout << "Score cutoff: " << score_cutoff << "\n";
+	motout << "Search space cutoff: " << ssp_cutoff << "\n";
 	motout << "Iteration found: " << iter << "\n";
 	motout << "Dejavu: " << dejavu << endl << "\n";
 }
@@ -691,12 +687,7 @@ void Motif::read(istream& motin) {
 	// Read expression cutoff
 	motin.getline(line, 200);
 	heading = strtok(line, ":");
-	set_expr_cutoff(atof(strtok(NULL, "\0")));
-	
-	// Read score cutoff
-	motin.getline(line, 200);
-	heading = strtok(line, ":");
-	set_score_cutoff(atof(strtok(NULL, "\0")));
+	set_ssp_cutoff(atof(strtok(NULL, "\0")));
 	
 	// Read iteration found
 	motin.getline(line, 200);

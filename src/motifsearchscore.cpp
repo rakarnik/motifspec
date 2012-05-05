@@ -23,7 +23,7 @@ void MotifSearchScore::reset_search_space() {
 	vector<struct idscore>::iterator scit = scranks.begin();
 	for(; scit != scranks.end() && motif.get_search_space_size() <= ngenes/10; ++scit)
 		motif.add_to_search_space(scit->id);
-	motif.set_score_cutoff(scit->score);
+	motif.set_ssp_cutoff(scit->score);
 	assert(motif.get_search_space_size() > 0);
 	assert(motif.get_search_space_size() <= ngenes);
 }
@@ -32,7 +32,7 @@ void MotifSearchScore::adjust_search_space() {
 	int isect = 0;
 	motif.clear_search_space();
 	vector<struct idscore>::iterator scit = scranks.begin();
-	while(scit != scranks.end() && scit->score >= motif.get_score_cutoff()) {
+	while(scit != scranks.end() && scit->score >= motif.get_ssp_cutoff()) {
 		motif.add_to_search_space(scit->id);
 		if(seqscores[scit->id] >= motif.get_seq_cutoff())
 			isect++;
@@ -63,7 +63,7 @@ void MotifSearchScore::set_search_space_cutoff(const int) {
 		sccut = sc_iter->score;
 	}
 	// cerr << "\t\t\tSetting score cutoff to " << best_sccut << " (minimum " << params.minscore[phase] << ")\n";
-	motif.set_score_cutoff(best_sccut);
+	motif.set_ssp_cutoff(best_sccut);
 	adjust_search_space();
 }
 
@@ -79,7 +79,7 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 	motif.set_iter(iterstr.str());
 	int phase = 0;
 	
-	motif.set_score_cutoff(0.8);
+	motif.set_ssp_cutoff(0.8);
 	reset_search_space();
 	seed_random_site();
 	if(size() < 1) {
@@ -186,22 +186,3 @@ int MotifSearchScore::search_for_motif(const int worker, const int iter, const s
 	return 0;
 }
 
-void MotifSearchScore::print_status(ostream& out, const int i, const int phase) {
-	out << setw(5) << i;
-	out << setw(3) << phase;
-	int prec = cerr.precision(2);
-	out << setw(10) << setprecision(3) << motif.get_seq_cutoff();
-	out << setw(10) << motif.get_score_cutoff();
-	out << setw(7) << motif.seqs_with_sites();
-	out << setw(7) << motif.get_above_cutoffs();
-	out << setw(7) << motif.get_above_seqc();
-	out << setw(7) << motif.get_search_space_size();
-	if(size() > 0) {
-		out << setw(50) << motif.consensus();
-		out << setw(15) << setprecision(10) << motif.get_motif_score();
-	} else {
-		out << setw(50) << "---------------------------------------";
-	}
-	out << '\n';
-	cerr.precision(prec);
-}

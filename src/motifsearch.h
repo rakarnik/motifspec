@@ -99,7 +99,7 @@ public:
 	/* Output */
 	void full_output(ostream &fout);                        // Output all motifs stored in archive_sites
 	void full_output(char *name);
-	virtual void print_status(ostream& out, const int i, const int phase) = 0;
+	virtual void print_status(ostream& out, const int i, const int phase);
 };
 
 #endif

@@ -138,21 +138,3 @@ int MotifSearchSubset::search_for_motif(const int worker, const int iter, const 
 	return 0;
 }
 
-void MotifSearchSubset::print_status(ostream& out, const int i, const int phase) {
-	out << setw(5) << i;
-	out << setw(3) << phase;
-	int prec = cerr.precision(2);
-	out << setw(10) << setprecision(3) << motif.get_seq_cutoff();
-	out << setw(7) << motif.seqs_with_sites();
-	out << setw(7) << motif.get_above_cutoffs();
-	out << setw(7) << motif.get_above_seqc();
-	out << setw(7) << motif.get_search_space_size();
-	if(size() > 0) {
-		out << setw(50) << motif.consensus();
-		out << setw(15) << setprecision(10) << motif.get_motif_score();
-	} else {
-		out << setw(50) << "---------------------------------------";
-	}
-	out << '\n';
-	cerr.precision(prec);
-}

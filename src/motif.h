@@ -24,8 +24,7 @@ class Motif {
 	int ssp_size;                            // number of sequences in search space
 	int above_cutoffs;                       // number of sequences above both cutoffs
 	double seq_cutoff;                       // sequence cutoff for this motif
-	double expr_cutoff;                      // expression cutoff for this motif
-	double score_cutoff;                     // score cutoff for this motif
+	double ssp_cutoff;                     // score cutoff for this motif
 	string iter;                             // iteration in which this motif was found
 	int dejavu;                              // number of times this motif was seen
 
@@ -66,10 +65,8 @@ public:
 	int get_above_cutoffs() const { return above_cutoffs; }
 	double get_seq_cutoff() const { return seq_cutoff; }
 	void set_seq_cutoff(const double cutoff) { seq_cutoff = cutoff; }
-	double get_expr_cutoff() const { return expr_cutoff; }
-	void set_expr_cutoff(const double cutoff) { expr_cutoff = cutoff; }
-	double get_score_cutoff() const { return score_cutoff; }
-	void set_score_cutoff(const double cutoff) { score_cutoff = cutoff; }
+	double get_ssp_cutoff() const { return ssp_cutoff; }
+	void set_ssp_cutoff(const double cutoff) { ssp_cutoff = cutoff; }
 	string get_iter() const { return iter; }
 	void set_iter(const string it) { iter = it; }
 	int get_dejavu() { return dejavu; }
