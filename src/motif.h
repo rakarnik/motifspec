@@ -42,8 +42,9 @@ public:
 	Motif(const Motif& m);
 	Motif& operator= (const Motif& m);
 	int number() const { return sitelist.size(); }
-	int get_width() const { return width; }
+	int init_ncols() const { return init_nc; }
 	int ncols() const { return columns.size(); }
+	int get_width() const { return width; }
 	int chrom(int i) const { return sitelist[i].chrom(); }
 	int posit(int i) const { return sitelist[i].posit(); }
 	bool strand(int i) const { return sitelist[i].strand(); }
