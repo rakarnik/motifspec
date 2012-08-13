@@ -19,10 +19,11 @@ expranks(ngenes) {
 
 void MotifSearchExpr::set_final_params() {
 	MotifSearch::set_final_params();
-	params.minprob[0] = 0.00003;
-	params.minprob[1] = 0.006;
-	params.minprob[2] = 0.2;
-	params.minprob[3] = 0.4;
+	params.minprob[0] = 0.00001;
+	params.minprob[1] = 0.002;
+	params.minprob[2] = 0.01;
+	params.minprob[3] = 0.2;
+	params.minpass = 200;
 }
 
 void MotifSearchExpr::calc_mean() {
@@ -140,6 +141,11 @@ int MotifSearchExpr::search_for_motif(const int worker, const int iter, const st
 		}
 		for(int j = 0; j < 3; j++)
 			if(! motif.column_sample()) break;
+		if(i % 2 == 0 && motif.ncols() < 2 * motif.init_ncols()) {
+			motif.column_sample(true, false);
+		} else if(motif.ncols() > 6) {
+			motif.column_sample(false, true);
+		}
 		compute_seq_scores_minimal();
 		compute_expr_scores();
 		motif.set_motif_score(score());

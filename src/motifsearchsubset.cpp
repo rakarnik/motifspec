@@ -14,9 +14,9 @@ subset(sub) {
 
 void MotifSearchSubset::set_final_params() {
 	MotifSearch::set_final_params();
-	params.minprob[0] = 0.00001;
-	params.minprob[1] = 0.002;
-	params.minprob[2] = 0.1;
+	params.minprob[0] = 0.000001;
+	params.minprob[1] = 0.0002;
+	params.minprob[2] = 0.01;
 	params.minprob[3] = 0.2;
 }
 
