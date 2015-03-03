@@ -5,8 +5,8 @@
 
 class MotifSearchScore : public MotifSearch {
 	vector<float>& scores;
-	float mean_sc;
-	float stdev_sc;
+ 	//float mean_sc;
+ 	//float stdev_sc;
 	vector<float> cumul_scores;
 	vector<struct idscore> scranks;
 

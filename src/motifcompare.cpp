@@ -1,10 +1,8 @@
 #include "motifcompare.h"
 
-MotifCompare::MotifCompare(const Seqset& s, const BGModel& bgm) 
-: seqset(s), bgmodel(bgm)
-{
+MotifCompare::MotifCompare() {
 }
-
+	
 float MotifCompare::compare(const Motif& m1, const Motif& m2) const {
 	int cols = 6;
 	

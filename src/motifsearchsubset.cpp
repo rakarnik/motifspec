@@ -15,9 +15,9 @@ subset(sub) {
 void MotifSearchSubset::set_final_params() {
 	MotifSearch::set_final_params();
 	params.minprob[0] = 0.000001;
-	params.minprob[1] = 0.0002;
+	params.minprob[1] = 0.0004;
 	params.minprob[2] = 0.01;
-	params.minprob[3] = 0.2;
+	params.minprob[3] = 0.4;
 }
 
 void MotifSearchSubset::reset_search_space() {
@@ -39,7 +39,7 @@ void MotifSearchSubset::set_search_space_cutoff(const int phase) {
 }
 
 double MotifSearchSubset::score() {
-	return -log_prob_overlap(motif.get_above_cutoffs(), motif.get_search_space_size(), motif.get_above_seqc(), ngenes);
+	return -log_prob_overlap(motif.get_above_cutoffs(), motif.get_above_cutoffs(), motif.get_above_seqc(), ngenes);
 }
 
 int MotifSearchSubset::search_for_motif(const int worker, const int iter, const string outfile) {

@@ -1,7 +1,6 @@
 #ifndef _archivesites
 #define _archivesites
 #include "seqset.h"
-#include "bgmodel.h"
 #include "motif.h"
 #include "motifcompare.h"
 
@@ -16,7 +15,7 @@ class ArchiveSites{
 	int min_visits;
 
 public:
-	ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const int maxm, const vector<double>& p, const vector<double>& b);
+	ArchiveSites(const Seqset& seq, const double sim_cut, const int maxm, const vector<double>& p, const vector<double>& b);
 	int nmots() const { return archive.size(); }
 	vector<Motif>& get_archive() { return archive; }
 	bool check_motif(const Motif& m);               // Returns true if no better motif, false otherwise

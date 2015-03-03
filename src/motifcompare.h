@@ -4,9 +4,7 @@
 #include "motif.h"
 
 class MotifCompare {
-	const Seqset& seqset;
-	const BGModel& bgmodel;
-	
+
 	struct idscore {
 		int id;
 		float score;
@@ -19,7 +17,7 @@ class MotifCompare {
 	void copy_subfreq(const vector<float>& fm, const vector<int>& cols, vector<float>& subfm) const;
 	
 public:
-	MotifCompare(const Seqset& s, const BGModel& bgm);
+	MotifCompare();
 	float compare(const Motif& m1, const Motif& m2) const;
 };
 

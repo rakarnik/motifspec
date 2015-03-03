@@ -94,7 +94,6 @@ void Motif::remove_all_sites() {
 }
 
 bool Motif::is_open_site(const int c, const int p){
-	vector<Site>::iterator site_iter = sitelist.begin();
 	for(vector<Site>::iterator si = sitelist.begin(), se = sitelist.end(); si != se; ++si) {
 		if(si->chrom() == c) {
 			int pp = si->posit();
@@ -149,7 +148,7 @@ void Motif::column_freq(const int col, int *ret){
 		if(s) {
 			assert(p + col >= 0);
 			assert(p + col < len);
-			ret[seq[c][p + col]]++;
+			ret[(int) seq[c][p + col]]++;
 		} else {
 			assert(p + width - 1 - col >= 0);
 			assert(p + width - 1 - col < len);

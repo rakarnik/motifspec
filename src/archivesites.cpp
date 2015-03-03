@@ -3,10 +3,10 @@
 
 #include "archivesites.h"
 
-ArchiveSites::ArchiveSites(const Seqset& seq, const BGModel& bgm, const double sim_cut, const int maxm,
-													 const vector<double>& p, const vector<double>& b) : 
+ArchiveSites::ArchiveSites(const Seqset& seq, const double sim_cut, const int maxm,
+		const vector<double>& p, const vector<double>& b) : 
 seqset(seq),
-mc(seqset, bgm),
+mc(),
 archive(0, Motif(seq, 12, p, b)),
 sim_cutoff(sim_cut),
 max_motifs(maxm),
