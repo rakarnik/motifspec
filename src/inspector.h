@@ -2,6 +2,7 @@
 #include <dirent.h>
 #include <signal.h>
 #include <errno.h>
+#include <unistd.h>
 #include "standard.h"
 #include "motifsearch.h"
 #include "motifsearchexpr.h"
