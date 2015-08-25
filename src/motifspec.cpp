@@ -1,4 +1,4 @@
-#include "inspector.h"
+#include "motifspec.h"
 
 int main(int argc, char *argv[]) {
 	set_new_handler(alloc_error);
@@ -285,7 +285,7 @@ void output(MotifSearch* ms) {
 }
 
 void print_usage(ostream& fout) {
-	fout << "Usage: inspector -s seqfile [-ex exprfile | -su subsetfile | -sc scorefile] -o outputfile (options)\n";
+	fout << "Usage: motifspec -s seqfile [-ex exprfile | -su subsetfile | -sc scorefile] -o outputfile (options)\n";
 	fout << " Seqfile must be in FASTA format.\n";
 	fout << " Exprfile must be in tab-delimited format.\n";
 	fout << " Subsetfile has one sequence name per line.\n";

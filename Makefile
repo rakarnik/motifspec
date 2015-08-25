@@ -10,20 +10,20 @@ BIN_DIR = bin
 DEBUG_DIR = debug
 
 #
-# INCLUDE directories for inspector
+# INCLUDE directories for motifspec
 #
 INCLUDE = -I.\
 					-Isrc
 
 #
-# Build inspector
+# Build motifspec
 #
-all: inspector inspector-debug
+all: motifspec motifspec-debug
 
-inspector: \
+motifspec: \
 		bin/archivesites.o\
 		bin/bgmodel.o\
-		bin/inspector.o\
+		bin/motifspec.o\
 		bin/fastmath.o\
 		bin/motif.o\
 		bin/motifcompare.o\
@@ -37,7 +37,7 @@ inspector: \
 	$(CC) $(LNK_OPTIONS) \
 		bin/archivesites.o\
 		bin/bgmodel.o\
-		bin/inspector.o\
+		bin/motifspec.o\
 		bin/fastmath.o\
 		bin/motif.o\
 		bin/motifcompare.o\
@@ -48,12 +48,12 @@ inspector: \
 		bin/seqset.o\
 		bin/site.o\
 		bin/standard.o\
-		-o bin/inspector
+		-o bin/motifspec
 
-inspector-debug: \
+motifspec-debug: \
 		debug/archivesites.o\
 		debug/bgmodel.o\
-		debug/inspector.o\
+		debug/motifspec.o\
 		debug/fastmath.o\
 		debug/motif.o\
 		debug/motifcompare.o\
@@ -67,7 +67,7 @@ inspector-debug: \
 	$(CC) $(LNK_DEBUG_OPTIONS) \
 		debug/archivesites.o\
 		debug/bgmodel.o\
-		debug/inspector.o\
+		debug/motifspec.o\
 		debug/fastmath.o\
 		debug/motif.o\
 		debug/motifcompare.o\
@@ -78,10 +78,10 @@ inspector-debug: \
 		debug/seqset.o\
 		debug/site.o\
 		debug/standard.o\
-		-o debug/inspector-debug
+		-o debug/motifspec-debug
 
 clean: 
-	rm -f $(BIN_DIR)/*.o $(BIN_DIR)/inspector $(DEBUG_DIR)/*.o $(DEBUG_DIR)/inspector-debug
+	rm -f $(BIN_DIR)/*.o $(BIN_DIR)/motifspec $(DEBUG_DIR)/*.o $(DEBUG_DIR)/motifspec-debug
 
 dir_guard=@mkdir -p $(@D)
 
