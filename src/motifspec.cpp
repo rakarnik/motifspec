@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 	if(archive) {
 		cerr << "Running in archive mode...\n";
 		string archinstr(outfile);
-		archinstr.append(".adj.ace");
+		archinstr.append(".ms");
 		ifstream archin(archinstr.c_str());
 		if(archin) {
 			cerr << "Refreshing from existing archive file " << archinstr << "... ";
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
 		nruns /= ms->get_params().undersample;
 		cerr << "Restarts planned: " << nruns << '\n';
 		string archinstr(outfile);
-		archinstr.append(".adj.ace");
+		archinstr.append(".ms");
 		string lockstr(outfile);
 		lockstr.append(".lock");
 		for(int j = 1; j <= nruns; j++) {
@@ -259,8 +259,8 @@ void output(MotifSearch* ms) {
 	string tmpstr(outfile);
 	string outstr(outfile);
 	string lockstr(outfile);
-	tmpstr.append(".tmp.ace");
-	outstr.append(".adj.ace");
+	tmpstr.append(".tmp.ms");
+	outstr.append(".ms");
 	lockstr.append(".lock");
 	ofstream tmp(tmpstr.c_str(), ios::trunc);
 	ms->full_output(tmp);
